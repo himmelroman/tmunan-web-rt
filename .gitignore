@@ -1,0 +1,8 @@
+.vercel
+dist
+node_modules
+scripts
+ssl
+.env
+.env.local
+dist.zip
