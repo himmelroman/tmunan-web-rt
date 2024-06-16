@@ -1,0 +1,85 @@
+@import "@/variables";
+
+.cont {
+	--width: 32px;
+	--height: 16px;
+	--handle-height: 16px;
+	--bar-height: 12px;
+	--checked: var(--accent-0);
+
+	position: relative;
+	display: inline-block;
+
+	width: var(--width);
+	height: var(--height);
+	border-radius: calc(var(--bar-height) / 2);
+
+	text-align: left;
+	direction: ltr;
+	touch-action: none;
+	user-select: none;
+
+	transition: opacity 0.25s;
+
+	&.dragging {
+		.handle {
+			transition: none !important;
+		}
+	}
+
+	&.checked {
+		.handle .inner_handle {
+			background-color: var(--checked);
+		}
+	}
+
+	&:hover {
+		.bg {
+			filter: brightness(1.3);
+		}
+	}
+}
+
+.bg {
+	position: absolute;
+	top: calc((var(--height) - var(--bar-height)) / 2);
+	width: var(--width);
+	height: var(--bar-height);
+	border-radius: calc(var(--bar-height) / 2);
+
+	background-color: var(--deep-3);
+
+	transition: background-color 0.25s;
+	cursor: pointer;
+}
+
+.input {
+	position: absolute;
+	border: 0;
+	clip: rect(0 0 0 0);
+	overflow: hidden;
+	padding: 0;
+}
+
+.handle {
+	position: absolute;
+	display: inline-block;
+
+	top: calc(var(--bar-height) / 2);
+	cursor: pointer;
+
+	transition: left 0.25s;
+}
+
+.inner_handle {
+	position: absolute;
+
+	height: var(--handle-height);
+	width: var(--handle-height);
+	transform: translate(-50%, -50%);
+
+	border-radius: 50%;
+	background-color: var(--deep-5);
+
+	transition: all 0.2s;
+}

@@ -24,16 +24,24 @@ export const API_URL = `${PROTOCOL}://${HOST}:${PORT}${SUFFIX}`
 
 export const INTERVAL = parseInt(QUERY.interval) || 1000
 
-export const WIDTH = QUERY.width || import.meta.env.VITE_WIDTH || 512
+export const WIDTH = 512 // QUERY.width || import.meta.env.VITE_WIDTH || 512
 
-export const HEIGHT = QUERY.height || import.meta.env.VITE_HEIGHT || 512
+export const HEIGHT = 512 // QUERY.height || import.meta.env.VITE_HEIGHT || 512
 
 // LCM
 
 export const LCM_STATUS = {
 	DISCONNECTED: 'disconnected',
+	TIMEOUT: 'timeout',
 	CONNECTED: 'connected',
 	WAIT: 'wait',
 	SEND_FRAME: 'send_frame',
-	TIMEOUT: 'timeout',
+}
+
+export const LCM_STATUS_COLOR = {
+	disconnected: '#f88',
+	timeout: '#f88',
+	connected: '#5f5',
+	wait: '#ff4',
+	send_frame: '#ff4',
 }

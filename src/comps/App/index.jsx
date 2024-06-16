@@ -1,12 +1,13 @@
-import { useEffect, useMemo, useCallback, useRef } from 'react'
+import { memo, useEffect, useRef } from 'react'
 import useDoubleClick from 'use-double-click'
 
-import { API_URL, HOST, PORT, WIDTH, HEIGHT, LCM_STATUS } from '~/lib/constants'
-import styles from './index.module.scss'
 import { useDispatch, useSelector } from 'react-redux'
-import { selectApp, selectLCMRunning, setPanel } from '~/lib/redux'
+import { HEIGHT, HOST, LCM_STATUS, PORT, WIDTH } from '~/lib/constants'
 import lcmLive from '~/lib/lcmLive'
+import logger from '~/lib/logger'
+import store, { selectApp, selectLCMRunning, setLCMStatus, setPanel } from '~/lib/redux'
 import Panel from '../Panel'
+import styles from './index.module.scss'
 
 let stream
 let cint
@@ -22,6 +23,8 @@ canvas.height = HEIGHT
 const ctx = canvas.getContext('2d')
 
 const video = document.createElement('video')
+// video.setAttribute('style', 'position: absolute; top: 0px; left: 0px; width: 100%; height: 100%;')
+// document.body.appendChild(video)
 
 video.autoplay = true
 
@@ -46,45 +49,30 @@ async function onFrame(now) {
 
 	ctx.drawImage(video, x0, y0, width0, height0, 0, 0, WIDTH, HEIGHT)
 
-	const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 1))
+	const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/webp', 0.9))
 	window.blob = blob
 
 	videoFrameCallbackId = video.requestVideoFrameCallback(onFrame)
+}
 
-	// const body = new FormData()
-	// body.append('file', blob)
-	// const encodedParams = new URLSearchParams()
-	// encodedParams.append('strength', app.parameters.strength)
-	// encodedParams.append('ip_adapter_weight', app.parameters.ip_weight)
-	// encodedParams.append('prompt', app.parameters.prompt)
-	// if (app.parameters.seed > 0) encodedParams.append('seed', app.parameters.seed)
+const sendImage = () => {
+	store.dispatch(setLCMStatus(LCM_STATUS.SEND_FRAME))
+	lcmLive.send(window.blob)
+}
 
-	// const res = await fetch(`${API_URL}?${encodedParams}`, {
-	// 	method: 'POST',
-	// 	body,
-	// 	headers: {
-	// 		'Accept-Encoding': 'gzip',
-	// 	},
-	// })
-	// if (res.status > 299) {
-	// 	console.log('Error:', res.status)
-	// 	return
-	// }
-	// const blob2 = await res.blob()
-	// if (blob2) img.current.src = URL.createObjectURL(blob2)
+const onKeyDown = e => {
+	const s = store.getState()
 
-	// .then(res => {
-	// 	console.log('res status', res.status)
-	// 	return blob()
-	// 	// if (res.status >= 200 && res.status < 300) res.blob()
-	// 	// return false
-	// })
-	// .then(b => {
-	// 	if (b) img.current.src = URL.createObjectURL(b)
-	// })
-	// .catch(e => {
-	// 	console.log(e)
-	// })
+	switch (e.code) {
+		case 'KeyQ':
+			store.dispatch(setPanel(!s.app.panel))
+			break
+		case 'KeyW':
+			logger.error(new Error('Unable to do some shit'))
+			break
+		default:
+			break
+	}
 }
 
 const App = () => {
@@ -107,24 +95,11 @@ const App = () => {
 
 	// mnt
 	useEffect(() => {
-		console.log('camera change', app.camera)
-		const getCamera = async () => {
-			try {
-				stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: app.camera } })
-				console.log('stream:', stream)
-				video.srcObject = stream
-
-				videoFrameCallbackId = video.requestVideoFrameCallback(onFrame)
-
-				lcmLive.start()
-			} catch (error) {
-				console.error('Error accessing webcam:', error)
-			}
-		}
-
-		getCamera()
-
+		logger.log('App mount')
+		window.addEventListener('keydown', onKeyDown)
 		return () => {
+			logger.log('App unmount')
+			window.removeEventListener('keydown', onKeyDown)
 			lcmLive.stop()
 			if (videoFrameCallbackId) video.cancelVideoFrameCallback(videoFrameCallbackId)
 			if (stream) {
@@ -132,28 +107,46 @@ const App = () => {
 				tracks.forEach(track => track.stop())
 			}
 		}
+	}, [])
+
+	// stream
+	useEffect(() => {
+		logger.log('set camera:', app.camera)
+		const getCamera = async () => {
+			try {
+				stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: app.camera } })
+				video.srcObject = stream
+				lcmLive.start()
+			} catch (error) {
+				logger.error('Error accessing camera:', error)
+				lcmLive.stop()
+				stream = video.srcObject = null
+			}
+		}
+		getCamera()
 	}, [app.camera])
 
-	const imStyle = useMemo(() => (app.camera === 'user' ? { transform: 'scaleX(-1)' } : null), [app.camera])
+	useEffect(() => {
+		if (lcmRunning) {
+			videoFrameCallbackId = video.requestVideoFrameCallback(onFrame)
+		} else if (videoFrameCallbackId) {
+			video.cancelVideoFrameCallback(videoFrameCallbackId)
+		}
+	}, [lcmRunning])
 
-	// useEffect(() => {
-	// 	console.log('reset sendImage')
-	// 	clearInterval(cint)
-	// 	cint = setInterval(sendImage, app.parameters.interval)
+	useEffect(() => {
+		clearInterval(cint)
 
-	// 	return () => {
-	// 		clearInterval(cint)
-	// 		if (videoFrameCallbackId) videoEl.cancelVideoFrameCallback(videoFrameCallbackId)
-	// 	}
-	// }, [sendImage, app.parameters.interval])
+		if (lcmRunning) {
+			logger.log('start sending images')
+			cint = setInterval(sendImage, 1000 / app.fps)
+		}
 
-	// panel
-	const panel = useMemo(() => {
-		if (app.panel) return <Panel />
-		return null
-	}, [app.panel])
-
-	const connected = app.lcmStatus !== LCM_STATUS.DISCONNECTED
+		return () => {
+			clearInterval(cint)
+			if (videoFrameCallbackId) video.cancelVideoFrameCallback(videoFrameCallbackId)
+		}
+	}, [app.fps, lcmRunning])
 
 	return (
 		<div className={styles.cont} ref={ref}>
@@ -162,18 +155,17 @@ const App = () => {
 					id='img'
 					className={styles.img0}
 					ref={img}
-					style={imStyle}
+					style={app.camera === 'user' ? { transform: 'scaleX(-1)' } : null}
 					src={
-						connected && app.streamId
-							? `http://${HOST}:${PORT}/api/stream/${app.streamId}`
+						lcmRunning
+							? `http://${HOST}:${PORT}/api/stream/${window.userId}`
 							: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
 					}
 				/>
 			</div>
-			{panel}
-			{!connected && <div className={styles.status}>Disconnected</div>}
+			{app.panel && <Panel />}
 		</div>
 	)
 }
 
-export default App
+export default memo(App)

@@ -1,105 +1,94 @@
-import store from './redux'
+import { HOST, LCM_STATUS, PORT } from './constants'
+import logger from './logger'
+import store, { setLCMStatus } from './redux'
 
-import { setLCMStatus, setStreamId } from './redux'
-
-import { HOST, PORT, LCM_STATUS } from './constants'
-
-let websocket = null
+export let ws = null
 
 const { dispatch } = store
 
-const getSreamdata = () => {
-	const parameters = store.getState().app.parameters
-	const blob = window.blob
-
-	// console.log('getStreamData', parameters, blob)
-
-	return [parameters, blob]
-}
-
 export async function start() {
-	return new Promise((resolve, reject) => {
-		try {
-			const userId = crypto.randomUUID()
-			const websocketURL = `${window.location.protocol === 'https:' ? 'wss' : 'ws'}:${HOST}:${PORT}/api/ws/${userId}`
+	try {
+		const userId = crypto.randomUUID()
+		const websocketURL = `${window.location.protocol === 'https:' ? 'wss' : 'ws'}:${HOST}:${PORT}/api/ws/${userId}`
 
-			websocket = new WebSocket(websocketURL)
-			websocket.onopen = () => {
-				console.log('Connected to websocket')
-			}
-			websocket.onclose = () => {
-				dispatch(setLCMStatus(LCM_STATUS.DISCONNECTED))
-				console.log('Disconnected from websocket')
-			}
-			websocket.onerror = err => {
-				console.error(err)
-			}
-			websocket.onmessage = event => {
-				const data = JSON.parse(event.data)
-				switch (data.status) {
-					case 'connected':
-						dispatch(setLCMStatus(LCM_STATUS.CONNECTED))
-						dispatch(setStreamId(userId))
-						resolve({ status: 'connected', userId })
-						break
-					case 'send_frame':
-						dispatch(setLCMStatus(LCM_STATUS.SEND_FRAME))
-						// eslint-disable-next-line no-case-declarations
-						const streamData = getSreamdata()
-						websocket?.send(JSON.stringify({ status: 'next_frame' }))
-						for (const d of streamData) {
-							send(d)
-						}
-						break
-					case 'wait':
-						dispatch(setLCMStatus(LCM_STATUS.WAIT))
-						break
-					case 'timeout':
-						console.log('timeout')
-						dispatch(setLCMStatus(LCM_STATUS.TIMEOUT))
-						dispatch(setStreamId(null))
-						reject(new Error('timeout'))
-						break
-					case 'error':
-						console.log(data.message)
-						dispatch(setLCMStatus(LCM_STATUS.DISCONNECTED))
-						dispatch(setStreamId(null))
-						reject(new Error(data.message))
-						break
-				}
-			}
-		} catch (err) {
-			console.error(err)
-			dispatch(setLCMStatus(LCM_STATUS.DISCONNECTED))
-			dispatch(setStreamId(null))
-			reject(err)
+		ws = new WebSocket(websocketURL)
+
+		ws.onopen = () => {
+			logger.log('%cConnected to websocket', 'color: green')
 		}
-	})
+
+		ws.onclose = () => {
+			logger.log('Disconnected from websocket')
+			dispatch(setLCMStatus(LCM_STATUS.DISCONNECTED))
+		}
+
+		ws.onerror = () => {
+			logger.log('%cFailed to connect', 'color: orange;')
+		}
+
+		ws.onmessage = event => {
+			const data = JSON.parse(event.data)
+			switch (data.error) {
+				case 'connected':
+					dispatch(setLCMStatus(LCM_STATUS.CONNECTED))
+					window.userId = userId
+					// eslint-disable-next-line no-case-declarations
+					const s = store.getState()
+					logger.log('sending parameters')
+					send(s.app.parameters)
+					break
+				case 'send_frame':
+					logger.log('%cDeprecated: send_frame', 'color: yellow')
+					// dispatch(setLCMStatus(LCM_STATUS.SEND_FRAME))
+					// const streamData = getSreamdata()
+					// websocket?.send(JSON.stringify({ status: 'next_frame' }))
+					// for (const d of streamData) {
+					// 	send(d)
+					// }
+					break
+				case 'wait':
+					dispatch(setLCMStatus(LCM_STATUS.WAIT))
+					break
+				case 'timeout':
+					window.uniqueId = null
+					dispatch(setLCMStatus(LCM_STATUS.TIMEOUT))
+					break
+				case 'error':
+					logger.log('%cError message:', 'color:red;', data.message)
+					dispatch(setLCMStatus(LCM_STATUS.DISCONNECTED))
+					window.uniqueId = null
+					break
+			}
+		}
+	} catch (err) {
+		logger.log('%cOut of loop error:', '%color:red;', err)
+		window.uniqueId = null
+	}
 }
 
 export function send(data) {
-	if (websocket && websocket.readyState === WebSocket.OPEN) {
+	if (ws && ws.readyState === WebSocket.OPEN) {
 		if (data instanceof Blob) {
-			websocket.send(data)
+			logger.log('sending blob', data.size)
+			ws.send(data)
 		} else {
-			websocket.send(JSON.stringify(data))
+			ws.send(JSON.stringify(data))
 		}
 	} else {
-		console.log('WebSocket not connected')
+		logger.log('%cWebSocket not connected', 'color: yellow')
 	}
 }
 
 export async function stop() {
-	dispatch(setLCMStatus(LCM_STATUS.DISCONNECTED))
-	if (websocket) {
-		websocket.close()
+	if (ws) {
+		ws.close()
 	}
-	websocket = null
-	dispatch(setStreamId(null))
+	ws = null
 }
 
 export default {
 	start,
 	send,
 	stop,
+	websocket: ws,
 }
