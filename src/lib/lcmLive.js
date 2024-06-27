@@ -2,15 +2,18 @@ import { HOST, LCM_STATUS, PORT } from './constants'
 import logger from './logger'
 import store, { setLCMStatus } from './redux'
 
+// const PROTOCOL = window.location.protocol === 'https:' ? 'wss' : 'ws'
+const PROTOCOL = 'ws'
+
 export let ws = null
 
 const { dispatch } = store
 
-const userId = crypto.randomUUID()
-
 export async function start() {
 	try {
-		const websocketURL = `${window.location.protocol === 'https:' ? 'wss' : 'ws'}:${HOST}:${PORT}/api/ws/${userId}`
+		const userId = crypto.randomUUID()
+
+		const websocketURL = `${PROTOCOL}:${HOST}:${PORT}/api/ws/${userId}`
 
 		ws = new WebSocket(websocketURL)
 

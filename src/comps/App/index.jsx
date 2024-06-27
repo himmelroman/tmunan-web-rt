@@ -24,11 +24,15 @@ canvas.height = HEIGHT
 const ctx = canvas.getContext('2d')
 
 let video
+let img_count = 0
 
 // const video = document.createElement('video')
 // video.setAttribute('style', 'position: absolute; top: 0px; left: 0px; width: 100%; height: 100%;')
 // document.body.appendChild(video)
 // video.autoplay = true
+
+let t1
+let t2
 
 async function onFrame(now) {
 	if (now - lastMillis < THROTTLE) {
@@ -66,6 +70,7 @@ async function onFrame(now) {
 }
 
 const sendImage = () => {
+	t1 = performance.now()
 	store.dispatch(setLCMStatus(LCM_STATUS.SEND_FRAME))
 	lcmLive.send(window.blob)
 }
@@ -86,6 +91,13 @@ const onKeyDown = e => {
 		default:
 			break
 	}
+}
+
+const cancelFrame = reason => {
+	if (!video || !videoFrameCallbackId) return
+	console.log('cancelling frame because:', reason)
+	video.cancelVideoFrameCallback(videoFrameCallbackId)
+	videoFrameCallbackId = null
 }
 
 const App = () => {
@@ -114,7 +126,7 @@ const App = () => {
 			logger.log('App unmount')
 			window.removeEventListener('keydown', onKeyDown)
 			lcmLive.stop()
-			if (videoFrameCallbackId && video) video.cancelVideoFrameCallback(videoFrameCallbackId)
+			cancelFrame('app unmount')
 			if (stream) {
 				const tracks = stream.getTracks()
 				tracks.forEach(track => track.stop())
@@ -143,8 +155,8 @@ const App = () => {
 		console.log('UE lcmRunning:', lcmRunning)
 		if (lcmRunning) {
 			videoFrameCallbackId = video.requestVideoFrameCallback(onFrame)
-		} else if (videoFrameCallbackId) {
-			video.cancelVideoFrameCallback(videoFrameCallbackId)
+		} else {
+			cancelFrame('lcmRunning false')
 		}
 	}, [lcmRunning])
 
@@ -153,13 +165,12 @@ const App = () => {
 		clearInterval(cint)
 
 		if (lcmRunning) {
-			logger.log('start sending images')
+			// logger.log('start sending images')
 			cint = setInterval(sendImage, 1000 / app.fps)
 		}
 
 		return () => {
 			clearInterval(cint)
-			if (video && videoFrameCallbackId) video.cancelVideoFrameCallback(videoFrameCallbackId)
 		}
 	}, [app.fps, lcmRunning])
 

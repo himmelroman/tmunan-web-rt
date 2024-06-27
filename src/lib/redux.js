@@ -13,7 +13,7 @@ import { WIDTH, HEIGHT, LCM_STATUS } from './constants'
 /* Slice */
 
 export const initialParameters = {
-	strength: 1,
+	strength: 2.6,
 	prompt: 'the beauty of nature is all around us',
 	guidance_scale: 0.6,
 	seed: 2,
@@ -21,17 +21,21 @@ export const initialParameters = {
 	height: HEIGHT,
 }
 
+const initialState = {
+	camera: 'environment',
+	fps: 9,
+	parameters: { ...initialParameters },
+	lcmStatus: LCM_STATUS.DISCONNECTED,
+	panel: false,
+	console: [],
+	showOriginal: false,
+	romaFPS: null,
+	latency: null,
+}
+
 export const appSlice = createSlice({
 	name: 'app',
-	initialState: {
-		camera: 'environment',
-		fps: 9,
-		parameters: { ...initialParameters },
-		lcmStatus: LCM_STATUS.DISCONNECTED,
-		panel: false,
-		console: [],
-		showOriginal: false,
-	},
+	initialState,
 	reducers: {
 		setPanel: (s, { payload }) => {
 			s.panel = payload
@@ -50,7 +54,15 @@ export const appSlice = createSlice({
 			s.lcmStatus = payload
 		},
 		setFPS: (s, { payload }) => {
-			s.fps = parseInt(payload) || 10
+			const fps = parseInt(payload)
+			console.log('fps', fps)
+			s.fps = fps || initialState.fps
+		},
+		setRomaFPS: (s, { payload }) => {
+			s.romaFPS = payload
+		},
+		setLatency: (s, { payload }) => {
+			s.latency = payload
 		},
 		// logLine: (s, { payload }) => {
 		// 	s.console.push({ type: 'log', message: payload })
@@ -61,7 +73,7 @@ export const appSlice = createSlice({
 	},
 })
 
-export const { setPanel, setParameter, setCamera, setOriginal, setLCMStatus, setFPS /* , errorLine */ } = appSlice.actions
+export const { setPanel, setParameter, setCamera, setOriginal, setLCMStatus, setFPS, setLatency, setRomaFPS /* , errorLine */ } = appSlice.actions
 
 /* Thunks */
 
@@ -82,6 +94,12 @@ export const selectshowOriginal = s => s.app.showOriginal
 export const selectLCMStatus = s => s.app.lcmStatus
 
 export const selectLCMRunning = s => window.userId !== null && s.app.lcmStatus !== LCM_STATUS.DISCONNECTED && s.app.lcmStatus !== LCM_STATUS.TIMEOUT
+
+export const selectFPS = s => s.app.fps
+
+export const selectRomaFPS = s => s.app.romaFPS
+
+export const selectLatency = s => s.app.latency
 
 // export const selectLog = s => s.app.console
 
