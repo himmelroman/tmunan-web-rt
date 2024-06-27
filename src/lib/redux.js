@@ -2,7 +2,7 @@ import { createSlice, configureStore } from '@reduxjs/toolkit'
 import { persistReducer, persistStore } from 'redux-persist'
 import storage from 'redux-persist/lib/storage'
 
-import { HEIGHT, LCM_STATUS, WIDTH } from './constants'
+import { WIDTH, HEIGHT, LCM_STATUS } from './constants'
 
 /* Async Thunks */
 
@@ -25,11 +25,12 @@ export const appSlice = createSlice({
 	name: 'app',
 	initialState: {
 		camera: 'environment',
-		fps: 1,
+		fps: 9,
 		parameters: { ...initialParameters },
 		lcmStatus: LCM_STATUS.DISCONNECTED,
 		panel: false,
 		console: [],
+		showOriginal: false,
 	},
 	reducers: {
 		setPanel: (s, { payload }) => {
@@ -42,22 +43,25 @@ export const appSlice = createSlice({
 		setCamera: (s, { payload }) => {
 			s.camera = payload ? 'user' : 'environment'
 		},
+		setOriginal: (s, { payload }) => {
+			s.showOriginal = payload
+		},
 		setLCMStatus: (s, { payload }) => {
 			s.lcmStatus = payload
 		},
 		setFPS: (s, { payload }) => {
 			s.fps = parseInt(payload) || 10
 		},
-		logLine: (s, { payload }) => {
-			s.console.push({ type: 'log', message: payload })
-		},
-		errorLine: (s, { payload }) => {
-			s.console.push({ type: 'error', message: payload })
-		},
+		// logLine: (s, { payload }) => {
+		// 	s.console.push({ type: 'log', message: payload })
+		// },
+		// errorLine: (s, { payload }) => {
+		// 	s.console.push({ type: 'error', message: payload })
+		// },
 	},
 })
 
-export const { setPanel, setParameter, setCamera, setLCMStatus, setFPS, errorLine } = appSlice.actions
+export const { setPanel, setParameter, setCamera, setOriginal, setLCMStatus, setFPS /* , errorLine */ } = appSlice.actions
 
 /* Thunks */
 
@@ -73,11 +77,13 @@ export const selectParameters = s => s.app.parameters
 
 export const selectCamera = s => s.app.camera
 
+export const selectshowOriginal = s => s.app.showOriginal
+
 export const selectLCMStatus = s => s.app.lcmStatus
 
 export const selectLCMRunning = s => window.userId !== null && s.app.lcmStatus !== LCM_STATUS.DISCONNECTED && s.app.lcmStatus !== LCM_STATUS.TIMEOUT
 
-export const selectLog = s => s.app.console
+// export const selectLog = s => s.app.console
 
 /* Store */
 

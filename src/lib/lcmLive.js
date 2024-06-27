@@ -6,9 +6,10 @@ export let ws = null
 
 const { dispatch } = store
 
+const userId = crypto.randomUUID()
+
 export async function start() {
 	try {
-		const userId = crypto.randomUUID()
 		const websocketURL = `${window.location.protocol === 'https:' ? 'wss' : 'ws'}:${HOST}:${PORT}/api/ws/${userId}`
 
 		ws = new WebSocket(websocketURL)
@@ -20,6 +21,9 @@ export async function start() {
 		ws.onclose = () => {
 			logger.log('Disconnected from websocket')
 			dispatch(setLCMStatus(LCM_STATUS.DISCONNECTED))
+
+			// reconnect
+			setTimeout(start, 1500)
 		}
 
 		ws.onerror = () => {
@@ -28,36 +32,18 @@ export async function start() {
 
 		ws.onmessage = event => {
 			const data = JSON.parse(event.data)
-			switch (data.error) {
-				case 'connected':
-					dispatch(setLCMStatus(LCM_STATUS.CONNECTED))
-					window.userId = userId
-					// eslint-disable-next-line no-case-declarations
-					const s = store.getState()
-					logger.log('sending parameters')
-					send(s.app.parameters)
-					break
-				case 'send_frame':
-					logger.log('%cDeprecated: send_frame', 'color: yellow')
-					// dispatch(setLCMStatus(LCM_STATUS.SEND_FRAME))
-					// const streamData = getSreamdata()
-					// websocket?.send(JSON.stringify({ status: 'next_frame' }))
-					// for (const d of streamData) {
-					// 	send(d)
-					// }
-					break
-				case 'wait':
-					dispatch(setLCMStatus(LCM_STATUS.WAIT))
-					break
-				case 'timeout':
-					window.uniqueId = null
-					dispatch(setLCMStatus(LCM_STATUS.TIMEOUT))
-					break
-				case 'error':
-					logger.log('%cError message:', 'color:red;', data.message)
-					dispatch(setLCMStatus(LCM_STATUS.DISCONNECTED))
-					window.uniqueId = null
-					break
+			console.log('ws onmessage', data)
+			if (data.status === LCM_STATUS.CONNECTED) {
+				dispatch(setLCMStatus(LCM_STATUS.CONNECTED))
+				window.userId = userId
+				// eslint-disable-next-line no-case-declarations
+				const s = store.getState()
+				logger.log('sending parameters')
+				send(s.app.parameters)
+			} else {
+				console.error('Invalid WS status')
+				console.log('data', data)
+				dispatch(setLCMStatus(LCM_STATUS.DISCONNECTED))
 			}
 		}
 	} catch (err) {

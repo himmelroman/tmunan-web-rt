@@ -5,9 +5,10 @@ import { useDispatch, useSelector } from 'react-redux'
 import { HEIGHT, HOST, LCM_STATUS, PORT, WIDTH } from '~/lib/constants'
 import lcmLive from '~/lib/lcmLive'
 import logger from '~/lib/logger'
-import store, { selectApp, selectLCMRunning, setLCMStatus, setPanel } from '~/lib/redux'
+import store, { selectApp, selectLCMRunning, setLCMStatus, setOriginal, setPanel } from '~/lib/redux'
 import Panel from '../Panel'
 import styles from './index.module.scss'
+import useClasses from '~/lib/useClasses'
 
 let stream
 let cint
@@ -22,11 +23,12 @@ canvas.height = HEIGHT
 
 const ctx = canvas.getContext('2d')
 
-const video = document.createElement('video')
+let video
+
+// const video = document.createElement('video')
 // video.setAttribute('style', 'position: absolute; top: 0px; left: 0px; width: 100%; height: 100%;')
 // document.body.appendChild(video)
-
-video.autoplay = true
+// video.autoplay = true
 
 async function onFrame(now) {
 	if (now - lastMillis < THROTTLE) {
@@ -49,7 +51,7 @@ async function onFrame(now) {
 
 	ctx.drawImage(video, x0, y0, width0, height0, 0, 0, WIDTH, HEIGHT)
 
-	const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/webp', 0.9))
+	const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.9))
 	window.blob = blob
 
 	videoFrameCallbackId = video.requestVideoFrameCallback(onFrame)
@@ -69,6 +71,9 @@ const onKeyDown = e => {
 			break
 		case 'KeyW':
 			logger.error(new Error('Unable to do some shit'))
+			break
+		case 'KeyV':
+			store.dispatch(setOriginal(!s.app.showOriginal))
 			break
 		default:
 			break
@@ -101,7 +106,7 @@ const App = () => {
 			logger.log('App unmount')
 			window.removeEventListener('keydown', onKeyDown)
 			lcmLive.stop()
-			if (videoFrameCallbackId) video.cancelVideoFrameCallback(videoFrameCallbackId)
+			if (videoFrameCallbackId && video) video.cancelVideoFrameCallback(videoFrameCallbackId)
 			if (stream) {
 				const tracks = stream.getTracks()
 				tracks.forEach(track => track.stop())
@@ -111,7 +116,7 @@ const App = () => {
 
 	// stream
 	useEffect(() => {
-		logger.log('set camera:', app.camera)
+		logger.log('UE camera:', app.camera)
 		const getCamera = async () => {
 			try {
 				stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: app.camera } })
@@ -127,6 +132,7 @@ const App = () => {
 	}, [app.camera])
 
 	useEffect(() => {
+		console.log('UE lcmRunning:', lcmRunning)
 		if (lcmRunning) {
 			videoFrameCallbackId = video.requestVideoFrameCallback(onFrame)
 		} else if (videoFrameCallbackId) {
@@ -135,6 +141,7 @@ const App = () => {
 	}, [lcmRunning])
 
 	useEffect(() => {
+		console.log('UE fps:', app.fps)
 		clearInterval(cint)
 
 		if (lcmRunning) {
@@ -148,8 +155,20 @@ const App = () => {
 		}
 	}, [app.fps, lcmRunning])
 
+	const cls = useClasses(styles.cont, app.panel && styles.panel, app.showOriginal && styles.original)
+
 	return (
-		<div className={styles.cont} ref={ref}>
+		<div className={cls} ref={ref}>
+			{app.panel && <Panel />}
+
+			<video
+				id='video'
+				autoPlay
+				className={styles.video}
+				ref={r => {
+					video = r
+				}}
+			/>
 			<div className={styles.image}>
 				<img
 					id='img'
@@ -163,7 +182,6 @@ const App = () => {
 					}
 				/>
 			</div>
-			{app.panel && <Panel />}
 		</div>
 	)
 }
