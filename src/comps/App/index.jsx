@@ -35,21 +35,29 @@ async function onFrame(now) {
 		videoFrameCallbackId = video.requestVideoFrameCallback(onFrame)
 		return
 	}
-	const videoWidth = video.videoWidth
-	const videoHeight = video.videoHeight
-	let height0 = videoHeight
-	let width0 = videoWidth
-	let x0 = 0
-	let y0 = 0
-	if (videoWidth > videoHeight) {
-		width0 = videoHeight
-		x0 = (videoWidth - videoHeight) / 2
+
+	// crop video to WIDTH / HEIGHT proportions before scaling, to preserve ratio:
+
+	const vwidth = video.videoWidth
+	const vheight = video.videoHeight
+	let width
+	let height
+	let x
+	let y
+
+	if (vwidth / vheight > WIDTH / HEIGHT) {
+		width = vheight * (WIDTH / HEIGHT)
+		height = vheight
+		x = (vwidth - width) / 2
+		y = 0
 	} else {
-		height0 = videoWidth
-		y0 = (videoHeight - videoWidth) / 2
+		width = vwidth
+		height = vwidth * (HEIGHT / WIDTH)
+		x = 0
+		y = (vheight - height) / 2
 	}
 
-	ctx.drawImage(video, x0, y0, width0, height0, 0, 0, WIDTH, HEIGHT)
+	ctx.drawImage(video, x, y, width, height, 0, 0, WIDTH, HEIGHT)
 
 	const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.9))
 	window.blob = blob
@@ -151,7 +159,7 @@ const App = () => {
 
 		return () => {
 			clearInterval(cint)
-			if (videoFrameCallbackId) video.cancelVideoFrameCallback(videoFrameCallbackId)
+			if (video && videoFrameCallbackId) video.cancelVideoFrameCallback(videoFrameCallbackId)
 		}
 	}, [app.fps, lcmRunning])
 
@@ -169,19 +177,19 @@ const App = () => {
 					video = r
 				}}
 			/>
-			<div className={styles.image}>
-				<img
-					id='img'
-					className={styles.img0}
-					ref={img}
-					style={app.camera === 'user' ? { transform: 'scaleX(-1)' } : null}
-					src={
-						lcmRunning
-							? `http://${HOST}:${PORT}/api/stream/${window.userId}`
-							: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
-					}
-				/>
-			</div>
+			{/* <div className={styles.image}> */}
+			<img
+				id='img'
+				className={styles.image}
+				ref={img}
+				style={app.camera === 'user' ? { transform: 'scaleX(-1)' } : null}
+				src={
+					lcmRunning
+						? `http://${HOST}:${PORT}/api/stream/${window.userId}`
+						: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
+				}
+			/>
+			{/* </div> */}
 		</div>
 	)
 }
