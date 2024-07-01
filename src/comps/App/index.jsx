@@ -24,15 +24,15 @@ canvas.height = HEIGHT
 const ctx = canvas.getContext('2d')
 
 let video
-let img_count = 0
+// let img_count = 0
 
 // const video = document.createElement('video')
 // video.setAttribute('style', 'position: absolute; top: 0px; left: 0px; width: 100%; height: 100%;')
 // document.body.appendChild(video)
 // video.autoplay = true
 
-let t1
-let t2
+// let t1
+// let t2
 
 async function onFrame(now) {
 	if (now - lastMillis < THROTTLE) {
@@ -70,7 +70,7 @@ async function onFrame(now) {
 }
 
 const sendImage = () => {
-	t1 = performance.now()
+	// t1 = performance.now()
 	store.dispatch(setLCMStatus(LCM_STATUS.SEND_FRAME))
 	lcmLive.send(window.blob)
 }
@@ -196,7 +196,7 @@ const App = () => {
 				style={app.camera === 'user' ? { transform: 'scaleX(-1)' } : null}
 				src={
 					lcmRunning
-						? `http://${HOST}:${PORT}/api/stream/${window.userId}`
+						? `https://${HOST}${PORT ? ':' + PORT : ''}/api/stream/${window.userId}`
 						: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
 				}
 			/>

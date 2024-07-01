@@ -14,7 +14,7 @@ export async function start() {
 	try {
 		const userId = crypto.randomUUID()
 
-		const websocketURL = `${PROTOCOL}:${HOST}:${PORT}/api/ws/${userId}`
+		const websocketURL = `${PROTOCOL}:${HOST}${PORT ? ':' + PORT : ''}/api/ws/${userId}`
 
 		ws = new WebSocket(websocketURL)
 
