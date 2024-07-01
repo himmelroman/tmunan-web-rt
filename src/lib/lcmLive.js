@@ -2,8 +2,7 @@ import { HOST, LCM_STATUS, PORT } from './constants'
 import logger from './logger'
 import store, { setLCMStatus } from './redux'
 
-// const PROTOCOL = window.location.protocol === 'https:' ? 'wss' : 'ws'
-const PROTOCOL = 'ws'
+const PROTOCOL = window.location.protocol === 'https:' ? 'wss' : 'ws'
 
 export let ws = null
 
