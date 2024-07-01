@@ -22,7 +22,7 @@ export const initialParameters = {
 }
 
 const initialState = {
-	camera: 'environment',
+	camera: 'user',
 	fps: 9,
 	parameters: { ...initialParameters },
 	lcmStatus: LCM_STATUS.DISCONNECTED,
