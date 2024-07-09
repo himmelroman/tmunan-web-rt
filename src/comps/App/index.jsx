@@ -139,7 +139,7 @@ const App = () => {
 		logger.log('UE camera:', app.camera)
 		const getCamera = async () => {
 			try {
-				stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: app.camera } })
+				stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { exact: app.camera } } })
 				video.srcObject = stream
 				lcmLive.start()
 			} catch (error) {
