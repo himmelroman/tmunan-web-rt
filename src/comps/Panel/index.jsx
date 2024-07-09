@@ -3,7 +3,7 @@
  * Panel
  *
  */
-import { memo } from 'react'
+import { memo, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { MdClose } from 'react-icons/md'
 
@@ -66,6 +66,18 @@ const Panel = () => {
 		logger.log('showOriginal', value)
 		dispatch(setOriginal(value))
 	}
+
+	const outsideClick = e => {
+		if (e.target.closest(`.${styles.cont}`)) return
+		dispatch(setPanel(false))
+	}
+
+	useEffect(() => {
+		window.addEventListener('pointerdown', outsideClick)
+		return () => {
+			window.removeEventListener('pointerdown', outsideClick)
+		}
+	}, [])
 
 	return (
 		<div className={styles.cont}>

@@ -9,6 +9,7 @@ import store, { selectApp, selectLCMRunning, setLCMStatus, setOriginal, setPanel
 import Panel from '../Panel'
 import styles from './index.module.scss'
 import useClasses from '~/lib/useClasses'
+import sleep from '~/lib/sleep'
 
 let stream
 let cint
@@ -137,15 +138,31 @@ const App = () => {
 	// stream
 	useEffect(() => {
 		logger.log('UE camera:', app.camera)
+		let count = 2
 		const getCamera = async () => {
+			if (stream) {
+				console.log('stopping stream')
+				stream.getTracks().forEach(track => track.stop())
+			}
+			console.log('getting camera')
+			await sleep(1)
 			try {
-				stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { exact: app.camera } } })
+				console.log('got camera')
+				stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: app.camera } })
 				video.srcObject = stream
 				lcmLive.start()
 			} catch (error) {
 				logger.error('Error accessing camera:', error)
 				lcmLive.stop()
 				stream = video.srcObject = null
+
+				if (count) {
+					count--
+					console.log('retrying...')
+					getCamera()
+				} else {
+					dispatch(setLCMStatus(LCM_STATUS.DISCONNECTED))
+				}
 			}
 		}
 		getCamera()
