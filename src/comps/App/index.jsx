@@ -73,7 +73,6 @@ async function onFrame(now) {
 }
 
 const sendImage = () => {
-	store.dispatch(setLCMStatus(LCM_STATUS.SEND_FRAME))
 	lcmLive.send(window.blob)
 }
 
@@ -93,6 +92,9 @@ const onKeyDown = e => {
 			break
 		case 'KeyV':
 			store.dispatch(setOriginal(!s.app.showOriginal))
+			break
+		case 'KeyF':
+			document.fullscreenElement ? document.exitFullscreen() : document.querySelector('body').requestFullscreen()
 			break
 		default:
 			break
@@ -156,8 +158,15 @@ const App = () => {
 				await sleep(0.5)
 			}
 			try {
-				console.log('getting camera')
-				stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { exact: app.camera } } })
+				console.log('getting camera stream...')
+				stream = await navigator.mediaDevices.getUserMedia({
+					video: {
+						facingMode: { exact: app.camera },
+						width: 9999,
+						// aspectRatio: { exact: 1.7777777778 },
+					},
+				})
+				console.log('got camera', stream)
 				video.srcObject = stream
 				lcmLive.start()
 			} catch (error) {
