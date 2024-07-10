@@ -27,6 +27,12 @@
 			height: 50dvh;
 		}
 	}
+
+	&.user {
+		.video {
+			transform: scaleX(-1);
+		}
+	}
 }
 
 .video {

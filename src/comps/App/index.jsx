@@ -23,25 +23,13 @@ canvas.width = WIDTH
 canvas.height = HEIGHT
 
 const ctx = canvas.getContext('2d')
-
 let video
-// let img_count = 0
-
-// const video = document.createElement('video')
-// video.setAttribute('style', 'position: absolute; top: 0px; left: 0px; width: 100%; height: 100%;')
-// document.body.appendChild(video)
-// video.autoplay = true
-
-// let t1
-// let t2
 
 async function onFrame(now) {
 	if (now - lastMillis < THROTTLE) {
 		videoFrameCallbackId = video.requestVideoFrameCallback(onFrame)
 		return
 	}
-
-	// crop video to WIDTH / HEIGHT proportions before scaling, to preserve ratio:
 
 	const vwidth = video.videoWidth
 	const vheight = video.videoHeight
@@ -71,13 +59,11 @@ async function onFrame(now) {
 }
 
 const sendImage = () => {
-	// t1 = performance.now()
 	store.dispatch(setLCMStatus(LCM_STATUS.SEND_FRAME))
 	lcmLive.send(window.blob)
 }
 
 const onKeyDown = e => {
-	// ignore when typing in input or textarea
 	if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return
 	const s = store.getState()
 
@@ -111,9 +97,7 @@ const App = () => {
 	const img = useRef()
 
 	const dispatch = useDispatch()
-
 	const app = useSelector(selectApp)
-
 	const lcmRunning = useSelector(selectLCMRunning)
 
 	useDoubleClick({
@@ -142,17 +126,15 @@ const App = () => {
 
 	// stream
 	useEffect(() => {
-		logger.log('UE camera:', app.camera)
-		let count = 2
+		logger.log('UE camera', app.camera)
 		const getCamera = async () => {
 			if (stream) {
-				console.log('stopping stream')
 				stream.getTracks().forEach(track => track.stop())
+				console.log('giving 1 second for camera to stop...')
+				await sleep(1)
 			}
-			console.log('getting camera')
-			await sleep(1)
 			try {
-				console.log('got camera')
+				console.log('getting camera')
 				stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: app.camera } })
 				video.srcObject = stream
 				lcmLive.start()
@@ -161,20 +143,14 @@ const App = () => {
 				lcmLive.stop()
 				stream = video.srcObject = null
 
-				if (count) {
-					count--
-					console.log('retrying...')
-					getCamera()
-				} else {
-					dispatch(setLCMStatus(LCM_STATUS.DISCONNECTED))
-				}
+				dispatch(setLCMStatus(LCM_STATUS.DISCONNECTED))
 			}
 		}
 		getCamera()
 	}, [app.camera])
 
 	useEffect(() => {
-		console.log('UE lcmRunning:', lcmRunning)
+		console.log('UE lcmRunning', lcmRunning)
 		if (lcmRunning) {
 			videoFrameCallbackId = video.requestVideoFrameCallback(onFrame)
 		} else {
@@ -183,11 +159,10 @@ const App = () => {
 	}, [lcmRunning])
 
 	useEffect(() => {
-		console.log('UE fps:', app.fps)
+		console.log('UE fps', app.fps)
 		clearInterval(cint)
 
 		if (lcmRunning) {
-			// logger.log('start sending images')
 			cint = setInterval(sendImage, 1000 / app.fps)
 		}
 
@@ -196,12 +171,11 @@ const App = () => {
 		}
 	}, [app.fps, lcmRunning])
 
-	const cls = useClasses(styles.cont, app.panel && styles.panel, app.showOriginal && styles.original)
+	const cls = useClasses(styles.cont, app.panel && styles.panel, app.showOriginal && styles.original, app.camera === 'user' && styles.user)
 
 	return (
 		<div className={cls} ref={ref}>
 			{app.panel && <Panel />}
-
 			<video
 				id='video'
 				autoPlay
@@ -210,19 +184,16 @@ const App = () => {
 					video = r
 				}}
 			/>
-			{/* <div className={styles.image}> */}
 			<img
 				id='img'
 				className={styles.image}
 				ref={img}
-				style={app.camera === 'user' ? { transform: 'scaleX(-1)' } : null}
 				src={
 					lcmRunning
 						? `https://${HOST}${PORT ? ':' + PORT : ''}/api/stream/${window.userId}`
 						: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
 				}
 			/>
-			{/* </div> */}
 		</div>
 	)
 }
