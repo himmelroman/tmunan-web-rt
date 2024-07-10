@@ -15,8 +15,14 @@
 
 	box-sizing: border-box;
 
-	&.original {
+	&.show_source {
 		.video {
+			display: block;
+		}
+	}
+
+	&.show_output {
+		.image {
 			display: block;
 		}
 	}
@@ -38,10 +44,10 @@
 
 .video {
 	flex: 1;
-	display: none;
 	min-width: 50dvh;
 	min-height: 50dvh;
 	object-fit: cover;
+	display: none;
 }
 
 .image {
@@ -49,7 +55,7 @@
 	min-width: 50dvh;
 	min-height: 50dvh;
 	object-fit: cover;
-	// display: none;
+	display: none;
 }
 
 .error {

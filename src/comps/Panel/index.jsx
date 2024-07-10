@@ -10,7 +10,7 @@ import { MdClose, MdFullscreen, MdFullscreenExit } from 'react-icons/md'
 import { LCM_STATUS, LCM_STATUS_COLOR } from '~/lib/constants'
 import lcmLive from '~/lib/lcmLive'
 import logger from '~/lib/logger'
-import { initialParameters, selectApp, setOriginal, setCamera, setFPS, setPanel, setParameter } from '~/lib/redux'
+import { initialParameters, selectApp, setShowSource, setShowOutput, setCamera, setFPS, setPanel, setParameter } from '~/lib/redux'
 import Toggle from '../Toggle'
 import styles from './index.module.scss'
 
@@ -48,7 +48,7 @@ export const resetParameters = () => (dispatch, getState) => {
 const Panel = () => {
 	const dispatch = useDispatch()
 
-	const { parameters, fps, camera, lcmStatus, showOriginal, noRearCamera } = useSelector(selectApp)
+	const { parameters, fps, camera, lcmStatus, showSource, showOutput, noRearCamera } = useSelector(selectApp)
 
 	const onChange = e => {
 		e.stopPropagation()
@@ -65,9 +65,14 @@ const Panel = () => {
 		dispatch(setCamera(value))
 	}
 
-	const onOriginl = value => {
-		logger.log('showOriginal', value)
-		dispatch(setOriginal(value))
+	const onSource = value => {
+		logger.log('showSource', value)
+		dispatch(setShowSource(value))
+	}
+
+	const onOutput = value => {
+		logger.log('showOutput', value)
+		dispatch(setShowOutput(value))
 	}
 
 	const outsideClick = e => {
@@ -132,7 +137,11 @@ const Panel = () => {
 				)}
 				<div className={styles.col}>
 					<label>Source Video</label>
-					<Toggle value={showOriginal} onChange={onOriginl} />
+					<Toggle value={showSource} onChange={onSource} />
+				</div>
+				<div className={styles.col}>
+					<label>Output Video</label>
+					<Toggle value={showOutput} onChange={onOutput} />
 				</div>
 			</div>
 			<div className={styles.row} data-prompt>

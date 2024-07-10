@@ -2,10 +2,10 @@ import { memo, useEffect, useRef } from 'react'
 import useDoubleClick from 'use-double-click'
 
 import { useDispatch, useSelector } from 'react-redux'
-import { HEIGHT, HOST, LCM_STATUS, PORT, WIDTH } from '~/lib/constants'
+import { HEIGHT, HOST, PORT, WIDTH } from '~/lib/constants'
 import lcmLive from '~/lib/lcmLive'
 import logger from '~/lib/logger'
-import store, { noRearCamera, selectApp, selectLCMRunning, setLCMStatus, setOriginal, setPanel } from '~/lib/redux'
+import store, { noRearCamera, selectApp, selectLCMRunning, setShowSource, setPanel, setShowOutput } from '~/lib/redux'
 import Panel from '../Panel'
 import styles from './index.module.scss'
 import useClasses from '~/lib/useClasses'
@@ -87,11 +87,11 @@ const onKeyDown = e => {
 		case 'Escape':
 			if (s.app.panel) store.dispatch(setPanel(false))
 			break
-		case 'KeyW':
-			logger.error(new Error('Unable to do some shit'))
-			break
 		case 'KeyV':
-			store.dispatch(setOriginal(!s.app.showOriginal))
+			store.dispatch(setShowSource(!s.app.showSource))
+			break
+		case 'KeyC':
+			store.dispatch(setShowOutput(!s.app.showOutput))
 			break
 		case 'KeyF':
 			document.fullscreenElement ? document.exitFullscreen() : document.querySelector('body').requestFullscreen()
@@ -201,7 +201,7 @@ const App = () => {
 		}
 	}, [app.fps, lcmRunning])
 
-	const cls = useClasses(styles.cont, app.panel && styles.panel, app.showOriginal && styles.original, app.camera === 'user' && styles.user)
+	const cls = useClasses(styles.cont, app.panel && styles.panel, app.showSource && styles.show_source, app.showOutput && styles.show_output, app.camera === 'user' && styles.user)
 
 	return (
 		<div className={cls} ref={ref}>

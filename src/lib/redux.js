@@ -23,12 +23,13 @@ export const initialParameters = {
 
 const initialState = {
 	camera: 'user',
-	fps: 9,
+	fps: 6,
 	parameters: { ...initialParameters },
 	lcmStatus: LCM_STATUS.DISCONNECTED,
 	panel: false,
 	console: [],
-	showOriginal: false,
+	showSource: false,
+	showOutput: true,
 	romaFPS: null,
 	latency: null,
 }
@@ -51,8 +52,13 @@ export const appSlice = createSlice({
 		setCamera: (s, { payload }) => {
 			s.camera = payload ? 'environment' : 'user'
 		},
-		setOriginal: (s, { payload }) => {
-			s.showOriginal = payload
+		setShowSource: (s, { payload }) => {
+			s.showSource = payload
+			if (!s.showSource && !s.showOutput) s.showOutput = true
+		},
+		setShowOutput: (s, { payload }) => {
+			s.showOutput = payload
+			if (!s.showSource && !s.showOutput) s.showSource = true
 		},
 		setLCMStatus: (s, { payload }) => {
 			s.lcmStatus = payload
@@ -71,7 +77,7 @@ export const appSlice = createSlice({
 	},
 })
 
-export const { setPanel, setParameter, setCamera, setOriginal, setLCMStatus, setFPS, setLatency, setRomaFPS, noRearCamera } = appSlice.actions
+export const { setPanel, setParameter, setCamera, setShowSource, setShowOutput, setLCMStatus, setFPS, setLatency, setRomaFPS, noRearCamera } = appSlice.actions
 
 /* Thunks */
 
@@ -87,7 +93,7 @@ export const selectParameters = s => s.app.parameters
 
 export const selectCamera = s => s.app.camera
 
-export const selectshowOriginal = s => s.app.showOriginal
+export const selectshowSource = s => s.app.showSource
 
 export const selectLCMStatus = s => s.app.lcmStatus
 
