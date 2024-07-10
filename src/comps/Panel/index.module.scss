@@ -38,7 +38,24 @@
 		width: 100dvw;
 		height: 100dvh;
 		opacity: 0.8;
+		overflow-y: scroll;
 	}
+
+	button:has(svg) {
+		font-size: 20px;
+		background-color: transparent;
+		padding: 0px;
+		&:hover {
+			background-color: transparent;
+			color: #f88;
+		}
+	}
+}
+
+.status {
+	display: flex;
+	align-items: center;
+	justify-content: center;
 }
 
 .row {
@@ -83,15 +100,5 @@
 
 	textarea {
 		height: 100%;
-	}
-}
-
-.close {
-	font-size: 20px;
-	background-color: transparent;
-	padding: 0px;
-	&:hover {
-		background-color: transparent;
-		color: #f88;
 	}
 }

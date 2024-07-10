@@ -5,7 +5,7 @@
  */
 import { memo, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { MdClose } from 'react-icons/md'
+import { MdClose, MdFullscreen, MdFullscreenExit } from 'react-icons/md'
 
 import { LCM_STATUS, LCM_STATUS_COLOR } from '~/lib/constants'
 import lcmLive from '~/lib/lcmLive'
@@ -86,7 +86,15 @@ const Panel = () => {
 		<div className={styles.cont}>
 			{/* <div className={styles.panel}> */}
 			<div className={styles.row} data-status style={{ color: LCM_STATUS_COLOR[lcmStatus] }}>
-				<span>{lcmStatus}</span>
+				<button
+					className={styles.fullscreen}
+					onClick={() => {
+						document.fullscreenElement ? document.exitFullscreen() : document.querySelector('body').requestFullscreen()
+					}}
+				>
+					{document.fullscreenElement ? <MdFullscreenExit /> : <MdFullscreen />}
+				</button>
+				<span className={styles.status}>{lcmStatus}</span>
 				<button className={styles.close} onClick={() => dispatch(setPanel(false))}>
 					<MdClose />
 				</button>
@@ -113,11 +121,11 @@ const Panel = () => {
 			</div>
 			<div className={styles.row}>
 				<div className={styles.col}>
-					<label>Camera: {camera}</label>
-					<Toggle value={camera === 'user'} onChange={onCamera} />
+					<label>{camera === 'environment' ? 'Back Camera' : 'Front Camera'}</label>
+					<Toggle value={camera === 'environment'} onChange={onCamera} />
 				</div>
 				<div className={styles.col}>
-					<label>Show Original Video:</label>
+					<label>Source Video</label>
 					<Toggle value={showOriginal} onChange={onOriginl} />
 				</div>
 			</div>

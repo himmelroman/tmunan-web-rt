@@ -45,7 +45,7 @@ export const appSlice = createSlice({
 			s.parameters[name] = name === 'seed' ? parseInt(value) : value
 		},
 		setCamera: (s, { payload }) => {
-			s.camera = payload ? 'user' : 'environment'
+			s.camera = payload ? 'environment' : 'user'
 		},
 		setOriginal: (s, { payload }) => {
 			s.showOriginal = payload
