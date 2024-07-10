@@ -29,7 +29,8 @@
 	}
 
 	&.user {
-		.video {
+		.video,
+		.image {
 			transform: scaleX(-1);
 		}
 	}
