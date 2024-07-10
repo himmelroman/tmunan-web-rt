@@ -77,11 +77,16 @@ const sendImage = () => {
 }
 
 const onKeyDown = e => {
+	// ignore when typing in input or textarea
+	if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return
 	const s = store.getState()
 
 	switch (e.code) {
 		case 'KeyQ':
 			store.dispatch(setPanel(!s.app.panel))
+			break
+		case 'Escape':
+			if (s.app.panel) store.dispatch(setPanel(false))
 			break
 		case 'KeyW':
 			logger.error(new Error('Unable to do some shit'))

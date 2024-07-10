@@ -14,12 +14,25 @@ import { initialParameters, selectApp, setOriginal, setCamera, setFPS, setPanel,
 import Toggle from '../Toggle'
 import styles from './index.module.scss'
 
+function debounce(func, timeout = 300) {
+	let timer
+	return (...args) => {
+		clearTimeout(timer)
+		timer = setTimeout(() => {
+			func.apply(this, args)
+		}, timeout)
+	}
+}
+
+const debouncedSend = debounce(lcmLive.send, 500)
+
 export const updateParameter = (name, value) => (dispatch, getState) => {
 	logger.log('update parameter:', name, value)
 	dispatch(setParameter({ name, value }))
 	const { app } = getState()
 	if (app.lcmStatus !== LCM_STATUS.DISCONNECTED) {
-		lcmLive.send(app.parameters)
+		if (name === 'prompt') debouncedSend(app.parameters)
+		else lcmLive.send(app.parameters)
 	}
 }
 
@@ -32,23 +45,13 @@ export const resetParameters = () => (dispatch, getState) => {
 	}
 }
 
-// parse %c style color string and return color and string without markup
-const parseColor = str => {
-	const colorMatch = str.match(/%c(.*?)color:([^;]+)/)
-	if (colorMatch) {
-		return { message: colorMatch[1], color: colorMatch[2] }
-	}
-	return { color: '', message: str }
-}
-
 const Panel = () => {
 	const dispatch = useDispatch()
 
 	const { parameters, fps, camera, lcmStatus, showOriginal } = useSelector(selectApp)
 
-	// const log_lines = useSelector(selectLog)
-
 	const onChange = e => {
+		e.stopPropagation()
 		const { name, value } = e.target
 		dispatch(updateParameter(name, value))
 	}
@@ -118,7 +121,7 @@ const Panel = () => {
 					<Toggle value={showOriginal} onChange={onOriginl} />
 				</div>
 			</div>
-			<div className={styles.row}>
+			<div className={styles.row} data-prompt>
 				<div className={styles.col}>
 					<label htmlFor='prompt'>Prompt</label>
 					<textarea name='prompt' value={parameters.prompt} onChange={onChange} />
@@ -136,17 +139,6 @@ const Panel = () => {
 					</button>
 				</div>
 			</div>
-			{/* </div> */}
-			{/* <div className={styles.console}>
-				{log_lines.map((line, i) => {
-					const { color, message } = parseColor(line.message)
-					return (
-						<div key={i} className={styles['line-' + line.type]} style={{ color }}>
-							<span>{message}</span>
-						</div>
-					)
-				})}
-			</div> */}
 		</div>
 	)
 }
