@@ -15,7 +15,7 @@ let stream
 let cint
 let videoFrameCallbackId
 
-const THROTTLE = 1000 / 120
+const THROTTLE = 1000 / 60
 let lastMillis = 0
 
 const canvas = document.createElement('canvas')
@@ -154,8 +154,8 @@ const App = () => {
 		const getCamera = async () => {
 			if (stream) {
 				stream.getTracks().forEach(track => track.stop())
-				console.log('giving 0.5 seconds for camera to stop...')
-				await sleep(0.5)
+				console.log('giving 0.75 seconds for camera to stop...')
+				await sleep(0.75)
 			}
 			try {
 				console.log('getting camera stream...')
