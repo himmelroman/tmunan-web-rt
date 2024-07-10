@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { HEIGHT, HOST, LCM_STATUS, PORT, WIDTH } from '~/lib/constants'
 import lcmLive from '~/lib/lcmLive'
 import logger from '~/lib/logger'
-import store, { selectApp, selectLCMRunning, setLCMStatus, setOriginal, setPanel } from '~/lib/redux'
+import store, { noRearCamera, selectApp, selectLCMRunning, setLCMStatus, setOriginal, setPanel } from '~/lib/redux'
 import Panel from '../Panel'
 import styles from './index.module.scss'
 import useClasses from '~/lib/useClasses'
@@ -24,6 +24,20 @@ canvas.height = HEIGHT
 
 const ctx = canvas.getContext('2d')
 let video
+
+async function checkCamera() {
+	try {
+		const devices = await navigator.mediaDevices.enumerateDevices()
+		return devices.some(
+			device =>
+				device.kind === 'videoinput' && (device.label.toLowerCase().includes('back') || device.deviceId.toLowerCase().includes('back') || device.getCapabilities().facingMode === 'environment')
+		)
+	} catch (error) {
+		console.error('Error checking for back camera:')
+		console.log(error)
+		return false
+	}
+}
 
 async function onFrame(now) {
 	if (now - lastMillis < THROTTLE) {
@@ -112,6 +126,14 @@ const App = () => {
 	useEffect(() => {
 		logger.log('App mount')
 		window.addEventListener('keydown', onKeyDown)
+
+		checkCamera().then(res => {
+			if (!res) {
+				console.log('%cNo rear camera', 'color:orange')
+				dispatch(noRearCamera())
+			}
+		})
+
 		return () => {
 			logger.log('App unmount')
 			window.removeEventListener('keydown', onKeyDown)
@@ -130,20 +152,19 @@ const App = () => {
 		const getCamera = async () => {
 			if (stream) {
 				stream.getTracks().forEach(track => track.stop())
-				console.log('giving 1 second for camera to stop...')
-				await sleep(1)
+				console.log('giving 0.5 seconds for camera to stop...')
+				await sleep(0.5)
 			}
 			try {
 				console.log('getting camera')
-				stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: app.camera } })
+				stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { exact: app.camera } } })
 				video.srcObject = stream
 				lcmLive.start()
 			} catch (error) {
-				logger.error('Error accessing camera:', error)
 				lcmLive.stop()
 				stream = video.srcObject = null
-
-				dispatch(setLCMStatus(LCM_STATUS.DISCONNECTED))
+				console.error('Error accessing camera:')
+				console.log(error)
 			}
 		}
 		getCamera()

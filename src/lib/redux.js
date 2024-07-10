@@ -40,6 +40,10 @@ export const appSlice = createSlice({
 		setPanel: (s, { payload }) => {
 			s.panel = payload
 		},
+		noRearCamera: s => {
+			s.camera = 'user'
+			s.noRearCamera = true
+		},
 		setParameter: (s, { payload }) => {
 			const { name, value } = payload
 			s.parameters[name] = name === 'seed' ? parseInt(value) : value
@@ -64,16 +68,10 @@ export const appSlice = createSlice({
 		setLatency: (s, { payload }) => {
 			s.latency = payload
 		},
-		// logLine: (s, { payload }) => {
-		// 	s.console.push({ type: 'log', message: payload })
-		// },
-		// errorLine: (s, { payload }) => {
-		// 	s.console.push({ type: 'error', message: payload })
-		// },
 	},
 })
 
-export const { setPanel, setParameter, setCamera, setOriginal, setLCMStatus, setFPS, setLatency, setRomaFPS /* , errorLine */ } = appSlice.actions
+export const { setPanel, setParameter, setCamera, setOriginal, setLCMStatus, setFPS, setLatency, setRomaFPS, noRearCamera } = appSlice.actions
 
 /* Thunks */
 

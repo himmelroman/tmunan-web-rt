@@ -48,7 +48,7 @@ export const resetParameters = () => (dispatch, getState) => {
 const Panel = () => {
 	const dispatch = useDispatch()
 
-	const { parameters, fps, camera, lcmStatus, showOriginal } = useSelector(selectApp)
+	const { parameters, fps, camera, lcmStatus, showOriginal, noRearCamera } = useSelector(selectApp)
 
 	const onChange = e => {
 		e.stopPropagation()
@@ -105,7 +105,7 @@ const Panel = () => {
 					<input name='strength' type='range' value={parameters.strength} min={0} max={3} step={0.01} onChange={onChange} />
 				</div>
 				<div className={styles.col}>
-					<label htmlFor='guidance_scale'>Guidance Scale: {parameters.guidance_scale}</label>
+					<label htmlFor='guidance_scale'>Guidance: {parameters.guidance_scale}</label>
 					<input name='guidance_scale' type='range' value={parameters.guidance_scale} min={0} max={1} step={0.01} onChange={onChange} />
 				</div>
 			</div>
@@ -120,10 +120,16 @@ const Panel = () => {
 				</div>
 			</div>
 			<div className={styles.row}>
-				<div className={styles.col}>
-					<label>{camera === 'environment' ? 'Back Camera' : 'Front Camera'}</label>
-					<Toggle value={camera === 'environment'} onChange={onCamera} />
-				</div>
+				{noRearCamera ? (
+					<div className={styles.col}>
+						<label style={{ opacity: 0.5 }}>No Rear Camera</label>
+					</div>
+				) : (
+					<div className={styles.col}>
+						<label>{camera === 'environment' ? 'Back Camera' : 'Front Camera'}</label>
+						<Toggle value={camera === 'environment'} onChange={onCamera} />
+					</div>
+				)}
 				<div className={styles.col}>
 					<label>Source Video</label>
 					<Toggle value={showOriginal} onChange={onOriginl} />
