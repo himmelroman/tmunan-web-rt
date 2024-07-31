@@ -25,13 +25,29 @@ canvas.height = HEIGHT
 const ctx = canvas.getContext('2d')
 let video
 
+let black = null
+
 async function checkCamera() {
 	try {
 		const devices = await navigator.mediaDevices.enumerateDevices()
-		return devices.some(
+
+		devices.forEach((a, i) => {
+			if (a.label.toLowerCase().includes('black')) {
+				black = a.deviceId
+			}
+		})
+
+		const some = devices.some(
 			device =>
-				device.kind === 'videoinput' && (device.label.toLowerCase().includes('back') || device.deviceId.toLowerCase().includes('back') || device.getCapabilities().facingMode === 'environment')
+				device.kind === 'videoinput' &&
+				(device.label.toLowerCase().includes('back') ||
+					device.deviceId.toLowerCase().includes('back') ||
+					device.getCapabilities().facingMode === 'environment' ||
+					device.label.toLowerCase().includes('black'))
 		)
+
+		console.log('some', some)
+		return some
 	} catch (error) {
 		console.error('Error checking for back camera:')
 		console.log(error)
@@ -159,13 +175,23 @@ const App = () => {
 			}
 			try {
 				console.log('getting camera stream...')
-				stream = await navigator.mediaDevices.getUserMedia({
-					video: {
-						facingMode: { exact: app.camera },
-						width: 9999,
-						// aspectRatio: { exact: 1.7777777778 },
-					},
-				})
+				if (black) {
+					stream = await navigator.mediaDevices.getUserMedia({
+						video: {
+							deviceId: black,
+							width: 9999,
+							// aspectRatio: { exact: 1.7777777778 },
+						},
+					})
+				} else {
+					stream = await navigator.mediaDevices.getUserMedia({
+						video: {
+							facingMode: { exact: app.camera },
+							width: 9999,
+							// aspectRatio: { exact: 1.7777777778 },
+						},
+					})
+				}
 				console.log('got camera', stream)
 				video.srcObject = stream
 				lcmLive.start()
@@ -177,6 +203,8 @@ const App = () => {
 			}
 		}
 		getCamera()
+
+		// test
 	}, [app.camera])
 
 	useEffect(() => {

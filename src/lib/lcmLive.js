@@ -57,10 +57,10 @@ export async function start() {
 }
 
 export function send(data) {
-	console.log('send...')
+	// console.log('send...')
 	if (ws && ws.readyState === WebSocket.OPEN) {
 		if (data instanceof Blob) {
-			logger.log('sending blob', data.size)
+			// logger.log('sending blob', data.size)
 			ws.send(data)
 		} else {
 			logger.log('sending parameters')
