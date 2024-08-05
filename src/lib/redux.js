@@ -1,39 +1,55 @@
-import { createSlice, configureStore } from '@reduxjs/toolkit'
+import { createSlice, configureStore, createSelector } from '@reduxjs/toolkit'
 import { persistReducer, persistStore } from 'redux-persist'
 import storage from 'redux-persist/lib/storage'
 
-import { WIDTH, HEIGHT, LCM_STATUS } from './constants'
+import { WIDTH, HEIGHT } from './constants'
 
 /* Async Thunks */
 
 /* Slice */
 
 export const initialParameters = {
-	strength: 2.6,
-	prompt: 'the beauty of nature is all around us',
-	guidance_scale: 0.6,
-	seed: 2,
+	strength: 1,
+	guidance_scale: 1,
+	seed: 1,
+	prompt: localStorage.getItem('prompt') || '',
 	width: WIDTH,
 	height: HEIGHT,
 }
 
 const initialState = {
+	connected: false,
+	connectionId: null,
 	camera: null,
 	cameras: [],
 	fps: 6,
-	parameters: { ...initialParameters },
-	lcmStatus: LCM_STATUS.DISCONNECTED,
+	active: true,
 	panel: false,
 	console: [],
 	showSource: false,
 	showOutput: true,
-	latency: null,
+	server: {
+		parameters: initialParameters,
+	},
 }
 
 export const appSlice = createSlice({
 	name: 'app',
 	initialState,
 	reducers: {
+		setConnected: (s, { payload }) => {
+			if (!payload) {
+				s.connected = false
+				s.connectionId = null
+				return
+			}
+			s.connected = true
+			s.connectionId = payload.connection_id
+			s.active = payload.active
+		},
+		setActive: (s, { payload }) => {
+			s.active = payload
+		},
 		setPanel: (s, { payload }) => {
 			s.panel = payload
 		},
@@ -46,10 +62,6 @@ export const appSlice = createSlice({
 		setCamera: (s, { payload }) => {
 			s.camera = payload
 		},
-		setParameter: (s, { payload }) => {
-			const { name, value } = payload
-			s.parameters[name] = name === 'seed' ? parseInt(value) : value
-		},
 		setShowSource: (s, { payload }) => {
 			s.showSource = payload
 			if (!s.showSource && !s.showOutput) s.showOutput = true
@@ -58,21 +70,17 @@ export const appSlice = createSlice({
 			s.showOutput = payload
 			if (!s.showSource && !s.showOutput) s.showSource = true
 		},
-		setLCMStatus: (s, { payload }) => {
-			s.lcmStatus = payload
-		},
 		setFPS: (s, { payload }) => {
 			const fps = parseInt(payload)
-			console.log('fps', fps)
 			s.fps = fps || initialState.fps
 		},
-		setLatency: (s, { payload }) => {
-			s.latency = payload
+		setServerState: (s, { payload }) => {
+			s.server = payload
 		},
 	},
 })
 
-export const { setPanel, setParameter, setCamera, setShowSource, setShowOutput, setLCMStatus, setFPS, setLatency, setCameras } = appSlice.actions
+export const { setPanel, setCamera, setShowSource, setShowOutput, setConnected, setFPS, setCameras, setServerState, setActive } = appSlice.actions
 
 /* Thunks */
 
@@ -92,13 +100,13 @@ export const selectCameras = s => s.app.cameras
 
 export const selectshowSource = s => s.app.showSource
 
-export const selectLCMStatus = s => s.app.lcmStatus
+export const selectConnected = s => s.app.connected
 
-export const selectLCMRunning = s => window.userId !== null && s.app.lcmStatus !== LCM_STATUS.DISCONNECTED && s.app.lcmStatus !== LCM_STATUS.TIMEOUT
+export const selectActive = s => s.app.active
+
+export const selectRunning = createSelector(selectConnected, selectActive, (connected, active) => connected && active)
 
 export const selectFPS = s => s.app.fps
-
-export const selectLatency = s => s.app.latency
 
 // export const selectLog = s => s.app.console
 
@@ -111,7 +119,7 @@ const store = configureStore({
 			{
 				key: 'rubin',
 				storage,
-				whitelist: ['parameters'],
+				whitelist: ['camera', 'fps'],
 			},
 			appSlice.reducer
 		),

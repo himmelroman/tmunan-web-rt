@@ -3,17 +3,19 @@
  * Panel
  *
  */
-import { memo, useEffect } from 'react'
+import { memo, useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { MdClose, MdFullscreen, MdFullscreenExit } from 'react-icons/md'
 
-import { LCM_STATUS, LCM_STATUS_COLOR } from '~/lib/constants'
-import lcmLive from '~/lib/lcmLive'
+// import { LCM_STATUS, LCM_STATUS_COLOR } from '~/lib/constants'
+import socket from '~/lib/socket'
 import logger from '~/lib/logger'
-import { initialParameters, selectApp, setShowSource, setShowOutput, setCamera, setFPS, setPanel, setParameter } from '~/lib/redux'
+import { initialParameters, selectApp, setShowSource, setShowOutput, setCamera, setFPS, setPanel } from '~/lib/redux'
 import Toggle from '../Toggle'
 import styles from './index.module.scss'
 import Select from '../Select'
+import useClasses from '~/lib/useClasses'
+import { NAME } from '~/lib/constants'
 
 function debounce(func, timeout = 300) {
 	let timer
@@ -25,37 +27,43 @@ function debounce(func, timeout = 300) {
 	}
 }
 
-const debouncedSend = debounce(lcmLive.send, 500)
-
-export const updateParameter = (name, value) => (dispatch, getState) => {
-	logger.log('update parameter:', name, value)
-	dispatch(setParameter({ name, value }))
-	const { app } = getState()
-	if (app.lcmStatus !== LCM_STATUS.DISCONNECTED) {
-		if (name === 'prompt') debouncedSend(app.parameters)
-		else lcmLive.send(app.parameters)
-	}
-}
+const debouncedSend = debounce(socket.json, 500)
 
 export const resetParameters = () => (dispatch, getState) => {
 	logger.log('reset parameters')
-	dispatch(setParameter({ ...initialParameters }))
 	const { app } = getState()
-	if (app.lcmStatus !== LCM_STATUS.DISCONNECTED) {
-		lcmLive.send(app.parameters)
+	if (app.connected) {
+		socket.json('set_parameters', initialParameters)
 	}
 }
 
 const Panel = () => {
 	const dispatch = useDispatch()
 
-	const { parameters, fps, camera, cameras, lcmStatus, showSource, showOutput } = useSelector(selectApp)
+	const { fps, camera, cameras, connected, active, showSource, showOutput, server } = useSelector(selectApp)
+
+	const { parameters, connections } = server
+
+	const [prompt, setPrompt] = useState('')
 
 	const onChange = e => {
 		e.stopPropagation()
 		const { name, value } = e.target
-		dispatch(updateParameter(name, value))
+		socket.json('set_parameters', { [name]: value, override: true })
 	}
+
+	const onPrompt = e => {
+		e.stopPropagation()
+		const { value } = e.target
+		setPrompt(value)
+		localStorage.setItem('prompt', value)
+		// dispatch(updateParameter(name, value))
+		if (connected) debouncedSend('set_parameters', { prompt: value, override: true })
+	}
+
+	useEffect(() => {
+		setPrompt(parameters.prompt)
+	}, [parameters.prompt])
 
 	const onFPS = e => {
 		dispatch(setFPS(e.target.value))
@@ -88,10 +96,18 @@ const Panel = () => {
 		}
 	}, [])
 
+	const onConnectionClick = e => {
+		const { name } = e.target.closest(`.${styles.connection}`).dataset
+		console.log('set active name', name)
+		// const connection = connections.find(c => c.info.name === name)
+		socket.json('set_active_name', { name })
+	}
+
+	const cls = useClasses(styles.cont, connected && styles.connected, active && styles.active)
+
 	return (
-		<div className={styles.cont}>
-			{/* <div className={styles.panel}> */}
-			<div className={styles.row} data-status style={{ color: LCM_STATUS_COLOR[lcmStatus] }}>
+		<div className={cls}>
+			<div className={styles.row} data-status>
 				<button
 					className={styles.fullscreen}
 					onClick={() => {
@@ -100,66 +116,82 @@ const Panel = () => {
 				>
 					{document.fullscreenElement ? <MdFullscreenExit /> : <MdFullscreen />}
 				</button>
-				<span className={styles.status}>{lcmStatus}</span>
+				<div className={styles.leds}>
+					<div className={styles.led} data-connected />
+					<div className={styles.led} data-active />
+				</div>
 				<button className={styles.close} onClick={() => dispatch(setPanel(false))}>
 					<MdClose />
 				</button>
 			</div>
-			<div className={styles.row}>
-				<div className={styles.col}>
-					<label htmlFor='strength'>Strength: {parameters.strength}</label>
-					<input name='strength' type='range' value={parameters.strength} min={0} max={3} step={0.01} onChange={onChange} />
-				</div>
-				<div className={styles.col}>
-					<label htmlFor='guidance_scale'>Guidance: {parameters.guidance_scale}</label>
-					<input name='guidance_scale' type='range' value={parameters.guidance_scale} min={0} max={1} step={0.01} onChange={onChange} />
-				</div>
-			</div>
-			<div className={styles.row}>
-				<div className={styles.col}>
-					<label htmlFor='seed'>Seed: {parameters.seed}</label>
-					<input name='seed' type='range' value={parameters.seed} step={1} min={0} max={30} onChange={onChange} />
-				</div>
-				<div className={styles.col}>
-					<label htmlFor='fps'>FPS: {fps}</label>
-					<input name='fps' type='range' value={fps} min={1} max={60} step={0.01} onChange={onFPS} />
-				</div>
-			</div>
-			<div className={styles.row}>
-				<div className={styles.col}>
-					<label>Source Video</label>
-					<Toggle value={showSource} onChange={onSource} />
-				</div>
-				<div className={styles.col}>
-					<label>Output Video</label>
-					<Toggle value={showOutput} onChange={onOutput} />
-				</div>
-			</div>
-			<div className={styles.row}>
-				<div className={styles.col}>
-					<label>Camera</label>
-					<Select className={styles.select} name='camera' options={cameras} value={camera} onChange={onCamera} />
-					{/* <Toggle value={camera === 'environment'} onChange={onCamera} /> */}
-				</div>
-			</div>
-			<div className={styles.row} data-prompt>
-				<div className={styles.col}>
-					<label htmlFor='prompt'>Prompt</label>
-					<textarea name='prompt' value={parameters.prompt} onChange={onChange} />
-				</div>
-			</div>
-			<div className={styles.row}>
-				<div className={styles.col}>
-					<button
-						name='reload'
-						onClick={() => {
-							window.location.reload()
-						}}
-					>
-						reload
-					</button>
-				</div>
-			</div>
+			<main>
+				<section>
+					<div className={styles.row}>
+						<div className={styles.col}>
+							<label htmlFor='strength'>Strength: {parameters.strength}</label>
+							<input name='strength' type='range' value={parameters.strength} min={0} max={3} step={0.01} onChange={onChange} />
+						</div>
+						<div className={styles.col}>
+							<label htmlFor='guidance_scale'>Guidance: {parameters.guidance_scale}</label>
+							<input name='guidance_scale' type='range' value={parameters.guidance_scale} min={0} max={1} step={0.01} onChange={onChange} />
+						</div>
+					</div>
+					<div className={styles.row}>
+						<div className={styles.col}>
+							<label htmlFor='seed'>Seed: {parameters.seed}</label>
+							<input name='seed' type='range' value={parameters.seed} step={1} min={0} max={30} onChange={onChange} />
+						</div>
+						<div className={styles.col}>
+							<label htmlFor='fps'>FPS: {fps}</label>
+							<input name='fps' type='range' value={fps} min={1} max={60} step={0.01} onChange={onFPS} />
+						</div>
+					</div>
+					<div className={styles.row}>
+						<div className={styles.col}>
+							<label>Source Video</label>
+							<Toggle value={showSource} onChange={onSource} />
+						</div>
+						<div className={styles.col}>
+							<label>Output Video</label>
+							<Toggle value={showOutput} onChange={onOutput} />
+						</div>
+					</div>
+					<div className={styles.row}>
+						<div className={styles.col}>
+							<label>Camera</label>
+							<Select className={styles.select} name='camera' options={[...cameras, 'test']} value={camera} onChange={onCamera} />
+						</div>
+					</div>
+					<div className={styles.row} data-prompt>
+						<div className={styles.col}>
+							<label htmlFor='prompt'>Prompt</label>
+							<textarea name='prompt' value={prompt} onChange={onPrompt} />
+						</div>
+					</div>
+					<div className={styles.row}>
+						<div className={styles.col}>
+							<button
+								name='reload'
+								onClick={() => {
+									window.location.reload()
+								}}
+							>
+								reload
+							</button>
+						</div>
+					</div>
+				</section>
+				<section>
+					<div className={styles.connections}>
+						{connections.map((c, i) => (
+							<div key={i} className={styles.connection} data-name={c.info.name} data-active={c.active || null} data-self={NAME === c.info.name || null} onClick={onConnectionClick}>
+								<div className={styles.name}>{c.info.name || c.info.host}</div>
+								<div className={styles.active}>{c.active ? 'active' : ''}</div>
+							</div>
+						))}
+					</div>
+				</section>
+			</main>
 		</div>
 	)
 }

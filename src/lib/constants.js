@@ -16,6 +16,8 @@ export const QUERY = Object.fromEntries(url.searchParams.entries())
 
 export const PROTOCOL = QUERY.protocol || import.meta.env.VITE_PROTOCOL || 'http'
 
+export const NAME = QUERY.name || import.meta.env.VITE_NAME || 'noname'
+
 export const HOST = QUERY.host || ENV_HOST
 
 export const PORT = QUERY.port || ENV_PORT
@@ -32,19 +34,6 @@ export const WIDTH = QUERY.width || ENV_WIDTH || 512
 
 export const HEIGHT = QUERY.height || ENV_HEIGHT || 512
 
-// LCM
-
-export const LCM_STATUS = {
-	INITIAL: 'initial',
-	DISCONNECTED: 'disconnected',
-	TIMEOUT: 'timeout',
-	CONNECTED: 'connected',
-}
-
-export const LCM_STATUS_COLOR = {
-	disconnected: '#f88',
-	timeout: '#f88',
-	connected: '#5f5',
-	wait: '#ff4',
-	send_frame: '#ff4',
+export const CODES = {
+	NON_ACTIVE_PUBLISH: 'non_active_publish',
 }

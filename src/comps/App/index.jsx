@@ -2,10 +2,10 @@ import { memo, useEffect, useRef } from 'react'
 import useDoubleClick from 'use-double-click'
 
 import { useDispatch, useSelector } from 'react-redux'
-import { HEIGHT, HOST, PORT, WIDTH } from '~/lib/constants'
-import lcmLive from '~/lib/lcmLive'
+import { HEIGHT, HOST, PORT, PROTOCOL, WIDTH } from '~/lib/constants'
+import socket from '~/lib/socket'
 import logger from '~/lib/logger'
-import store, { selectApp, selectLCMRunning, setShowSource, setPanel, setShowOutput, setCameras } from '~/lib/redux'
+import store, { selectApp, setShowSource, setPanel, setShowOutput, setCameras, selectRunning } from '~/lib/redux'
 import Panel from '../Panel'
 import styles from './index.module.scss'
 import useClasses from '~/lib/useClasses'
@@ -13,7 +13,7 @@ import sleep from '~/lib/sleep'
 
 let stream
 let cint
-let videoFrameCallbackId
+let frameId
 
 const THROTTLE = 1000 / 60
 let lastMillis = 0
@@ -40,7 +40,7 @@ async function getCameras() {
 
 async function onFrame(now) {
 	if (now - lastMillis < THROTTLE) {
-		videoFrameCallbackId = video.requestVideoFrameCallback(onFrame)
+		frameId = video.requestVideoFrameCallback(onFrame)
 		return
 	}
 
@@ -68,11 +68,12 @@ async function onFrame(now) {
 	const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.9))
 	window.blob = blob
 
-	videoFrameCallbackId = video.requestVideoFrameCallback(onFrame)
+	frameId = video.requestVideoFrameCallback(onFrame)
 }
 
 const sendImage = () => {
-	lcmLive.send(window.blob)
+	console.log('sending blob', window.blob)
+	socket.send(window.blob)
 }
 
 const onKeyDown = e => {
@@ -101,10 +102,10 @@ const onKeyDown = e => {
 }
 
 const cancelFrame = reason => {
-	if (!video || !videoFrameCallbackId) return
+	if (!video || !frameId) return
 	console.log('cancelling frame because:', reason)
-	video.cancelVideoFrameCallback(videoFrameCallbackId)
-	videoFrameCallbackId = null
+	video.cancelVideoFrameCallback(frameId)
+	frameId = null
 }
 
 const App = () => {
@@ -113,7 +114,7 @@ const App = () => {
 
 	const dispatch = useDispatch()
 	const app = useSelector(selectApp)
-	const lcmRunning = useSelector(selectLCMRunning)
+	const running = useSelector(selectRunning)
 
 	useDoubleClick({
 		onDoubleClick: () => {
@@ -132,7 +133,7 @@ const App = () => {
 		return () => {
 			logger.log('App unmount')
 			window.removeEventListener('keydown', onKeyDown)
-			lcmLive.stop()
+			socket.close()
 			cancelFrame('app unmount')
 			if (stream) {
 				const tracks = stream.getTracks()
@@ -161,9 +162,7 @@ const App = () => {
 				})
 				console.log('got camera', stream)
 				video.srcObject = stream
-				lcmLive.start()
 			} catch (error) {
-				lcmLive.stop()
 				stream = video.srcObject = null
 				console.error('Error accessing camera:')
 				console.log(error)
@@ -175,26 +174,26 @@ const App = () => {
 	}, [app.camera])
 
 	useEffect(() => {
-		console.log('UE lcmRunning', lcmRunning)
-		if (lcmRunning) {
-			videoFrameCallbackId = video.requestVideoFrameCallback(onFrame)
+		console.log('UE running', running)
+		if (running) {
+			frameId = video.requestVideoFrameCallback(onFrame)
 		} else {
-			cancelFrame('lcmRunning false')
+			cancelFrame('disconnected')
 		}
-	}, [lcmRunning])
+	}, [running])
 
 	useEffect(() => {
 		console.log('UE fps', app.fps)
 		clearInterval(cint)
 
-		if (lcmRunning) {
+		if (app.connected && app.active) {
 			cint = setInterval(sendImage, 1000 / app.fps)
 		}
 
 		return () => {
 			clearInterval(cint)
 		}
-	}, [app.fps, lcmRunning])
+	}, [app.fps, running])
 
 	const cls = useClasses(styles.cont, app.panel && styles.panel, app.showSource && styles.show_source, app.showOutput && styles.show_output, app.camera === 'user' && styles.user)
 
@@ -214,8 +213,8 @@ const App = () => {
 				className={styles.image}
 				ref={img}
 				src={
-					lcmRunning
-						? `https://${HOST}${PORT ? ':' + PORT : ''}/api/stream/${window.userId}`
+					app.connected
+						? `${PROTOCOL}://${HOST}${PORT ? ':' + PORT : ''}/api/stream`
 						: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
 				}
 			/>

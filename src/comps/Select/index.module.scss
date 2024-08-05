@@ -35,8 +35,7 @@
 	z-index: 10;
 	left: 0;
 
-	width: var(--line-width);
-	min-width: var(--line-width);
+	width: 100%;
 	max-height: calc(var(--line-height) * 6 + 1px);
 
 	box-sizing: border-box;
