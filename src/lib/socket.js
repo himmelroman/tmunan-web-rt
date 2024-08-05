@@ -1,8 +1,8 @@
-import { CODES, HOST, NAME, PORT, PROTOCOL } from './constants'
+import { CODES, HOST, NAME, PORT } from './constants'
 import logger from './logger'
 import store, { setConnected, setActive, setServerState } from './redux'
 
-// const PROTOCOL = window.location.protocol === 'https:' ? 'wss' : 'ws'
+const PROTOCOL = window.location.protocol === 'https:' ? 'wss' : 'ws'
 
 const { dispatch, getState } = store
 
