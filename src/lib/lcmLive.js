@@ -11,7 +11,12 @@ export let ws = null
 const { dispatch } = store
 
 export async function start() {
+	if (ws) {
+		console.log('.')
+		return
+	}
 	try {
+		console.log('starting lcm...')
 		const userId = crypto.randomUUID()
 
 		const websocketURL = `${PROTOCOL}:${HOST}${PORT ? ':' + PORT : ''}/api/ws/${userId}`
@@ -53,6 +58,7 @@ export async function start() {
 	} catch (err) {
 		logger.log('%cOut of loop error:', '%color:red;', err)
 		window.uniqueId = null
+		ws = null
 	}
 }
 
@@ -82,5 +88,5 @@ export default {
 	start,
 	send,
 	stop,
-	websocket: ws,
+	ws,
 }

@@ -13,6 +13,7 @@ import logger from '~/lib/logger'
 import { initialParameters, selectApp, setShowSource, setShowOutput, setCamera, setFPS, setPanel, setParameter } from '~/lib/redux'
 import Toggle from '../Toggle'
 import styles from './index.module.scss'
+import Select from '../Select'
 
 function debounce(func, timeout = 300) {
 	let timer
@@ -48,7 +49,7 @@ export const resetParameters = () => (dispatch, getState) => {
 const Panel = () => {
 	const dispatch = useDispatch()
 
-	const { parameters, fps, camera, lcmStatus, showSource, showOutput, noRearCamera } = useSelector(selectApp)
+	const { parameters, fps, camera, cameras, lcmStatus, showSource, showOutput } = useSelector(selectApp)
 
 	const onChange = e => {
 		e.stopPropagation()
@@ -125,16 +126,6 @@ const Panel = () => {
 				</div>
 			</div>
 			<div className={styles.row}>
-				{noRearCamera ? (
-					<div className={styles.col}>
-						<label style={{ opacity: 0.5 }}>No Rear Camera</label>
-					</div>
-				) : (
-					<div className={styles.col}>
-						<label>{camera === 'environment' ? 'Back Camera' : 'Front Camera'}</label>
-						<Toggle value={camera === 'environment'} onChange={onCamera} />
-					</div>
-				)}
 				<div className={styles.col}>
 					<label>Source Video</label>
 					<Toggle value={showSource} onChange={onSource} />
@@ -142,6 +133,13 @@ const Panel = () => {
 				<div className={styles.col}>
 					<label>Output Video</label>
 					<Toggle value={showOutput} onChange={onOutput} />
+				</div>
+			</div>
+			<div className={styles.row}>
+				<div className={styles.col}>
+					<label>Camera</label>
+					<Select className={styles.select} name='camera' options={cameras} value={camera} onChange={onCamera} />
+					{/* <Toggle value={camera === 'environment'} onChange={onCamera} /> */}
 				</div>
 			</div>
 			<div className={styles.row} data-prompt>

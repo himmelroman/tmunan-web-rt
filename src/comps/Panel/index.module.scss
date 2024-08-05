@@ -54,6 +54,23 @@
 			color: #f88;
 		}
 	}
+
+	.select {
+		--line-width: 100%;
+		--line-height: 40px;
+		--background-color: var(--deep-3);
+		--color: var(--deep-5);
+		--selected-bg: var(--deep-4);
+		--border: none;
+
+		font-size: 15px;
+		--align: left;
+
+		[data-item],
+		[data-button] {
+			padding: 0 10px;
+		}
+	}
 }
 
 .status {

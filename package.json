@@ -35,6 +35,7 @@
 	"dependencies": {
 		"@reduxjs/toolkit": "^2.2.3",
 		"axios": "^1.6.8",
+		"downshift": "^9.0.7",
 		"gsap": "^3.12.5",
 		"page-flip": "^2.0.7",
 		"prop-types": "^15.8.1",

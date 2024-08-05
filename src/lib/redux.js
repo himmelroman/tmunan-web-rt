@@ -6,10 +6,6 @@ import { WIDTH, HEIGHT, LCM_STATUS } from './constants'
 
 /* Async Thunks */
 
-// export const requestSetCamera = camera => async dispatch => {
-
-// }
-
 /* Slice */
 
 export const initialParameters = {
@@ -22,7 +18,8 @@ export const initialParameters = {
 }
 
 const initialState = {
-	camera: 'user',
+	camera: null,
+	cameras: [],
 	fps: 6,
 	parameters: { ...initialParameters },
 	lcmStatus: LCM_STATUS.DISCONNECTED,
@@ -30,7 +27,6 @@ const initialState = {
 	console: [],
 	showSource: false,
 	showOutput: true,
-	romaFPS: null,
 	latency: null,
 }
 
@@ -41,16 +37,18 @@ export const appSlice = createSlice({
 		setPanel: (s, { payload }) => {
 			s.panel = payload
 		},
-		noRearCamera: s => {
-			s.camera = 'user'
-			s.noRearCamera = true
+		setCameras: (s, { payload }) => {
+			s.cameras = payload
+			if (!s.camera || !payload.includes(s.camera)) {
+				s.camera = s.cameras[0]
+			}
+		},
+		setCamera: (s, { payload }) => {
+			s.camera = payload
 		},
 		setParameter: (s, { payload }) => {
 			const { name, value } = payload
 			s.parameters[name] = name === 'seed' ? parseInt(value) : value
-		},
-		setCamera: (s, { payload }) => {
-			s.camera = payload ? 'environment' : 'user'
 		},
 		setShowSource: (s, { payload }) => {
 			s.showSource = payload
@@ -68,16 +66,13 @@ export const appSlice = createSlice({
 			console.log('fps', fps)
 			s.fps = fps || initialState.fps
 		},
-		setRomaFPS: (s, { payload }) => {
-			s.romaFPS = payload
-		},
 		setLatency: (s, { payload }) => {
 			s.latency = payload
 		},
 	},
 })
 
-export const { setPanel, setParameter, setCamera, setShowSource, setShowOutput, setLCMStatus, setFPS, setLatency, setRomaFPS, noRearCamera } = appSlice.actions
+export const { setPanel, setParameter, setCamera, setShowSource, setShowOutput, setLCMStatus, setFPS, setLatency, setCameras } = appSlice.actions
 
 /* Thunks */
 
@@ -93,6 +88,8 @@ export const selectParameters = s => s.app.parameters
 
 export const selectCamera = s => s.app.camera
 
+export const selectCameras = s => s.app.cameras
+
 export const selectshowSource = s => s.app.showSource
 
 export const selectLCMStatus = s => s.app.lcmStatus
@@ -100,8 +97,6 @@ export const selectLCMStatus = s => s.app.lcmStatus
 export const selectLCMRunning = s => window.userId !== null && s.app.lcmStatus !== LCM_STATUS.DISCONNECTED && s.app.lcmStatus !== LCM_STATUS.TIMEOUT
 
 export const selectFPS = s => s.app.fps
-
-export const selectRomaFPS = s => s.app.romaFPS
 
 export const selectLatency = s => s.app.latency
 

@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { HEIGHT, HOST, PORT, WIDTH } from '~/lib/constants'
 import lcmLive from '~/lib/lcmLive'
 import logger from '~/lib/logger'
-import store, { noRearCamera, selectApp, selectLCMRunning, setShowSource, setPanel, setShowOutput } from '~/lib/redux'
+import store, { selectApp, selectLCMRunning, setShowSource, setPanel, setShowOutput, setCameras } from '~/lib/redux'
 import Panel from '../Panel'
 import styles from './index.module.scss'
 import useClasses from '~/lib/useClasses'
@@ -25,31 +25,14 @@ canvas.height = HEIGHT
 const ctx = canvas.getContext('2d')
 let video
 
-let black = null
-
-async function checkCamera() {
+async function getCameras() {
 	try {
 		const devices = await navigator.mediaDevices.enumerateDevices()
-
-		devices.forEach((a, i) => {
-			if (a.label.toLowerCase().includes('black')) {
-				black = a.deviceId
-			}
-		})
-
-		const some = devices.some(
-			device =>
-				device.kind === 'videoinput' &&
-				(device.label.toLowerCase().includes('back') ||
-					device.deviceId.toLowerCase().includes('back') ||
-					device.getCapabilities().facingMode === 'environment' ||
-					device.label.toLowerCase().includes('black'))
-		)
-
-		console.log('some', some)
-		return some
+		const cameras = devices.filter(device => device.kind === 'videoinput').map(device => device.label)
+		store.dispatch(setCameras(cameras))
+		return true
 	} catch (error) {
-		console.error('Error checking for back camera:')
+		console.error('Error getting cameras:')
 		console.log(error)
 		return false
 	}
@@ -144,13 +127,7 @@ const App = () => {
 	useEffect(() => {
 		logger.log('App mount')
 		window.addEventListener('keydown', onKeyDown)
-
-		checkCamera().then(res => {
-			if (!res) {
-				console.log('%cNo rear camera', 'color:orange')
-				dispatch(noRearCamera())
-			}
-		})
+		getCameras()
 
 		return () => {
 			logger.log('App unmount')
@@ -173,25 +150,15 @@ const App = () => {
 				console.log('giving 0.75 seconds for camera to stop...')
 				await sleep(0.75)
 			}
+			if (!app.camera) return
 			try {
 				console.log('getting camera stream...')
-				if (black) {
-					stream = await navigator.mediaDevices.getUserMedia({
-						video: {
-							deviceId: black,
-							width: 9999,
-							// aspectRatio: { exact: 1.7777777778 },
-						},
-					})
-				} else {
-					stream = await navigator.mediaDevices.getUserMedia({
-						video: {
-							facingMode: { exact: app.camera },
-							width: 9999,
-							// aspectRatio: { exact: 1.7777777778 },
-						},
-					})
-				}
+				stream = await navigator.mediaDevices.getUserMedia({
+					video: {
+						label: app.camera,
+						width: 9999,
+					},
+				})
 				console.log('got camera', stream)
 				video.srcObject = stream
 				lcmLive.start()
