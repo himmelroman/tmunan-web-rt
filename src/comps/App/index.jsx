@@ -72,8 +72,12 @@ async function onFrame(now) {
 }
 
 const sendImage = () => {
-	console.log('sending blob', window.blob)
-	socket.send(window.blob)
+	const blob = window.blob
+	if (!blob) return
+	if (socket?.readyState === WebSocket.OPEN) {
+		console.log('blob', blob.size)
+		socket.send(blob)
+	}
 }
 
 const onKeyDown = e => {

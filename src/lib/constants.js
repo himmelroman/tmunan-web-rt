@@ -14,7 +14,7 @@ const url = new URL(window.location.href)
 
 export const QUERY = Object.fromEntries(url.searchParams.entries())
 
-export const PROTOCOL = QUERY.protocol || import.meta.env.VITE_PROTOCOL || 'http'
+export const PROTOCOL = QUERY.protocol || import.meta.env.VITE_PROTOCOL || 'https'
 
 export const NAME = QUERY.name || import.meta.env.VITE_NAME || 'noname'
 
