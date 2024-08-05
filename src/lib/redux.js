@@ -30,6 +30,7 @@ const initialState = {
 	showOutput: true,
 	server: {
 		parameters: initialParameters,
+		connections: [],
 	},
 }
 
