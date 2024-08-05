@@ -21,6 +21,7 @@ const initialState = {
 	connected: false,
 	connectionId: null,
 	camera: null,
+	flipped: false,
 	cameras: [],
 	fps: 6,
 	active: true,
@@ -63,6 +64,9 @@ export const appSlice = createSlice({
 		setCamera: (s, { payload }) => {
 			s.camera = payload
 		},
+		setFlipped: (s, { payload }) => {
+			s.flipped = payload
+		},
 		setShowSource: (s, { payload }) => {
 			s.showSource = payload
 			if (!s.showSource && !s.showOutput) s.showOutput = true
@@ -84,7 +88,7 @@ export const appSlice = createSlice({
 	},
 })
 
-export const { setPanel, setCamera, setShowSource, setShowOutput, setConnected, setFPS, setCameras, setServerState, setActive } = appSlice.actions
+export const { setPanel, setCamera, setShowSource, setShowOutput, setConnected, setFPS, setCameras, setServerState, setActive, setFlipped } = appSlice.actions
 
 /* Thunks */
 
@@ -123,7 +127,7 @@ const store = configureStore({
 			{
 				key: 'rubin',
 				storage,
-				whitelist: ['camera', 'fps'],
+				whitelist: ['camera', 'fps', 'flipped'],
 			},
 			appSlice.reducer
 		),

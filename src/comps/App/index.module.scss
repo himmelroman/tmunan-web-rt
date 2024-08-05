@@ -34,7 +34,7 @@
 		}
 	}
 
-	&.user {
+	&.flipped {
 		.video,
 		.image {
 			transform: scaleX(-1);

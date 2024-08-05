@@ -10,7 +10,7 @@ import { MdClose, MdFullscreen, MdFullscreenExit, MdReorder } from 'react-icons/
 // import { LCM_STATUS, LCM_STATUS_COLOR } from '~/lib/constants'
 import socket from '~/lib/socket'
 import logger from '~/lib/logger'
-import { initialParameters, selectApp, setShowSource, setShowOutput, setCamera, setFPS, setPanel } from '~/lib/redux'
+import { initialParameters, selectApp, setShowSource, setShowOutput, setCamera, setFPS, setPanel, setFlipped } from '~/lib/redux'
 import Toggle from '../Toggle'
 import styles from './index.module.scss'
 import Select from '../Select'
@@ -40,7 +40,7 @@ export const resetParameters = () => (dispatch, getState) => {
 const Panel = () => {
 	const dispatch = useDispatch()
 
-	const { fps, camera, cameras, connected, active, showSource, showOutput, server } = useSelector(selectApp)
+	const { fps, camera, flipped, cameras, connected, active, showSource, showOutput, server } = useSelector(selectApp)
 
 	const { parameters, connections } = server
 
@@ -84,6 +84,11 @@ const Panel = () => {
 	const onOutput = value => {
 		logger.log('showOutput', value)
 		dispatch(setShowOutput(value))
+	}
+
+	const onFlip = value => {
+		logger.log('flipped', value)
+		dispatch(setFlipped(value))
 	}
 
 	const outsideClick = e => {
@@ -153,12 +158,16 @@ const Panel = () => {
 					</div>
 					<div className={styles.row}>
 						<div className={styles.col}>
-							<label>Source Video</label>
+							<label>Source</label>
 							<Toggle value={showSource} onChange={onSource} />
 						</div>
 						<div className={styles.col}>
-							<label>Output Video</label>
+							<label>Output</label>
 							<Toggle value={showOutput} onChange={onOutput} />
+						</div>
+						<div className={styles.col}>
+							<label>Flip</label>
+							<Toggle value={flipped} onChange={onFlip} />
 						</div>
 					</div>
 					<div className={styles.row}>

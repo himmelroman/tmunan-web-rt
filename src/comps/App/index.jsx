@@ -198,7 +198,14 @@ const App = () => {
 		}
 	}, [app.fps, running])
 
-	const cls = useClasses(styles.cont, app.panel && styles.panel, app.showSource && styles.show_source, app.showOutput && styles.show_output, app.camera === 'user' && styles.user)
+	const cls = useClasses(
+		styles.cont,
+		app.panel && styles.panel,
+		app.showSource && styles.show_source,
+		app.showOutput && styles.show_output,
+		app.camera === 'user' && styles.user,
+		app.flipped && styles.flipped
+	)
 
 	return (
 		<div className={cls} ref={ref}>
@@ -211,16 +218,18 @@ const App = () => {
 					video = r
 				}}
 			/>
-			<img
-				id='img'
-				className={styles.image}
-				ref={img}
-				src={
-					app.connected
-						? `${PROTOCOL}://${HOST}${PORT ? ':' + PORT : ''}/api/stream`
-						: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
-				}
-			/>
+			{app.showOutput && (
+				<img
+					id='img'
+					className={styles.image}
+					ref={img}
+					src={
+						app.connected
+							? `${PROTOCOL}://${HOST}${PORT ? ':' + PORT : ''}/api/stream`
+							: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
+					}
+				/>
+			)}
 		</div>
 	)
 }
