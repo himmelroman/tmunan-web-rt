@@ -2,7 +2,7 @@ import { createSlice, configureStore, createSelector } from '@reduxjs/toolkit'
 import { persistReducer, persistStore } from 'redux-persist'
 import storage from 'redux-persist/lib/storage'
 
-import { WIDTH, HEIGHT } from './constants'
+import { WIDTH, HEIGHT, NAME } from './constants'
 
 /* Async Thunks */
 
@@ -77,6 +77,9 @@ export const appSlice = createSlice({
 		},
 		setServerState: (s, { payload }) => {
 			s.server = payload
+			if ('active_connection_name' in payload) {
+				s.active = payload.active_connection_name === NAME
+			}
 		},
 	},
 })

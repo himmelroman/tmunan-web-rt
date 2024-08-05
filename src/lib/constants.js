@@ -30,9 +30,9 @@ export const API_URL = `${PROTOCOL}://${HOST}:${PORT}${SUFFIX}`
 
 export const INTERVAL = parseInt(QUERY.interval) || 1000
 
-export const WIDTH = QUERY.width || ENV_WIDTH || 512
+export const WIDTH = parseInt(QUERY.width || ENV_WIDTH || 512)
 
-export const HEIGHT = QUERY.height || ENV_HEIGHT || 512
+export const HEIGHT = parseInt(QUERY.height || ENV_HEIGHT || 512)
 
 export const CODES = {
 	NON_ACTIVE_PUBLISH: 'non_active_publish',
