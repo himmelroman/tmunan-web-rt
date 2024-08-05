@@ -72,11 +72,10 @@ async function onFrame(now) {
 }
 
 const sendImage = () => {
-	const blob = window.blob
-	if (!blob) return
-	if (socket?.readyState === WebSocket.OPEN) {
-		console.log('blob', blob.size)
-		socket.send(blob)
+	// if (!blob) return
+	if (socket.readyState === WebSocket.OPEN) {
+		// console.log('blob', blob.size)
+		socket.send(window.blob)
 	}
 }
 

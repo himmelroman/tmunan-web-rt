@@ -5,7 +5,7 @@
  */
 import { memo, useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { MdClose, MdFullscreen, MdFullscreenExit } from 'react-icons/md'
+import { MdClose, MdFullscreen, MdFullscreenExit, MdReorder } from 'react-icons/md'
 
 // import { LCM_STATUS, LCM_STATUS_COLOR } from '~/lib/constants'
 import socket from '~/lib/socket'
@@ -45,6 +45,8 @@ const Panel = () => {
 	const { parameters, connections } = server
 
 	const [prompt, setPrompt] = useState('')
+
+	const [showClients, setShowClients] = useState(true)
 
 	const onChange = e => {
 		e.stopPropagation()
@@ -120,6 +122,9 @@ const Panel = () => {
 					<div className={styles.led} data-connected />
 					<div className={styles.led} data-active />
 				</div>
+				<button className={styles.close} onClick={() => setShowClients(showClients ? false : true)}>
+					<MdReorder />
+				</button>
 				<button className={styles.close} onClick={() => dispatch(setPanel(false))}>
 					<MdClose />
 				</button>
@@ -181,16 +186,18 @@ const Panel = () => {
 						</div>
 					</div>
 				</section>
-				<section>
-					<div className={styles.connections}>
-						{connections.map((c, i) => (
-							<div key={i} className={styles.connection} data-name={c.info.name} data-active={c.active || null} data-self={NAME === c.info.name || null} onClick={onConnectionClick}>
-								<div className={styles.name}>{c.info.name || c.info.host}</div>
-								<div className={styles.active}>{c.active ? 'active' : ''}</div>
-							</div>
-						))}
-					</div>
-				</section>
+				{showClients && (
+					<section>
+						<div className={styles.connections}>
+							{connections.map((c, i) => (
+								<div key={i} className={styles.connection} data-name={c.info.name} data-active={c.active || null} data-self={NAME === c.info.name || null} onClick={onConnectionClick}>
+									<div className={styles.name}>{c.info.name || c.info.host}</div>
+									<div className={styles.active}>{c.active ? 'active' : ''}</div>
+								</div>
+							))}
+						</div>
+					</section>
+				)}
 			</main>
 		</div>
 	)

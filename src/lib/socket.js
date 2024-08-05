@@ -14,6 +14,7 @@ const connect = () => {
 	console.log(`Connecting to websocket at %c${websocketURL}`, 'color: #aaf')
 
 	if (ws) {
+		console.log('closing socket')
 		ws.close()
 	}
 
