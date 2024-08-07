@@ -20,13 +20,6 @@ const print = (prop, val) => {
 	logger.info(chalk.gray(prop.padEnd(20)) + chalk.blueBright(val))
 }
 
-logger.info(chalk.green('START'))
-
-print('Version', VERSION)
-print('Websocket URL', SOCKET_URL)
-
-socket.connect()
-
 async function getCameras() {
 	window.cmap = {}
 	try {
@@ -47,13 +40,23 @@ async function getCameras() {
 	}
 }
 
-await getCameras()
+async function main() {
+	logger.info(chalk.green('START'))
+	print('Version', VERSION)
+	print('Websocket URL', SOCKET_URL)
 
-const root = ReactDOM.createRoot(document.getElementById('root'))
-root.render(
-	<Provider store={store}>
-		<PersistGate loading={null} persistor={persistor}>
-			<App />
-		</PersistGate>
-	</Provider>
-)
+	socket.connect()
+
+	await getCameras()
+
+	const root = ReactDOM.createRoot(document.getElementById('root'))
+	root.render(
+		<Provider store={store}>
+			<PersistGate loading={null} persistor={persistor}>
+				<App />
+			</PersistGate>
+		</Provider>
+	)
+}
+
+main()
