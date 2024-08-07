@@ -12,7 +12,7 @@ import chalk from 'chalk'
 import { SOCKET_URL, VERSION } from './lib/constants'
 import logger from './lib/logger'
 import socket from './lib/socket'
-import store, { persistor } from '~/lib/redux'
+import store, { persistor, setCameras } from '~/lib/redux'
 import App from './comps/App'
 import './styles/index.scss'
 
@@ -20,12 +20,34 @@ const print = (prop, val) => {
 	logger.info(chalk.gray(prop.padEnd(20)) + chalk.blueBright(val))
 }
 
-logger.info(chalk.green('- START -'))
+logger.info(chalk.green('START'))
 
 print('Version', VERSION)
 print('Websocket URL', SOCKET_URL)
 
 socket.connect()
+
+async function getCameras() {
+	window.cmap = {}
+	try {
+		logger.info('Getting cameras...')
+		const devices = await navigator.mediaDevices.enumerateDevices()
+		const cameras = devices
+			.filter(device => device.kind === 'videoinput')
+			.map(({ deviceId, label }) => {
+				window.cmap[deviceId] = label
+				return deviceId
+			})
+		logger.info(`Found ${chalk.blueBright(cameras.length)} cameras`)
+		store.dispatch(setCameras(cameras))
+		return true
+	} catch (error) {
+		logger.error('Error getting cameras', error)
+		return false
+	}
+}
+
+await getCameras()
 
 const root = ReactDOM.createRoot(document.getElementById('root'))
 root.render(

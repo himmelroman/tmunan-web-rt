@@ -65,17 +65,18 @@ const Select = forwardRef((props, eref) => {
 			<div {...getMenuProps()} className={`${styles.menu} ${isOpen && styles.is_open}`} data-menu>
 				{options.map((item, index) => {
 					const itemValue = itemToValue(item)
+					const itemString = itemToString(item)
 					const current = itemValue === innerValue
 					return (
 						<div
-							key={`g-${itemValue}`}
+							key={`g-${itemString}`}
 							data-item
 							data-first={current || undefined}
 							data-index={index}
 							{...getItemProps({ item, index })}
 							className={`${styles.menu_item} ${highlightedIndex === index ? styles.selected_item : ''} ${current ? styles.current_item : ''}`}
 						>
-							<div className={styles.item_text}>{itemToString(item)}</div>
+							<div className={styles.item_text}>{itemString}</div>
 						</div>
 					)
 				})}

@@ -5,11 +5,12 @@ import { useDispatch, useSelector } from 'react-redux'
 import { HEIGHT, HOST, PORT, PROTOCOL, WIDTH } from '~/lib/constants'
 import logger from '~/lib/logger'
 import socket from '~/lib/socket'
-import store, { selectApp, setShowSource, setShowPanel, setShowOutput, setCameras, selectRunning, setShowClients } from '~/lib/redux'
+import store, { selectApp, setShowSource, setShowPanel, setShowOutput, selectRunning, setShowClients } from '~/lib/redux'
 import Panel from '../Panel'
 import styles from './index.module.scss'
 import useClasses from '~/lib/useClasses'
 import sleep from '~/lib/sleep'
+import chalk from 'chalk'
 
 let stream
 let cint
@@ -24,18 +25,6 @@ canvas.height = HEIGHT
 
 const ctx = canvas.getContext('2d')
 let video
-
-async function getCameras() {
-	try {
-		const devices = await navigator.mediaDevices.enumerateDevices()
-		const cameras = devices.filter(device => device.kind === 'videoinput').map(device => device.label)
-		store.dispatch(setCameras(cameras))
-		return true
-	} catch (error) {
-		logger.error('Error getting cameras', error)
-		return false
-	}
-}
 
 async function onFrame(now) {
 	if (now - lastMillis < THROTTLE) {
@@ -70,6 +59,13 @@ async function onFrame(now) {
 	frameId = video.requestVideoFrameCallback(onFrame)
 }
 
+const cancelFrame = reason => {
+	if (!video || !frameId) return
+	logger.info('Cancelling frame', reason)
+	video.cancelVideoFrameCallback(frameId)
+	frameId = null
+}
+
 const sendImage = () => {
 	socket.send(window.blob)
 }
@@ -102,13 +98,6 @@ const onKeyDown = e => {
 	}
 }
 
-const cancelFrame = reason => {
-	if (!video || !frameId) return
-	logger.info('Cancelling frame', reason)
-	video.cancelVideoFrameCallback(frameId)
-	frameId = null
-}
-
 const App = () => {
 	const ref = useRef()
 	const img = useRef()
@@ -129,7 +118,6 @@ const App = () => {
 	useEffect(() => {
 		logger.info('App mount')
 		window.addEventListener('keydown', onKeyDown)
-		getCameras()
 
 		return () => {
 			logger.info('App unmount')
@@ -148,19 +136,19 @@ const App = () => {
 		const getCamera = async () => {
 			if (stream) {
 				stream.getTracks().forEach(track => track.stop())
-				logger.debug('Giving 0.75 seconds for camera to stop...')
-				await sleep(0.75)
+				logger.debug('Giving 0.5 seconds for camera to stop...')
+				await sleep(0.5)
 			}
 			if (!app.camera) return
 			try {
-				logger.info('Getting camera stream...')
+				logger.info(`Getting camera ${chalk.blueBright(window.cmap[app.camera])}`)
 				stream = await navigator.mediaDevices.getUserMedia({
 					video: {
-						label: app.camera,
+						deviceId: app.camera,
 						width: 9999,
 					},
 				})
-				logger.info('Got camera stream', stream)
+				logger.info('Got camera')
 				video.srcObject = stream
 			} catch (error) {
 				stream = video.srcObject = null

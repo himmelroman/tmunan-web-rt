@@ -11,7 +11,7 @@ logger.use(log => ({
 // export default logger
 
 export const debug = (...args) => {
-	console.debug(...args)
+	console.log(...args)
 	logger.debug(...args)
 }
 

@@ -59,23 +59,19 @@ const Panel = () => {
 		dispatch(setFPS(e.target.value))
 	}
 
-	const onCamera = value => {
-		logger.info('onCamera', value)
+	const onCamera = (name, value) => {
 		dispatch(setCamera(value))
 	}
 
-	const onSource = value => {
-		logger.info('onSource', value)
+	const onSource = (name, value) => {
 		dispatch(setShowSource(value))
 	}
 
-	const onOutput = value => {
-		logger.info('onOutput', value)
+	const onOutput = (name, value) => {
 		dispatch(setShowOutput(value))
 	}
 
-	const onFlip = value => {
-		logger.info('onFlipped', value)
+	const onFlip = (name, value) => {
 		dispatch(setFlipped(value))
 	}
 
@@ -146,21 +142,21 @@ const Panel = () => {
 					<div className={styles.row}>
 						<div className={styles.col}>
 							<label>Source</label>
-							<Toggle value={showSource} onChange={onSource} />
+							<Toggle name='source' value={showSource} onChange={onSource} />
 						</div>
 						<div className={styles.col}>
 							<label>Output</label>
-							<Toggle value={showOutput} onChange={onOutput} />
+							<Toggle name='output' value={showOutput} onChange={onOutput} />
 						</div>
 						<div className={styles.col}>
 							<label>Flip</label>
-							<Toggle value={flipped} onChange={onFlip} />
+							<Toggle name='flip' value={flipped} onChange={onFlip} />
 						</div>
 					</div>
 					<div className={styles.row}>
 						<div className={styles.col}>
 							<label>Camera</label>
-							<Select className={styles.select} name='camera' options={cameras} value={camera} onChange={onCamera} />
+							<Select className={styles.select} name='camera' itemToString={a => window.cmap[a]} itemToValue={a => a} options={cameras} value={camera} onChange={onCamera} />
 						</div>
 					</div>
 					<div className={styles.row} data-prompt>

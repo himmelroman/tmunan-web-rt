@@ -15,7 +15,7 @@ const noop = e => {
 	e.preventDefault()
 }
 
-const Toggle = ({ onChange = noop, value, className, disabled, style, ...props }) => {
+const Toggle = ({ name, onChange = noop, value, className, disabled, style, ...props }) => {
 	const inputRef = useRef()
 	const timeRef = useRef()
 
@@ -51,7 +51,7 @@ const Toggle = ({ onChange = noop, value, className, disabled, style, ...props }
 	// Events
 
 	const onInnerChange = useCallback(() => {
-		onChange(!value)
+		onChange(name, !value)
 	}, [value])
 
 	const onDragStart = clientX => {
@@ -77,7 +77,7 @@ const Toggle = ({ onChange = noop, value, className, disabled, style, ...props }
 	const onDragStop = useCallback(() => {
 		const dif = Date.now() - timeRef.current
 		if (!dragRef.current || dif < 100) {
-			onChange(!value)
+			onChange(name, !value)
 			return
 		}
 
@@ -85,7 +85,7 @@ const Toggle = ({ onChange = noop, value, className, disabled, style, ...props }
 		const nextValue = posRef.current >= half
 
 		if (value !== nextValue) {
-			onChange(nextValue)
+			onChange(name, nextValue)
 		} else {
 			setPos(value ? checkedPos : uncheckedPos)
 		}
@@ -131,7 +131,7 @@ const Toggle = ({ onChange = noop, value, className, disabled, style, ...props }
 		e => {
 			if (e.target.className.includes('handle')) return
 			e.preventDefault()
-			onChange(!value)
+			onChange(name, !value)
 		},
 		[value]
 	)
@@ -139,7 +139,7 @@ const Toggle = ({ onChange = noop, value, className, disabled, style, ...props }
 	const cls = useClasses(styles.cont, className, disabled && styles.disabled, isDragging && styles.dragging, value && styles.checked)
 
 	return (
-		<div className={cls} style={style} data-input='boolean' data-toggle onClick={onClick} onMouseDown={noop}>
+		<div name={name} id={`toggle_${name}`} className={cls} style={style} data-input='boolean' data-toggle onClick={onClick} onMouseDown={noop}>
 			<div className={styles.bg} data-el='bg' ref={bgRef}>
 				<div
 					className={styles.handle}
@@ -160,6 +160,7 @@ const Toggle = ({ onChange = noop, value, className, disabled, style, ...props }
 }
 
 Toggle.propTypes = {
+	name: PropTypes.string.isRequired,
 	onChange: PropTypes.func,
 	value: PropTypes.oneOf([true, false, 0, 1]),
 	className: PropTypes.string,
