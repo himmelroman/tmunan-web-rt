@@ -153,14 +153,14 @@ const App = () => {
 			}
 			if (!app.camera) return
 			try {
-				logger.debug('Getting camera stream...')
+				logger.info('Getting camera stream...')
 				stream = await navigator.mediaDevices.getUserMedia({
 					video: {
 						label: app.camera,
 						width: 9999,
 					},
 				})
-				logger.debug('Got camera stream', stream)
+				logger.info('Got camera stream', stream)
 				video.srcObject = stream
 			} catch (error) {
 				stream = video.srcObject = null
