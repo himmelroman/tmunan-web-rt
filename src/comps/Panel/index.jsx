@@ -4,18 +4,17 @@
  *
  */
 import { memo, useEffect, useState } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
 import { MdClose, MdFullscreen, MdFullscreenExit, MdReorder } from 'react-icons/md'
+import { useDispatch, useSelector } from 'react-redux'
 
-// import { LCM_STATUS, LCM_STATUS_COLOR } from '~/lib/constants'
-import socket from '~/lib/socket'
+import { NAME } from '~/lib/constants'
 import logger from '~/lib/logger'
-import { initialParameters, selectApp, setShowSource, setShowOutput, setCamera, setFPS, setPanel, setFlipped } from '~/lib/redux'
+import { selectApp, setCamera, setFlipped, setFPS, setShowClients, setShowOutput, setShowPanel, setShowSource } from '~/lib/redux'
+import socket from '~/lib/socket'
+import useClasses from '~/lib/useClasses'
+import Select from '../Select'
 import Toggle from '../Toggle'
 import styles from './index.module.scss'
-import Select from '../Select'
-import useClasses from '~/lib/useClasses'
-import { NAME } from '~/lib/constants'
 
 function debounce(func, timeout = 300) {
 	let timer
@@ -27,31 +26,21 @@ function debounce(func, timeout = 300) {
 	}
 }
 
-const debouncedSend = debounce(socket.json, 500)
-
-export const resetParameters = () => (dispatch, getState) => {
-	logger.log('reset parameters')
-	const { app } = getState()
-	if (app.connected) {
-		socket.json('set_parameters', initialParameters)
-	}
-}
+const debouncedSend = debounce(socket.send, 500)
 
 const Panel = () => {
 	const dispatch = useDispatch()
 
-	const { fps, camera, flipped, cameras, connected, active, showSource, showOutput, server } = useSelector(selectApp)
+	const { fps, camera, flipped, cameras, connected, active, showClients, showSource, showOutput, server } = useSelector(selectApp)
 
 	const { parameters, connections } = server
 
 	const [prompt, setPrompt] = useState('')
 
-	const [showClients, setShowClients] = useState(true)
-
 	const onChange = e => {
 		e.stopPropagation()
 		const { name, value } = e.target
-		socket.json('set_parameters', { [name]: value, override: true })
+		socket.send('set_parameters', { [name]: value, override: true })
 	}
 
 	const onPrompt = e => {
@@ -59,7 +48,6 @@ const Panel = () => {
 		const { value } = e.target
 		setPrompt(value)
 		localStorage.setItem('prompt', value)
-		// dispatch(updateParameter(name, value))
 		if (connected) debouncedSend('set_parameters', { prompt: value, override: true })
 	}
 
@@ -72,28 +60,28 @@ const Panel = () => {
 	}
 
 	const onCamera = value => {
-		logger.log('camera', value)
+		logger.info('onCamera', value)
 		dispatch(setCamera(value))
 	}
 
 	const onSource = value => {
-		logger.log('showSource', value)
+		logger.info('onSource', value)
 		dispatch(setShowSource(value))
 	}
 
 	const onOutput = value => {
-		logger.log('showOutput', value)
+		logger.info('onOutput', value)
 		dispatch(setShowOutput(value))
 	}
 
 	const onFlip = value => {
-		logger.log('flipped', value)
+		logger.info('onFlipped', value)
 		dispatch(setFlipped(value))
 	}
 
 	const outsideClick = e => {
 		if (e.target.closest(`.${styles.cont}`)) return
-		dispatch(setPanel(false))
+		dispatch(setShowPanel(false))
 	}
 
 	useEffect(() => {
@@ -105,9 +93,8 @@ const Panel = () => {
 
 	const onConnectionClick = e => {
 		const { name } = e.target.closest(`.${styles.connection}`).dataset
-		console.log('set active name', name)
-		// const connection = connections.find(c => c.info.name === name)
-		socket.json('set_active_name', { name })
+		logger.info('set active name', name)
+		socket.send('set_active_name', { name })
 	}
 
 	const cls = useClasses(styles.cont, connected && styles.connected, active && styles.active)
@@ -123,14 +110,14 @@ const Panel = () => {
 				>
 					{document.fullscreenElement ? <MdFullscreenExit /> : <MdFullscreen />}
 				</button>
+				<button className={styles.close} onClick={() => dispatch(setShowClients(showClients ? false : true))}>
+					<MdReorder />
+				</button>
 				<div className={styles.leds}>
 					<div className={styles.led} data-connected />
 					<div className={styles.led} data-active />
 				</div>
-				<button className={styles.close} onClick={() => setShowClients(showClients ? false : true)}>
-					<MdReorder />
-				</button>
-				<button className={styles.close} onClick={() => dispatch(setPanel(false))}>
+				<button className={styles.close} onClick={() => dispatch(setShowPanel(false))}>
 					<MdClose />
 				</button>
 			</div>
@@ -139,7 +126,7 @@ const Panel = () => {
 					<div className={styles.row}>
 						<div className={styles.col}>
 							<label htmlFor='strength'>Strength: {parameters.strength}</label>
-							<input name='strength' type='range' value={parameters.strength} min={0} max={3} step={0.01} onChange={onChange} />
+							<input name='strength' type='range' value={parameters.strength} min={1} max={3} step={0.01} onChange={onChange} />
 						</div>
 						<div className={styles.col}>
 							<label htmlFor='guidance_scale'>Guidance: {parameters.guidance_scale}</label>
@@ -153,7 +140,7 @@ const Panel = () => {
 						</div>
 						<div className={styles.col}>
 							<label htmlFor='fps'>FPS: {fps}</label>
-							<input name='fps' type='range' value={fps} min={1} max={60} step={0.01} onChange={onFPS} />
+							<input name='fps' type='range' value={fps} min={1} max={30} step={0.01} onChange={onFPS} />
 						</div>
 					</div>
 					<div className={styles.row}>
@@ -173,7 +160,7 @@ const Panel = () => {
 					<div className={styles.row}>
 						<div className={styles.col}>
 							<label>Camera</label>
-							<Select className={styles.select} name='camera' options={[...cameras, 'test']} value={camera} onChange={onCamera} />
+							<Select className={styles.select} name='camera' options={cameras} value={camera} onChange={onCamera} />
 						</div>
 					</div>
 					<div className={styles.row} data-prompt>
@@ -190,7 +177,7 @@ const Panel = () => {
 									window.location.reload()
 								}}
 							>
-								reload
+								Reload
 							</button>
 						</div>
 					</div>

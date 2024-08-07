@@ -15,16 +15,16 @@ const noop = e => {
 	e.preventDefault()
 }
 
-const Toggle = ({ onChange, value, className, disabled, style, ...props }) => {
+const Toggle = ({ onChange = noop, value, className, disabled, style, ...props }) => {
 	const inputRef = useRef()
+	const timeRef = useRef()
 
-	const [bgRef, { width, height }] = useMeasure()
+	const [bgRef, { width: bw, height: bh }] = useMeasure()
+	const [hRef, { width: hw, height: hh }] = useMeasure()
 
-	const [checkedPos, uncheckedPos] = useMemo(() => [width - height / 2, height / 2], [width, height])
+	const [uncheckedPos, checkedPos] = useMemo(() => [hw / 2, bw - hw / 2], [bw, bh, hw, hh])
 
 	const xRef = useRef(value ? checkedPos : uncheckedPos)
-
-	const timeRef = useRef()
 
 	// Dragging
 
@@ -44,14 +44,11 @@ const Toggle = ({ onChange, value, className, disabled, style, ...props }) => {
 		posRef.current = pos
 	}, [pos])
 
-	/* EFFECTS */
-
-	// update position on value change
 	useEffect(() => {
 		setPos(value ? checkedPos : uncheckedPos)
 	}, [value, checkedPos, uncheckedPos])
 
-	/* EVENTS */
+	// Events
 
 	const onInnerChange = useCallback(() => {
 		onChange(!value)
@@ -70,11 +67,8 @@ const Toggle = ({ onChange, value, className, disabled, style, ...props }) => {
 			}
 
 			const startPos = value ? checkedPos : uncheckedPos
-
 			const mousePos = startPos + clientX - xRef.current
-
 			const newPos = Math.min(checkedPos, Math.max(uncheckedPos, mousePos))
-
 			if (newPos !== posRef.current) setPos(newPos)
 		},
 		[value, checkedPos, uncheckedPos]
@@ -88,7 +82,6 @@ const Toggle = ({ onChange, value, className, disabled, style, ...props }) => {
 		}
 
 		const half = (checkedPos + uncheckedPos) / 2
-
 		const nextValue = posRef.current >= half
 
 		if (value !== nextValue) {
@@ -105,7 +98,7 @@ const Toggle = ({ onChange, value, className, disabled, style, ...props }) => {
 		onDrag(e.clientX)
 	}
 
-	/* Ref Events */
+	// Ref Events
 
 	const onMouseUp = e => {
 		onDragStop(e)
@@ -134,9 +127,9 @@ const Toggle = ({ onChange, value, className, disabled, style, ...props }) => {
 		onDragStop(e)
 	}
 
-	const onBgClick = useCallback(
+	const onClick = useCallback(
 		e => {
-			if (e.target.dataset.el !== 'bg') return
+			if (e.target.className.includes('handle')) return
 			e.preventDefault()
 			onChange(!value)
 		},
@@ -146,10 +139,19 @@ const Toggle = ({ onChange, value, className, disabled, style, ...props }) => {
 	const cls = useClasses(styles.cont, className, disabled && styles.disabled, isDragging && styles.dragging, value && styles.checked)
 
 	return (
-		<div className={cls} style={style} data-input='boolean' data-toggle>
-			<div className={styles.bg} data-el='bg' onClick={onBgClick} onMouseDown={noop} ref={bgRef}>
-				<div className={styles.handle} style={{ left: `${pos}px` }} onClick={noop} onMouseDown={onMouseDown} onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
-					<div className={styles.inner_handle} />
+		<div className={cls} style={style} data-input='boolean' data-toggle onClick={onClick} onMouseDown={noop}>
+			<div className={styles.bg} data-el='bg' ref={bgRef}>
+				<div
+					className={styles.handle}
+					style={{ left: `${pos}px` }}
+					onClick={noop}
+					onMouseDown={onMouseDown}
+					onTouchStart={onTouchStart}
+					onTouchMove={onTouchMove}
+					onTouchEnd={onTouchEnd}
+					data-handle
+				>
+					<div className={styles.inner_handle} ref={hRef} />
 				</div>
 				<input type='checkbox' role='switch' className={styles.input} checked={value} disabled={disabled} ref={inputRef} onChange={onInnerChange} {...props} />
 			</div>
@@ -163,12 +165,6 @@ Toggle.propTypes = {
 	className: PropTypes.string,
 	disabled: PropTypes.bool,
 	style: PropTypes.object,
-}
-
-Toggle.defaultProps = {
-	onChange: () => {
-		console.log('Toggle: onChange noop')
-	},
 }
 
 export default Toggle

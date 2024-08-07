@@ -1,12 +1,7 @@
 import { createSlice, configureStore, createSelector } from '@reduxjs/toolkit'
 import { persistReducer, persistStore } from 'redux-persist'
 import storage from 'redux-persist/lib/storage'
-
 import { WIDTH, HEIGHT, NAME } from './constants'
-
-/* Async Thunks */
-
-/* Slice */
 
 export const initialParameters = {
 	strength: 1,
@@ -20,13 +15,13 @@ export const initialParameters = {
 const initialState = {
 	connected: false,
 	connectionId: null,
+	active: true,
 	camera: null,
 	flipped: false,
 	cameras: [],
 	fps: 6,
-	active: true,
-	panel: false,
-	console: [],
+	showPanel: false,
+	showClients: false,
 	showSource: false,
 	showOutput: true,
 	server: {
@@ -52,9 +47,6 @@ export const appSlice = createSlice({
 		setActive: (s, { payload }) => {
 			s.active = payload
 		},
-		setPanel: (s, { payload }) => {
-			s.panel = payload
-		},
 		setCameras: (s, { payload }) => {
 			s.cameras = payload
 			if (!s.camera || !payload.includes(s.camera)) {
@@ -63,6 +55,12 @@ export const appSlice = createSlice({
 		},
 		setCamera: (s, { payload }) => {
 			s.camera = payload
+		},
+		setShowPanel: (s, { payload }) => {
+			s.showPanel = payload
+		},
+		setShowClients: (s, { payload }) => {
+			s.showClients = payload
 		},
 		setFlipped: (s, { payload }) => {
 			s.flipped = payload
@@ -88,35 +86,31 @@ export const appSlice = createSlice({
 	},
 })
 
-export const { setPanel, setCamera, setShowSource, setShowOutput, setConnected, setFPS, setCameras, setServerState, setActive, setFlipped } = appSlice.actions
-
-/* Thunks */
+export const { setActive, setCamera, setCameras, setConnected, setFlipped, setFPS, setServerState, setShowClients, setShowOutput, setShowPanel, setShowSource } = appSlice.actions
 
 /* Selectors */
 
-// App
-
 export const selectApp = s => s.app
 
-export const selectPanel = s => s.app.panel
-
-export const selectParameters = s => s.app.parameters
+export const selectActive = s => s.app.active
 
 export const selectCamera = s => s.app.camera
 
 export const selectCameras = s => s.app.cameras
 
-export const selectshowSource = s => s.app.showSource
-
 export const selectConnected = s => s.app.connected
-
-export const selectActive = s => s.app.active
-
-export const selectRunning = createSelector(selectConnected, selectActive, (connected, active) => connected && active)
 
 export const selectFPS = s => s.app.fps
 
-// export const selectLog = s => s.app.console
+export const selectParameters = s => s.app.parameters
+
+export const selectShowClients = s => s.app.showClients
+
+export const selectShowPanel = s => s.app.showPanel
+
+export const selectShowSource = s => s.app.showSource
+
+export const selectRunning = createSelector(selectConnected, selectActive, (connected, active) => connected && active)
 
 /* Store */
 

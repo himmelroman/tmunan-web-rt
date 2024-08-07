@@ -1,53 +1,61 @@
-import { CODES, HOST, NAME, PORT, PROTOCOL } from './constants'
+import chalk from 'chalk'
+import { CODES, SOCKET_URL } from './constants'
 import logger from './logger'
 import store, { setConnected, setActive, setServerState } from './redux'
 
 const { dispatch, getState } = store
 
-console.log('PROTOCOL', PROTOCOL)
+const RECONNECT_INTERVAL = 5
 
-const websocketURL = `${PROTOCOL === 'https' ? 'wss' : 'ws'}://${HOST}${PORT ? ':' + PORT : ''}/api/ws?name=${NAME}`
+export let ws
 
-let ws
+let wsTimeout
 
-const connect = () => {
-	console.log(`Connecting to websocket at %c${websocketURL}`, 'color: #aaf')
+export const send = (type, payload) => {
+	if (ws?.readyState === WebSocket.OPEN) {
+		if (typeof type === 'string') ws.send(JSON.stringify({ type, payload }))
+		else ws.send(type)
+	}
+}
 
-	if (ws) {
-		console.log('closing socket')
+export const connect = () => {
+	logger.info(`Connecting...`)
+	clearTimeout(wsTimeout)
+
+	if (ws?.readyState === WebSocket.OPEN) {
 		ws.close()
 	}
 
-	ws = new WebSocket(websocketURL)
-
-	ws.json = (type, payload) => {
-		ws.send(JSON.stringify({ type, payload }))
+	try {
+		ws = new WebSocket(SOCKET_URL)
+	} catch (e) {
+		logger.warn(`Failed to create websocket, retrying in ${RECONNECT_INTERVAL}`)
+		wsTimeout = setTimeout(connect, RECONNECT_INTERVAL * 1000)
 	}
 
 	ws.onopen = () => {
-		logger.log('%cConnected to websocket', 'color: green')
+		logger.info(chalk.green('Connected'))
 		dispatch(setConnected(true))
+	}
+
+	ws.onerror = () => {
+		logger.warn('Failed to connect')
 	}
 
 	ws.onclose = () => {
 		dispatch(setConnected(false))
-		// reconnect
-		logger.log('.')
-		setTimeout(connect, 1500)
-	}
-
-	ws.onerror = () => {
-		logger.log('%cFailed to connect', 'color: orange;')
+		logger.info(`Closed, retrying in ${RECONNECT_INTERVAL}`)
+		wsTimeout = setTimeout(connect, RECONNECT_INTERVAL * 1000)
 	}
 
 	ws.onmessage = e => {
 		const { type, payload } = JSON.parse(e.data)
-		console.log('ws:', type, payload)
+		logger.info('ws:', type, payload)
 		switch (type) {
 			case 'connected': {
 				dispatch(setConnected(payload))
 				const { parameters } = getState().app.server
-				ws.json('set_parameters', { ...parameters, override: false })
+				send('set_parameters', { ...parameters, override: false })
 				break
 			}
 			case 'state': {
@@ -61,11 +69,20 @@ const connect = () => {
 				break
 			}
 			default:
-				console.log('Unknown message type:', type)
+				logger.error('Unknown message type', { type, payload })
 		}
 	}
 }
 
-connect()
+export const close = () => {
+	if (ws?.readyState === WebSocket.OPEN) {
+		ws.close()
+	}
+}
 
-export default ws
+export default {
+	connect,
+	send,
+	close,
+	ws,
+}

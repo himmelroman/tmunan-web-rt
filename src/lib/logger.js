@@ -1,18 +1,38 @@
-// import store from './redux'
+import { Logtail } from '@logtail/browser'
+import { NAME } from './constants'
 
-export function log(...args) {
-	window.con.log(...args)
-	// store.dispatch({ type: 'app/logLine', payload: args.join(' ') })
+const logger = new Logtail(import.meta.env.VITE_LOG_TOKEN)
+
+logger.use(log => ({
+	...log,
+	name: NAME,
+}))
+
+// export default logger
+
+export const debug = (...args) => {
+	console.debug(...args)
+	logger.debug(...args)
 }
 
-export function warn(...args) {
-	window.con.warn(...args)
-	// store.dispatch({ type: 'app/warnLine', payload: args.join(' ') })
+export const info = (...args) => {
+	console.log(...args)
+	logger.info(...args)
 }
 
-export function error(...args) {
-	window.con.error(...args)
-	// store.dispatch({ type: 'app/errorLine', payload: args.join(' ') })
+export const warn = (...args) => {
+	console.warn(...args)
+	logger.warn(...args)
 }
 
-export default { log, error }
+export const error = (...args) => {
+	console.error(...args)
+	logger.error(...args)
+}
+
+export default {
+	debug,
+	info,
+	warn,
+	error,
+}

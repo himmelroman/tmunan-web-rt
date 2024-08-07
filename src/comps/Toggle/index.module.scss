@@ -4,7 +4,7 @@
 	--width: 32px;
 	--height: 16px;
 	--handle-height: 16px;
-	--bar-height: 12px;
+	--bar-height: 4px;
 	--checked: var(--accent-0);
 
 	position: relative;
@@ -38,6 +38,7 @@
 			filter: brightness(1.3);
 		}
 	}
+	cursor: pointer;
 }
 
 .bg {
@@ -67,7 +68,6 @@
 	display: inline-block;
 
 	top: calc(var(--bar-height) / 2);
-	cursor: pointer;
 
 	transition: left 0.25s;
 }

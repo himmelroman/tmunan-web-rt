@@ -16,6 +16,7 @@ const noToString = item => item
 
 const Select = forwardRef((props, eref) => {
 	const { name, className, options = [], value, onChange = noop, itemToString = noToString, buttonPrefix = '', disabled } = props
+
 	const itemToValue = props.itemToValue || itemToString
 
 	const [currentIndex, innerString, innerValue] = useMemo(() => {
@@ -57,10 +58,10 @@ const Select = forwardRef((props, eref) => {
 		}
 	}, [eref, openMenu, closeMenu, isOpen])
 
-	const cls = useClasses(styles.cont, className, disabled && styles.disabled)
+	const cls = useClasses(styles.cont, className, (disabled || options.length < 2) && styles.disabled)
 
 	return (
-		<div id={`${name}-select`} name={name} /* ref={ref} */ className={cls} tabIndex={disabled ? -1 : null} data-select>
+		<div id={`${name}-select`} name={name} className={cls} tabIndex={disabled ? -1 : null} data-select>
 			<div {...getMenuProps()} className={`${styles.menu} ${isOpen && styles.is_open}`} data-menu>
 				{options.map((item, index) => {
 					const itemValue = itemToValue(item)

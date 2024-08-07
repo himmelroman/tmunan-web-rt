@@ -3,9 +3,9 @@ import useDoubleClick from 'use-double-click'
 
 import { useDispatch, useSelector } from 'react-redux'
 import { HEIGHT, HOST, PORT, PROTOCOL, WIDTH } from '~/lib/constants'
-import socket from '~/lib/socket'
 import logger from '~/lib/logger'
-import store, { selectApp, setShowSource, setPanel, setShowOutput, setCameras, selectRunning } from '~/lib/redux'
+import socket from '~/lib/socket'
+import store, { selectApp, setShowSource, setShowPanel, setShowOutput, setCameras, selectRunning, setShowClients } from '~/lib/redux'
 import Panel from '../Panel'
 import styles from './index.module.scss'
 import useClasses from '~/lib/useClasses'
@@ -32,8 +32,7 @@ async function getCameras() {
 		store.dispatch(setCameras(cameras))
 		return true
 	} catch (error) {
-		console.error('Error getting cameras:')
-		console.log(error)
+		logger.error('Error getting cameras', error)
 		return false
 	}
 }
@@ -72,11 +71,7 @@ async function onFrame(now) {
 }
 
 const sendImage = () => {
-	// if (!blob) return
-	if (socket.readyState === WebSocket.OPEN) {
-		// console.log('blob', blob.size)
-		socket.send(window.blob)
-	}
+	socket.send(window.blob)
 }
 
 const onKeyDown = e => {
@@ -85,13 +80,16 @@ const onKeyDown = e => {
 
 	switch (e.code) {
 		case 'KeyQ':
-			store.dispatch(setPanel(!s.app.panel))
+			store.dispatch(setShowPanel(!s.app.showPanel))
 			break
 		case 'Escape':
-			if (s.app.panel) store.dispatch(setPanel(false))
+			if (s.app.showPanel) store.dispatch(setShowPanel(false))
 			break
 		case 'KeyV':
 			store.dispatch(setShowSource(!s.app.showSource))
+			break
+		case 'KeyK':
+			store.dispatch(setShowClients(!s.app.showClients))
 			break
 		case 'KeyC':
 			store.dispatch(setShowOutput(!s.app.showOutput))
@@ -106,7 +104,7 @@ const onKeyDown = e => {
 
 const cancelFrame = reason => {
 	if (!video || !frameId) return
-	console.log('cancelling frame because:', reason)
+	logger.info('Cancelling frame', reason)
 	video.cancelVideoFrameCallback(frameId)
 	frameId = null
 }
@@ -121,7 +119,7 @@ const App = () => {
 
 	useDoubleClick({
 		onDoubleClick: () => {
-			if (!app.panel) dispatch(setPanel(true))
+			if (!app.showPanel) dispatch(setShowPanel(true))
 		},
 		ref,
 		latency: 180,
@@ -129,12 +127,12 @@ const App = () => {
 
 	// mnt
 	useEffect(() => {
-		logger.log('App mount')
+		logger.info('App mount')
 		window.addEventListener('keydown', onKeyDown)
 		getCameras()
 
 		return () => {
-			logger.log('App unmount')
+			logger.info('App unmount')
 			window.removeEventListener('keydown', onKeyDown)
 			socket.close()
 			cancelFrame('app unmount')
@@ -145,39 +143,34 @@ const App = () => {
 		}
 	}, [])
 
-	// stream
+	// camera changes
 	useEffect(() => {
-		logger.log('UE camera', app.camera)
 		const getCamera = async () => {
 			if (stream) {
 				stream.getTracks().forEach(track => track.stop())
-				console.log('giving 0.75 seconds for camera to stop...')
+				logger.debug('Giving 0.75 seconds for camera to stop...')
 				await sleep(0.75)
 			}
 			if (!app.camera) return
 			try {
-				console.log('getting camera stream...')
+				logger.debug('Getting camera stream...')
 				stream = await navigator.mediaDevices.getUserMedia({
 					video: {
 						label: app.camera,
 						width: 9999,
 					},
 				})
-				console.log('got camera', stream)
+				logger.debug('Got camera stream', stream)
 				video.srcObject = stream
 			} catch (error) {
 				stream = video.srcObject = null
-				console.error('Error accessing camera:')
-				console.log(error)
+				logger.error('Error getting camera', error)
 			}
 		}
 		getCamera()
-
-		// test
 	}, [app.camera])
 
 	useEffect(() => {
-		console.log('UE running', running)
 		if (running) {
 			frameId = video.requestVideoFrameCallback(onFrame)
 		} else {
@@ -186,30 +179,19 @@ const App = () => {
 	}, [running])
 
 	useEffect(() => {
-		console.log('UE fps', app.fps)
 		clearInterval(cint)
-
-		if (app.connected && app.active) {
-			cint = setInterval(sendImage, 1000 / app.fps)
-		}
+		if (running) cint = setInterval(sendImage, 1000 / app.fps)
 
 		return () => {
 			clearInterval(cint)
 		}
 	}, [app.fps, running])
 
-	const cls = useClasses(
-		styles.cont,
-		app.panel && styles.panel,
-		app.showSource && styles.show_source,
-		app.showOutput && styles.show_output,
-		app.camera === 'user' && styles.user,
-		app.flipped && styles.flipped
-	)
+	const cls = useClasses(styles.cont, app.showPanel && styles.panel, app.showSource && styles.show_source, app.showOutput && styles.show_output, app.flipped && styles.flipped)
 
 	return (
 		<div className={cls} ref={ref}>
-			{app.panel && <Panel />}
+			{app.showPanel && <Panel />}
 			<video
 				id='video'
 				autoPlay
