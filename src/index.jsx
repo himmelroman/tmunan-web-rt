@@ -9,7 +9,7 @@ import { PersistGate } from 'redux-persist/integration/react'
 import { Provider } from 'react-redux'
 import chalk from 'chalk'
 
-import { SOCKET_URL, VERSION } from './lib/constants'
+import { IMG_URL, SOCKET_URL, VERSION } from './lib/constants'
 import logger from './lib/logger'
 import socket from './lib/socket'
 import store, { persistor, setCameras } from '~/lib/redux'
@@ -44,6 +44,7 @@ async function main() {
 	logger.info(chalk.green('START'))
 	print('Version', VERSION)
 	print('Websocket URL', SOCKET_URL)
+	print('Image URL', IMG_URL)
 
 	socket.connect()
 

@@ -9,7 +9,7 @@ import { useDispatch, useSelector } from 'react-redux'
 
 import { NAME } from '~/lib/constants'
 import logger from '~/lib/logger'
-import { selectApp, setCamera, setFlipped, setFPS, setShowClients, setShowOutput, setShowPanel, setShowSource } from '~/lib/redux'
+import { selectApp, setCamera, setFlipped, setFPS, setInverted, setShowClients, setShowOutput, setShowPanel, setShowSource } from '~/lib/redux'
 import socket from '~/lib/socket'
 import useClasses from '~/lib/useClasses'
 import Select from '../Select'
@@ -31,7 +31,7 @@ const debouncedSend = debounce(socket.send, 500)
 const Panel = () => {
 	const dispatch = useDispatch()
 
-	const { fps, camera, flipped, cameras, connected, active, showClients, showSource, showOutput, server } = useSelector(selectApp)
+	const { fps, camera, flipped, inverted, cameras, connected, active, showClients, showSource, showOutput, server } = useSelector(selectApp)
 
 	const { parameters, connections } = server
 
@@ -73,6 +73,10 @@ const Panel = () => {
 
 	const onFlip = (name, value) => {
 		dispatch(setFlipped(value))
+	}
+
+	const onInvert = (name, value) => {
+		dispatch(setInverted(value))
 	}
 
 	const outsideClick = e => {
@@ -141,6 +145,12 @@ const Panel = () => {
 					</div>
 					<div className={styles.row}>
 						<div className={styles.col}>
+							<label>Camera</label>
+							<Select className={styles.select} name='camera' itemToString={a => window.cmap[a]} itemToValue={a => a} options={cameras} value={camera} onChange={onCamera} />
+						</div>
+					</div>
+					<div className={styles.row}>
+						<div className={styles.col}>
 							<label>Source</label>
 							<Toggle name='source' value={showSource} onChange={onSource} />
 						</div>
@@ -152,11 +162,9 @@ const Panel = () => {
 							<label>Flip</label>
 							<Toggle name='flip' value={flipped} onChange={onFlip} />
 						</div>
-					</div>
-					<div className={styles.row}>
 						<div className={styles.col}>
-							<label>Camera</label>
-							<Select className={styles.select} name='camera' itemToString={a => window.cmap[a]} itemToValue={a => a} options={cameras} value={camera} onChange={onCamera} />
+							<label>Invert</label>
+							<Toggle name='invert' value={inverted} onChange={onInvert} />
 						</div>
 					</div>
 					<div className={styles.row} data-prompt>

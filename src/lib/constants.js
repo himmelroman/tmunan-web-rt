@@ -17,6 +17,8 @@ export const NAME = QUERY.name || import.meta.env.VITE_NAME || 'noname'
 
 export const SOCKET_URL = `${PROTOCOL === 'https' ? 'wss' : 'ws'}://${HOST}${PORT ? ':' + PORT : ''}/api/ws?name=${NAME}`
 
+export const IMG_URL = `${PROTOCOL}://${HOST}${PORT ? ':' + PORT : ''}/api/stream`
+
 export const WIDTH = parseInt(QUERY.width || import.meta.env.VITE_WIDTH || 512)
 
 export const HEIGHT = parseInt(QUERY.height || import.meta.env.VITE_HEIGHT || 512)

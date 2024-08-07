@@ -5,7 +5,7 @@ import store, { setConnected, setActive, setServerState } from './redux'
 
 const { dispatch, getState } = store
 
-const RECONNECT_INTERVAL = 5
+const RECONNECT_INTERVAL = 10
 
 export let ws
 
@@ -59,6 +59,18 @@ export const connect = () => {
 				break
 			}
 			case 'state': {
+				const { parameters } = payload
+				if (parameters) {
+					for (const a in parameters) {
+						if (a !== 'prompt') {
+							if (typeof parameters[a] === 'string') {
+								logger.warn(`parameter ${a} is string, casting`)
+								parameters[a] = Number(parameters[a])
+							}
+						}
+					}
+				}
+
 				dispatch(setServerState(payload))
 				break
 			}

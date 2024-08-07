@@ -2,7 +2,7 @@ import { memo, useEffect, useRef } from 'react'
 import useDoubleClick from 'use-double-click'
 
 import { useDispatch, useSelector } from 'react-redux'
-import { HEIGHT, HOST, PORT, PROTOCOL, WIDTH } from '~/lib/constants'
+import { HEIGHT, WIDTH, IMG_URL } from '~/lib/constants'
 import logger from '~/lib/logger'
 import socket from '~/lib/socket'
 import store, { selectApp, setShowSource, setShowPanel, setShowOutput, selectRunning, setShowClients } from '~/lib/redux'
@@ -25,6 +25,9 @@ canvas.height = HEIGHT
 
 const ctx = canvas.getContext('2d')
 let video
+
+window.video = video
+window.ctx = ctx
 
 async function onFrame(now) {
 	if (now - lastMillis < THROTTLE) {
@@ -53,7 +56,7 @@ async function onFrame(now) {
 
 	ctx.drawImage(video, x, y, width, height, 0, 0, WIDTH, HEIGHT)
 
-	const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.9))
+	const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.96))
 	window.blob = blob
 
 	frameId = video.requestVideoFrameCallback(onFrame)
@@ -175,7 +178,19 @@ const App = () => {
 		}
 	}, [app.fps, running])
 
-	const cls = useClasses(styles.cont, app.showPanel && styles.panel, app.showSource && styles.show_source, app.showOutput && styles.show_output, app.flipped && styles.flipped)
+	useEffect(() => {
+		if (app.inverted) ctx.filter = 'invert(1)'
+		else ctx.filter = 'none'
+	}, [app.inverted])
+
+	const cls = useClasses(
+		styles.cont,
+		app.showPanel && styles.panel,
+		app.showSource && styles.show_source,
+		app.showOutput && styles.show_output,
+		app.flipped && styles.flipped,
+		app.inverted && styles.inverted
+	)
 
 	return (
 		<div className={cls} ref={ref}>
@@ -193,11 +208,7 @@ const App = () => {
 					id='img'
 					className={styles.image}
 					ref={img}
-					src={
-						app.connected
-							? `${PROTOCOL}://${HOST}${PORT ? ':' + PORT : ''}/api/stream`
-							: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
-					}
+					src={app.connected ? IMG_URL : 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='}
 				/>
 			)}
 		</div>

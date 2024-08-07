@@ -18,6 +18,7 @@ const initialState = {
 	active: true,
 	camera: null,
 	flipped: false,
+	inverted: false,
 	cameras: [],
 	fps: 6,
 	showPanel: false,
@@ -65,6 +66,9 @@ export const appSlice = createSlice({
 		setFlipped: (s, { payload }) => {
 			s.flipped = payload
 		},
+		setInverted: (s, { payload }) => {
+			s.inverted = payload
+		},
 		setShowSource: (s, { payload }) => {
 			s.showSource = payload
 			if (!s.showSource && !s.showOutput) s.showOutput = true
@@ -86,7 +90,7 @@ export const appSlice = createSlice({
 	},
 })
 
-export const { setActive, setCamera, setCameras, setConnected, setFlipped, setFPS, setServerState, setShowClients, setShowOutput, setShowPanel, setShowSource } = appSlice.actions
+export const { setActive, setCamera, setCameras, setConnected, setFlipped, setFPS, setServerState, setShowClients, setShowOutput, setShowPanel, setShowSource, setInverted } = appSlice.actions
 
 /* Selectors */
 
