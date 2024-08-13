@@ -9,18 +9,20 @@ import { PersistGate } from 'redux-persist/integration/react'
 import { Provider } from 'react-redux'
 import chalk from 'chalk'
 
-import { IMG_URL, SOCKET_URL, VERSION } from './lib/constants'
+import { IMG_URL, SOCKET_URL, VERSION, NAME, IS_CONTROL } from './lib/constants'
 import logger from './lib/logger'
 import socket from './lib/socket'
 import store, { persistor, setCameras } from '~/lib/redux'
 import App from './comps/App'
 import './styles/index.scss'
 
+window.socket = socket
+
 const print = (prop, val) => {
 	logger.info(chalk.gray(prop.padEnd(20)) + chalk.blueBright(val))
 }
 
-async function getCameras() {
+export async function getCameras() {
 	window.cmap = {}
 	try {
 		logger.info('Getting cameras...')
@@ -29,9 +31,11 @@ async function getCameras() {
 			.filter(device => device.kind === 'videoinput')
 			.map(({ deviceId, label }) => {
 				window.cmap[deviceId] = label
+				logger.info(chalk.blueBright(label))
 				return deviceId
 			})
-		logger.info(`Found ${chalk.blueBright(cameras.length)} cameras`)
+		// logger.info(`Found ${chalk.blueBright(cameras.length)} cameras`)
+		window.cameras = cameras
 		store.dispatch(setCameras(cameras))
 		return true
 	} catch (error) {
@@ -41,23 +45,33 @@ async function getCameras() {
 }
 
 async function main() {
+	if (!NAME) {
+		// generate random 8 char string
+		const name = Math.random().toString(36).substring(2, 10)
+		let query = `?name=${name}`
+		if (IS_CONTROL) query += '&control'
+		window.open(query, '_self')
+		return
+	}
+
 	logger.info(chalk.green('START'))
 	print('Version', VERSION)
 	print('Websocket URL', SOCKET_URL)
 	print('Image URL', IMG_URL)
-
-	socket.connect()
+	print('Name', NAME)
 
 	await getCameras()
+
+	socket.connect()
 
 	const root = ReactDOM.createRoot(document.getElementById('root'))
 	root.render(
 		<Provider store={store}>
-			<PersistGate loading={null} persistor={persistor}>
-				<App />
-			</PersistGate>
+			<App />
 		</Provider>
 	)
 }
 
 main()
+
+// <PersistGate loading={null} persistor={persistor}></PersistGate

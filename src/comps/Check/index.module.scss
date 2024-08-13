@@ -1,0 +1,24 @@
+/**
+ *
+ * Check Styles
+ *
+ */
+@import "@/variables";
+
+.cont {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+
+	&.checked {
+		[data-if-unchecked] {
+			display: none;
+		}
+	}
+
+	&:not(.checked) {
+		[data-if-checked] {
+			display: none;
+		}
+	}
+}

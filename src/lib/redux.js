@@ -8,24 +8,26 @@ export const initialParameters = {
 	guidance_scale: 1,
 	seed: 1,
 	prompt: localStorage.getItem('prompt') || '',
+	negative_prompt: localStorage.getItem('negative') || '',
 	width: WIDTH,
 	height: HEIGHT,
 }
 
 const initialState = {
 	connected: false,
-	connectionId: null,
 	active: true,
 	camera: null,
 	flipped: false,
 	inverted: false,
 	cameras: [],
 	fps: 6,
-	showPanel: false,
-	showClients: false,
-	showSource: false,
-	showOutput: true,
-	server: {
+	show_panel: false,
+	show_clients: false,
+	show_source: true,
+	show_output: true,
+	filter: 'none',
+	transform: 'none',
+	presence: {
 		parameters: initialParameters,
 		connections: [],
 	},
@@ -58,10 +60,10 @@ export const appSlice = createSlice({
 			s.camera = payload
 		},
 		setShowPanel: (s, { payload }) => {
-			s.showPanel = payload
+			s.show_panel = payload
 		},
 		setShowClients: (s, { payload }) => {
-			s.showClients = payload
+			s.show_clients = payload
 		},
 		setFlipped: (s, { payload }) => {
 			s.flipped = payload
@@ -70,33 +72,30 @@ export const appSlice = createSlice({
 			s.inverted = payload
 		},
 		setShowSource: (s, { payload }) => {
-			s.showSource = payload
-			if (!s.showSource && !s.showOutput) s.showOutput = true
+			s.show_source = payload
+			if (!s.show_source && !s.show_output) s.show_output = true
 		},
 		setShowOutput: (s, { payload }) => {
-			s.showOutput = payload
-			if (!s.showSource && !s.showOutput) s.showSource = true
+			s.show_output = payload
+			if (!s.show_source && !s.show_output) s.show_source = true
 		},
 		setFPS: (s, { payload }) => {
 			const fps = parseInt(payload)
 			s.fps = fps || initialState.fps
 		},
-		setServerState: (s, { payload }) => {
-			s.server = payload
-			if ('active_connection_name' in payload) {
-				s.active = payload.active_connection_name === NAME
-			}
+		setPresence: (s, { payload }) => {
+			s.presence = payload
 		},
 	},
 })
 
-export const { setActive, setCamera, setCameras, setConnected, setFlipped, setFPS, setServerState, setShowClients, setShowOutput, setShowPanel, setShowSource, setInverted } = appSlice.actions
+export const { setActive, setCamera, setCameras, setConnected, setFlipped, setFPS, setPresence, setShowClients, setShowOutput, setShowPanel, setShowSource, setInverted } = appSlice.actions
 
 /* Selectors */
 
 export const selectApp = s => s.app
 
-export const selectActive = s => s.app.active
+export const selectPresence = s => s.app.presence
 
 export const selectCamera = s => s.app.camera
 
@@ -108,27 +107,31 @@ export const selectFPS = s => s.app.fps
 
 export const selectParameters = s => s.app.parameters
 
-export const selectShowClients = s => s.app.showClients
+export const selectShowClients = s => s.app.show_clients
 
-export const selectShowPanel = s => s.app.showPanel
+export const selectShowPanel = s => s.app.show_panel
 
-export const selectShowSource = s => s.app.showSource
+export const selectShowSource = s => s.app.show_source
 
-export const selectRunning = createSelector(selectConnected, selectActive, (connected, active) => connected && active)
+export const selectIsActive = createSelector(selectPresence, p => p.active_connection_name === NAME)
+
+export const selectRunning = createSelector(selectConnected, selectIsActive, (connected, active) => connected && active)
+
+export const selectConnections = createSelector(selectPresence, p => p.connections)
 
 /* Store */
 
 const store = configureStore({
 	reducer: {
-		// app: appSlice.reducer,
-		app: persistReducer(
-			{
-				key: 'rubin',
-				storage,
-				whitelist: ['camera', 'fps', 'flipped'],
-			},
-			appSlice.reducer
-		),
+		app: appSlice.reducer,
+		// app: persistReducer(
+		// 	{
+		// 		key: 'rubin',
+		// 		storage,
+		// 		whitelist: ['camera', 'fps', 'flipped'],
+		// 	},
+		// 	appSlice.reducer
+		// ),
 	},
 	middleware: d => d({ serializableCheck: false }),
 })

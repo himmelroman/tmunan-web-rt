@@ -16,33 +16,33 @@
 	box-sizing: border-box;
 
 	&.show_source {
-		.video {
+		.source {
 			display: block;
 		}
 	}
 
 	&.show_output {
-		.image {
+		.output {
 			display: block;
 		}
 	}
 
 	@media (orientation: portrait) {
 		flex-direction: column;
-		.video {
+		.source {
 			height: 50dvh;
 		}
 	}
 
 	&.flipped {
-		.video,
-		.image {
+		.source,
+		.output {
 			transform: scaleX(-1);
 		}
 	}
 }
 
-.video {
+.source {
 	flex: 1;
 	min-width: 50dvh;
 	min-height: 50dvh;
@@ -50,13 +50,21 @@
 	display: none;
 }
 
-.image {
+.output {
 	flex: 1;
 	min-width: 50dvh;
 	min-height: 50dvh;
 	object-fit: cover;
 	display: none;
 }
+
+// .image {
+// 	flex: 1;
+// 	min-width: 50dvh;
+// 	min-height: 50dvh;
+// 	object-fit: cover;
+// 	display: none;
+// }
 
 .error {
 	position: absolute;
