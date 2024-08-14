@@ -5,18 +5,18 @@ import { useDispatch, useSelector } from 'react-redux'
 import { HEIGHT, WIDTH } from '~/lib/constants'
 import logger from '~/lib/logger'
 import socket from '~/lib/socket'
-import store, { selectApp, setShowSource, setShowPanel, setShowOutput, selectRunning, setShowClients, selectIsActive } from '~/lib/redux'
+import store, { selectApp, setShowSource, setShowPanel, setShowOutput, /* selectRunning, */ setShowClients, selectIsActive } from '~/lib/redux'
 import Panel from '../Panel'
 import styles from './index.module.scss'
 import useClasses from '~/lib/useClasses'
-import sleep from '~/lib/sleep'
+// import sleep from '~/lib/sleep'
 import chalk from 'chalk'
 
 // let cint
-let frameId
+// let frameId
 
-const THROTTLE = 1000 / 60
-let lastMillis = 0
+// const THROTTLE = 1000 / 60
+// let lastMillis = 0
 
 const canvas = document.createElement('canvas')
 canvas.width = WIDTH
@@ -59,12 +59,12 @@ window.ctx = ctx
 // 	frameId = source.requestVideoFrameCallback(onFrame)
 // }
 
-const cancelFrame = reason => {
-	if (!window.src_video || !frameId) return
-	logger.info('Cancelling frame', reason)
-	window.src_video.cancelVideoFrameCallback(frameId)
-	frameId = null
-}
+// const cancelFrame = reason => {
+// 	if (!window.src_video || !frameId) return
+// 	logger.info('Cancelling frame', reason)
+// 	window.src_video.cancelVideoFrameCallback(frameId)
+// 	frameId = null
+// }
 
 const onKeyDown = e => {
 	const s = store.getState()
@@ -98,20 +98,14 @@ const onKeyDown = e => {
 }
 
 const getStream = async camera => {
-	if (camera === window.camera) return
+	if (camera === window.camera) {
+		logger.debug("Camera didn't change, skipping.")
+	}
 	window.camera = camera
-	logger.info(`getStream ${chalk.blueBright(window.cmap[camera])}`)
+	logger.info(`Getting stream...`)
 
 	if (window.camera_busy) {
-		console.log('%cCamera busy', 'color:orange')
-		return
-	}
-	if (!camera) {
-		console.log('%cNo camera', 'color:orange')
-		if (window.stream) {
-			window.stream.getTracks().forEach(track => track.stop())
-			window.stream = null
-		}
+		logger.warn('Camera busy')
 		return
 	}
 
@@ -123,19 +117,15 @@ const getStream = async camera => {
 		},
 	})
 	window.camera_busy = false
-	window.source_vid.srcObject = stream
 	window.stream = stream
 
-	const state = store.getState()
-	const isActive = selectIsActive(state)
+	window.source_vid.srcObject = stream
 
-	console.log('got stream:', stream, isActive)
+	const isActive = selectIsActive(store.getState())
 
-	if (stream && isActive) {
-		socket.setTrack(stream)
-	} else {
-		socket.setTrack()
-	}
+	logger.info('Got stream.', { stream, isActive })
+
+	socket.setTrack(isActive)
 }
 
 const App = () => {
@@ -144,7 +134,7 @@ const App = () => {
 
 	const dispatch = useDispatch()
 	const app = useSelector(selectApp)
-	const running = useSelector(selectRunning)
+	// const running = useSelector(selectRunning)
 	const isActive = useSelector(selectIsActive)
 
 	useDoubleClick({
@@ -157,13 +147,13 @@ const App = () => {
 
 	// mnt
 	useEffect(() => {
-		logger.info('App mount')
+		logger.info('App mounted')
 		window.addEventListener('keydown', onKeyDown)
 
 		return () => {
-			logger.info('App unmount')
+			logger.info('App unmounted')
 			window.removeEventListener('keydown', onKeyDown)
-			cancelFrame('app unmount')
+			// cancelFrame('app unmount')
 			if (window.stream) {
 				const tracks = window.stream.getTracks()
 				tracks.forEach(track => track.stop())
@@ -172,23 +162,13 @@ const App = () => {
 	}, [])
 
 	useEffect(() => {
-		console.log('UE, camera:', app.camera)
+		logger.info(`Camera > ${chalk.cyan(window.cmap[app.camera])}`)
 		getStream(app.camera)
 	}, [app.camera])
 
 	useEffect(() => {
-		console.log('UE isActive', isActive)
-		if (isActive) {
-			if (window.stream) {
-				console.log('setting track')
-				socket.setTrack(window.stream)
-			} else {
-				console.warn('No stream found')
-			}
-		} else {
-			console.log('removing track')
-			socket.setTrack()
-		}
+		logger.info(`isActive > ${isActive ? chalk.greenBright('True') : chalk.redBright('False')}`)
+		socket.setTrack(isActive)
 	}, [isActive])
 
 	// useEffect(() => {
@@ -229,14 +209,6 @@ const App = () => {
 					window.output_vid = r
 				}}
 			/>
-			{/* {app.show_output && (
-				<img
-					id='img'
-					className={styles.image}
-					ref={img}
-					src={app.connected ? IMG_URL : 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='}
-				/>
-			)} */}
 		</div>
 	)
 }

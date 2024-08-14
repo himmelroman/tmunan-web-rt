@@ -22,7 +22,7 @@ const initialState = {
 	cameras: [],
 	fps: 6,
 	show_panel: false,
-	show_clients: false,
+	show_clients: true,
 	show_source: true,
 	show_output: true,
 	filter: 'none',
