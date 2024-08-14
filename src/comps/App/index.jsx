@@ -192,6 +192,7 @@ const App = () => {
 
 	useEffect(() => {
 		// logger.info(`Filter > ${filterString}`)
+		source_vid.style.filter = filterString
 		ctx.filter = filterString
 	}, [filterString])
 

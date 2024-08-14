@@ -12,6 +12,7 @@
 	flex-direction: column;
 	gap: 10px;
 	min-width: 150px;
+	user-select: none;
 
 	label {
 		text-transform: capitalize;

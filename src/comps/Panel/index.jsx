@@ -104,7 +104,9 @@ const Panel = () => {
 
 	const cls = useClasses(styles.cont, connected && styles.connected, active && styles.active)
 
-	const ranges = FILTER_LIST.map(f => <Range key={f.name} name={f.name} label={f.label} value={filter[f.name] || f.default} onChange={onFilterChange} min={f.min} max={f.max} step={f.step} />)
+	const ranges = FILTER_LIST.map(f => (
+		<Range key={f.name} name={f.name} label={f.label} value={f.name in filter ? filter[f.name] : f.default} onChange={onFilterChange} min={f.min} max={f.max} step={f.step} />
+	))
 
 	return (
 		<div className={cls}>

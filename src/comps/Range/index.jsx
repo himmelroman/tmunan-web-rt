@@ -6,8 +6,20 @@
 import PropTypes from 'prop-types'
 
 import styles from './index.module.scss'
+import useDoubleClick from 'use-double-click'
+import { useRef } from 'react'
 
 const Range = ({ name, label, value, onChange, min = 0, max = 100, step = 1 }) => {
+	const labelRef = useRef()
+
+	useDoubleClick({
+		onDoubleClick: e => {
+			e.preventDefault()
+			onChange?.(null, name)
+		},
+		ref: labelRef,
+	})
+
 	const onRangeChange = e => {
 		onChange?.(parseFloat(e.target.value), name)
 	}
@@ -21,7 +33,9 @@ const Range = ({ name, label, value, onChange, min = 0, max = 100, step = 1 }) =
 	return (
 		<div id={name ? `range-${name}` : undefined} className={styles.cont}>
 			<div className={styles.row}>
-				<label htmlFor={name}>{label || name}</label>
+				<label ref={labelRef} htmlFor={name}>
+					{label || name}
+				</label>
 				<input name={`${name}-value`} type='text' className={styles.text} value={value} onChange={onTextChange} />
 			</div>
 			<input name={name} type='range' className={styles.range} value={value} min={min} max={max} step={step} onChange={onRangeChange} />

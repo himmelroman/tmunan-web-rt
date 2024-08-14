@@ -88,7 +88,7 @@ export const appSlice = createSlice({
 		},
 		applyFilter: (s, { payload }) => {
 			for (const [k, v] of Object.entries(payload)) {
-				if (v === FILTERS_SCHEMA[k].default) delete s.filter[k]
+				if (v === null || v === FILTERS_SCHEMA[k].default) delete s.filter[k]
 				else s.filter[k] = v
 			}
 		},

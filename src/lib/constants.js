@@ -59,21 +59,16 @@ export const FILTERS_SCHEMA = {
 		max: 5,
 		step: 0.1,
 	},
-	// sepia: {
-	// 	min: 0,
-	// 	max: 1,
-	// 	default: 0,
-	// },
-	grayscale: {
-		default: 0,
+	sepia: {
 		min: 0,
 		max: 1,
+		default: 0,
 		step: 0.1,
 	},
 	blur: {
 		default: 0,
 		min: 0,
-		max: 10,
+		max: 30,
 		step: 1,
 	},
 }
