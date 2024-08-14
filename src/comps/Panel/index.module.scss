@@ -31,12 +31,13 @@
 		display: flex;
 		flex-direction: column;
 		align-items: stretch;
-		&:not(:first-child) {
-			border-left: $border_2;
-		}
+		// &:not(:last-child) {
+		border-right: $border_2;
+		// }
 	}
 
 	textarea {
+		padding: 12px;
 		letter-spacing: 1px;
 	}
 
@@ -83,7 +84,7 @@
 	position: absolute;
 	top: 0;
 	left: 0;
-	width: 100dvw;
+	// width: 100dvw;
 	height: 100dvh;
 	opacity: 0.9;
 	overflow-y: scroll;
@@ -127,7 +128,7 @@
 }
 
 .row {
-	display: flex;
+	display: grid;
 	flex-direction: row;
 	flex-wrap: wrap;
 	padding: 20px 15px;
@@ -135,6 +136,22 @@
 
 	&:not(:last-child) {
 		border-bottom: $border;
+	}
+
+	&[data-1] {
+		grid-template-columns: 1fr;
+	}
+
+	// &[data-2] {
+	grid-template-columns: 1fr 1fr;
+	// }
+
+	&[data-3] {
+		grid-template-columns: 1fr 1fr 1fr;
+	}
+
+	&[data-4] {
+		grid-template-columns: 1fr 1fr 1fr 1fr;
 	}
 }
 
@@ -172,8 +189,8 @@
 	display: flex;
 	flex-direction: column;
 	gap: 10px;
-	flex-shrink: 0;
-	flex-grow: 1;
+	// flex-shrink: 0;
+	// flex-grow: 1;
 
 	label {
 		white-space: nowrap;
@@ -200,17 +217,23 @@
 		}
 	}
 
-	[name="negative"] {
+	[name="negative_prompt"] {
 		color: #f88;
 	}
 }
 
+.heading {
+	padding: 10px;
+	border-bottom: $border;
+}
+
 .connections {
-	flex: 1;
 	display: flex;
 	flex-direction: column;
 	align-items: stretch;
-	padding: 10px;
+	// padding: 5px 0;
+
+	border-bottom: $border;
 }
 
 .connection {
@@ -219,7 +242,15 @@
 	flex-direction: row;
 	align-items: center;
 	gap: 10px;
-	padding: 5px 10px;
+	padding: 5px 12px;
+
+	&:first-child {
+		padding-top: 8px;
+	}
+
+	&:last-child {
+		padding-bottom: 8px;
+	}
 
 	cursor: pointer;
 
@@ -242,8 +273,10 @@
 	}
 
 	&:hover {
-		text-decoration: underline;
+		// text-decoration: underline;
 		color: var(--deep-6);
+
+		background-color: var(--deep-21);
 	}
 
 	// &[data-self] {

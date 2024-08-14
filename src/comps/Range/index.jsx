@@ -9,7 +9,7 @@ import styles from './index.module.scss'
 
 const Range = ({ name, label, value, onChange, min = 0, max = 100, step = 1 }) => {
 	const onRangeChange = e => {
-		onChange?.(e.target.value, name)
+		onChange?.(parseFloat(e.target.value), name)
 	}
 
 	const onTextChange = e => {
@@ -19,7 +19,7 @@ const Range = ({ name, label, value, onChange, min = 0, max = 100, step = 1 }) =
 	}
 
 	return (
-		<div id={`range-${name}`} className={styles.cont}>
+		<div id={name ? `range-${name}` : undefined} className={styles.cont}>
 			<div className={styles.row}>
 				<label htmlFor={name}>{label || name}</label>
 				<input name={`${name}-value`} type='text' className={styles.text} value={value} onChange={onTextChange} />
@@ -30,10 +30,10 @@ const Range = ({ name, label, value, onChange, min = 0, max = 100, step = 1 }) =
 }
 
 Range.propTypes = {
-	name: PropTypes.string.isRequired,
+	name: PropTypes.string,
 	label: PropTypes.string,
 	value: PropTypes.number.isRequired,
-	onChange: PropTypes.func.isRequired,
+	onChange: PropTypes.func,
 	min: PropTypes.number,
 	max: PropTypes.number,
 	step: PropTypes.number,

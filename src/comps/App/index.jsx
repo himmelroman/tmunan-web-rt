@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { HEIGHT, WIDTH } from '~/lib/constants'
 import logger from '~/lib/logger'
 import socket from '~/lib/socket'
-import store, { selectApp, setShowSource, setShowPanel, setShowOutput, /* selectRunning, */ setShowClients, selectIsActive } from '~/lib/redux'
+import store, { selectApp, setShowSource, setShowPanel, setShowOutput, /* selectRunning, */ setShowClients, selectIsActive, selectFilterString } from '~/lib/redux'
 import Panel from '../Panel'
 import styles from './index.module.scss'
 import useClasses from '~/lib/useClasses'
@@ -105,6 +105,7 @@ const App = () => {
 	const dispatch = useDispatch()
 	const app = useSelector(selectApp)
 	const isActive = useSelector(selectIsActive)
+	const filterString = useSelector(selectFilterString)
 
 	useDoubleClick({
 		onDoubleClick: () => {
@@ -124,7 +125,7 @@ const App = () => {
 			window.removeEventListener('keydown', onKeyDown)
 			clearInterval(v_interval)
 			// cancelFrame()
-			if (source_vid.srcObject) {
+			if (source_vid?.srcObject) {
 				const tracks = source_vid.srcObject.getTracks()
 				tracks.forEach(track => track.stop())
 				source_vid.srcObject = null
@@ -188,6 +189,11 @@ const App = () => {
 			}
 		}
 	}, [isActive])
+
+	useEffect(() => {
+		// logger.info(`Filter > ${filterString}`)
+		ctx.filter = filterString
+	}, [filterString])
 
 	// useEffect(() => {
 	// 	if (running) {

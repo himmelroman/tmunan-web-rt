@@ -4,18 +4,19 @@
  *
  */
 import { memo, useEffect, useState } from 'react'
-import { MdClose, MdFullscreen, MdFullscreenExit, MdReorder, MdRefresh } from 'react-icons/md'
+import { MdClose, MdFullscreen, MdFullscreenExit, MdRefresh, MdReorder } from 'react-icons/md'
 import { useDispatch, useSelector } from 'react-redux'
 
 // import { NAME } from '~/lib/constants'
+import { FILTER_LIST, NAME } from '~/lib/constants'
 import logger from '~/lib/logger'
-import { selectApp, setCamera, setFlipped, setFPS, setInverted, setShowClients, setShowOutput, setShowPanel, setShowSource } from '~/lib/redux'
+import { applyFilter, selectApp, setCamera, setFlipped, setFPS, setShowClients, setShowOutput, setShowPanel, setShowSource } from '~/lib/redux'
 import socket from '~/lib/socket'
 import useClasses from '~/lib/useClasses'
+import Range from '../Range'
 import Select from '../Select'
 import Toggle from '../Toggle'
 import styles from './index.module.scss'
-import { NAME } from '~/lib/constants'
 
 function debounce(func, timeout = 300) {
 	let timer
@@ -32,7 +33,7 @@ const debouncedSend = debounce(socket.send, 500)
 const Panel = () => {
 	const dispatch = useDispatch()
 
-	const { fps, camera, flipped, inverted, cameras, connected, active, show_clients, show_source, show_output, presence } = useSelector(selectApp)
+	const { fps, camera, flipped, filter, cameras, connected, active, show_clients, show_source, show_output, presence } = useSelector(selectApp)
 
 	const { parameters, connections, active_connection_name } = presence
 
@@ -79,8 +80,8 @@ const Panel = () => {
 		dispatch(setFlipped(value))
 	}
 
-	const onInvert = (name, value) => {
-		dispatch(setInverted(value))
+	const onFilterChange = (value, name) => {
+		dispatch(applyFilter({ [name]: value }))
 	}
 
 	const outsideClick = e => {
@@ -102,6 +103,8 @@ const Panel = () => {
 	}
 
 	const cls = useClasses(styles.cont, connected && styles.connected, active && styles.active)
+
+	const ranges = FILTER_LIST.map(f => <Range key={f.name} name={f.name} label={f.label} value={filter[f.name] || f.default} onChange={onFilterChange} min={f.min} max={f.max} step={f.step} />)
 
 	return (
 		<div className={cls}>
@@ -133,12 +136,12 @@ const Panel = () => {
 			</div>
 			<main>
 				<section>
-					<div className={styles.row}>
+					<div className={styles.row} data-1>
 						<div className={styles.col}>
 							<Select className={styles.select} name='camera' itemToString={a => window.cmap[a]} itemToValue={a => a} options={cameras} value={camera} onChange={onCamera} />
 						</div>
 					</div>
-					<div className={styles.row}>
+					<div className={styles.row} data-4>
 						<div className={styles.col}>
 							<label>Source</label>
 							<Toggle name='source' value={show_source} onChange={onSource} />
@@ -151,10 +154,10 @@ const Panel = () => {
 							<label>Flip</label>
 							<Toggle name='flip' value={flipped} onChange={onFlip} />
 						</div>
-						<div className={styles.col}>
+						{/* <div className={styles.col}>
 							<label>Invert</label>
 							<Toggle name='invert' value={inverted} onChange={onInvert} />
-						</div>
+						</div> */}
 					</div>
 					<div className={styles.row}>
 						<div className={styles.col}>
@@ -176,16 +179,23 @@ const Panel = () => {
 							<input name='fps' type='range' value={fps} min={1} max={30} step={0.01} onChange={onFPS} />
 						</div>
 					</div>
-					<div className={`${styles.row} ${styles.prompt}`}>
+					<div className={`${styles.row} ${styles.prompt}`} data-1>
 						<div className={styles.col}>
 							<textarea name='prompt' value={prompt} placeholder='Prompt' onChange={onText} />
 							<textarea name='negative_prompt' value={negativePrompt} placeholder='Negative prompt' onChange={onText} />
 						</div>
 					</div>
-					<div className={styles.row}>Filters</div>
+					<div className={styles.row}>
+						{ranges}
+						{/* <Range name='brightness' className={styles.col} min={-1} max={1} value={filter['brightness']} />
+						<Range name='contrast' className={styles.col} min={-1} max={1} value={filter['contrast']} />
+						<Range name='hue' className={styles.col} min={-1} max={1} value={filter['hue-rotate']} />
+						<Range name='saturate' className={styles.col} min={-1} max={1} value={filter['saturate']} /> */}
+					</div>
 				</section>
 				{show_clients && (
 					<section>
+						{/* <div className={styles.heading}>Connections</div> */}
 						<div className={styles.connections}>
 							{connections.map((c, i) => (
 								<div

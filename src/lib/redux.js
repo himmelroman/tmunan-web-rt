@@ -1,7 +1,7 @@
 import { createSlice, configureStore, createSelector } from '@reduxjs/toolkit'
 // import { persistReducer, persistStore } from 'redux-persist'
 // import storage from 'redux-persist/lib/storage'
-import { WIDTH, HEIGHT, NAME } from './constants'
+import { WIDTH, HEIGHT, NAME, IS_CONTROL, FILTERS_SCHEMA } from './constants'
 
 export const initialParameters = {
 	strength: 1,
@@ -21,12 +21,12 @@ const initialState = {
 	inverted: false,
 	cameras: [],
 	fps: 6,
-	show_panel: false,
+	show_panel: IS_CONTROL,
 	show_clients: true,
 	show_source: true,
 	show_output: true,
-	filter: 'none',
-	transform: 'none',
+	filter: {},
+	transform: {},
 	presence: {
 		parameters: initialParameters,
 		connections: [],
@@ -86,10 +86,16 @@ export const appSlice = createSlice({
 		setPresence: (s, { payload }) => {
 			s.presence = payload
 		},
+		applyFilter: (s, { payload }) => {
+			for (const [k, v] of Object.entries(payload)) {
+				if (v === FILTERS_SCHEMA[k].default) delete s.filter[k]
+				else s.filter[k] = v
+			}
+		},
 	},
 })
 
-export const { setActive, setCamera, setCameras, setConnected, setFlipped, setFPS, setPresence, setShowClients, setShowOutput, setShowPanel, setShowSource, setInverted } = appSlice.actions
+export const { setActive, setCamera, setCameras, setConnected, setFlipped, setFPS, setPresence, setShowClients, setShowOutput, setShowPanel, setShowSource, applyFilter } = appSlice.actions
 
 /* Selectors */
 
@@ -100,6 +106,10 @@ export const selectPresence = s => s.app.presence
 export const selectCamera = s => s.app.camera
 
 export const selectCameras = s => s.app.cameras
+
+export const selectFilter = s => s.app.filter
+
+export const selectTransform = s => s.app.transform
 
 export const selectConnected = s => s.app.connected
 
@@ -118,6 +128,22 @@ export const selectIsActive = createSelector(selectPresence, p => p.active_conne
 export const selectRunning = createSelector(selectConnected, selectIsActive, (connected, active) => connected && active)
 
 export const selectConnections = createSelector(selectPresence, p => p.connections)
+
+export const selectFilterString = createSelector(selectFilter, f => {
+	const props = Object.entries(f)
+	if (!props.length) return 'none'
+	return props
+		.map(([k, v]) => {
+			if (k === 'hue-rotate') {
+				return `${k}(${v}deg)`
+			} else if (k === 'blur') {
+				return `${k}(${v}px)`
+			} else {
+				return `${k}(${v})`
+			}
+		})
+		.join(' ')
+})
 
 /* Store */
 

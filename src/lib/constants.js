@@ -32,3 +32,50 @@ export const HEIGHT = parseInt(QUERY.height || import.meta.env.VITE_HEIGHT || 51
 export const CODES = {
 	NON_ACTIVE_PUBLISH: 'non_active_publish',
 }
+
+export const FILTERS_SCHEMA = {
+	brightness: {
+		default: 1,
+		min: 0,
+		max: 4,
+		step: 0.1,
+	},
+	contrast: {
+		default: 1,
+		min: 0,
+		max: 5,
+		step: 0.1,
+	},
+	'hue-rotate': {
+		label: 'hue',
+		default: 0,
+		min: -180,
+		max: 180,
+		step: 1,
+	},
+	saturate: {
+		default: 1,
+		min: 0,
+		max: 5,
+		step: 0.1,
+	},
+	// sepia: {
+	// 	min: 0,
+	// 	max: 1,
+	// 	default: 0,
+	// },
+	grayscale: {
+		default: 0,
+		min: 0,
+		max: 1,
+		step: 0.1,
+	},
+	blur: {
+		default: 0,
+		min: 0,
+		max: 10,
+		step: 1,
+	},
+}
+
+export const FILTER_LIST = Object.keys(FILTERS_SCHEMA).map(k => ({ name: k, ...FILTERS_SCHEMA[k] }))
