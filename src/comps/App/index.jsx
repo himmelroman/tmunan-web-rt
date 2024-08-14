@@ -27,6 +27,7 @@ window.ctx = ctx
 
 let camera_busy
 let source_vid
+let output_vid
 
 async function drawVideo() {
 	// if (now - lastMillis < THROTTLE) {
@@ -193,9 +194,22 @@ const App = () => {
 	}, [filterString])
 
 	useEffect(() => {
-		logger.info(`Transform > ${transformString}`)
+		// const { string, scales } = transform
+		// logger.info(`Transform > ${string}`)
 		source_vid.style.transform = transformString
-		ctx.transform = transformString
+		// ctx.translate(scales[0] < 0 ? WIDTH : 0, 0)
+
+		// const sx = prevScales[0] / scales[0]
+		// const sy = prevScales[1] / scales[1]
+
+		// console.log('scales', prevScales, scales, sx, sy)
+
+		// ctx.scale(sx, sy)
+		// drawVideo()
+
+		// prevScales[0] = scales[0]
+		// prevScales[1] = scales[1]
+		output_vid.style.transform = transformString
 	}, [transformString])
 
 	// useEffect(() => {
@@ -234,6 +248,7 @@ const App = () => {
 				autoPlay
 				className={styles.output}
 				ref={r => {
+					output_vid = r
 					window.output_vid = r
 				}}
 			/>

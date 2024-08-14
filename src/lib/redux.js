@@ -145,7 +145,7 @@ export const selectFilterString = createSelector(selectFilter, f => {
 
 export const selectTransform = s => s.app.transform
 
-const transform_map = {
+const flips = {
 	flip_x: 'scaleX',
 	flip_y: 'scaleY',
 }
@@ -156,8 +156,8 @@ export const selectTransformString = createSelector(selectTransform, t => {
 	return props
 		.map(([k, v]) => {
 			if (!v) return
-			if (k in transform_map) {
-				return `${transform_map[k]}(-1)`
+			if (k in flips) {
+				return `${flips[k]}(-1)`
 			}
 			return `${k}(${v})`
 		})

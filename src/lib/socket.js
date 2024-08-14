@@ -219,31 +219,28 @@ export const replaceTrack = async stream => {
 }
 
 // Add, remove or replace track
-export const setTrack = isActive => {
-	const { stream } = window
-	const stream_present = !!stream
-	logger.info(`Set outgoing track > ${isActive ? chalk.greenBright('ON') : chalk.redBright('OFF')} ${stream_present ? '' : chalk.redBright('NO STREAM')}`)
+// export const setTrack = isActive => {
+// 	const { stream } = window
+// 	const stream_present = !!stream
+// 	logger.info(`Set outgoing track > ${isActive ? chalk.greenBright('ON') : chalk.redBright('OFF')} ${stream_present ? '' : chalk.redBright('NO STREAM')}`)
 
-	const sender = pc.getSenders()[0]
-	if (isActive) {
-		logger.info('\tReplacing track')
-		if (stream) sender.replaceTrack(stream.getVideoTracks()[0])
-		else {
-			sender.replaceTrack(stream.getVideoTracks()[0])
-		}
-	} else {
-		logger.info('\tRemoving track')
-		pc.removeTrack(sender)
-		return
-	}
-}
-
-window.setTrack = setTrack
+// 	const sender = pc.getSenders()[0]
+// 	if (isActive) {
+// 		logger.info('\tReplacing track')
+// 		if (stream) sender.replaceTrack(stream.getVideoTracks()[0])
+// 		else {
+// 			sender.replaceTrack(stream.getVideoTracks()[0])
+// 		}
+// 	} else {
+// 		logger.info('\tRemoving track')
+// 		pc.removeTrack(sender)
+// 		return
+// 	}
+// }
 
 export default {
 	close,
 	connect,
 	send,
-	setTrack,
 	replaceTrack,
 }
