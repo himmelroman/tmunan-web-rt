@@ -104,11 +104,12 @@ export const connect = async () => {
 					})
 			)
 			.then(() => {
-				logger.debug('Sending offer...')
 				const offer = pc.localDescription
 
 				let query = `${BASE_URL}/offer?name=${NAME}`
 				if (getState().app.show_output) query += '&output=true'
+
+				logger.debug('Sending offer to', query)
 
 				fetch(query, {
 					body: JSON.stringify({
@@ -204,6 +205,7 @@ export const connect = async () => {
 	}
 
 	pc.addTransceiver('video')
+	console.log('Added transciever', pc.getTransceivers())
 
 	// if (should_send) {
 	// 	logger.info('Sending flag true, getting stream and adding track')

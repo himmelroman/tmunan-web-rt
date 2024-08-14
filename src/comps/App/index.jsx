@@ -172,13 +172,16 @@ const App = () => {
 
 		if (isActive) {
 			// frameId = source_vid.requestVideoFrameCallback(drawVideo)
-			v_interval = setInterval(drawVideo, 1000 / 30)
-			window.stream = canvas.captureStream(20)
-			socket.replaceTrack(window.stream)
-			// socket.replaceTrack(stream)
+			if (!window.stream) {
+				logger.info('Starting stream')
+				v_interval = setInterval(drawVideo, 1000 / 30)
+				window.stream = canvas.captureStream(20)
+				socket.replaceTrack(window.stream)
+			}
 		} else {
 			// cancelFrame()
 			if (window.stream) {
+				logger.info('Stopping stream')
 				const tracks = window.stream.getTracks()
 				tracks.forEach(track => track.stop())
 				window.stream = null

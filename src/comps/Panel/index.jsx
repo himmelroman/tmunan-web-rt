@@ -197,7 +197,7 @@ const Panel = () => {
 									onClick={onConnectionClick}
 								>
 									{c.name}
-									{c.name === active_connection_name && <div className={styles.active_connection} />}
+									{NAME === c.name && ' (You)'}
 								</div>
 							))}
 						</div>
