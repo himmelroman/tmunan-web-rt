@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { HEIGHT, WIDTH } from '~/lib/constants'
 import logger from '~/lib/logger'
 import socket from '~/lib/socket'
-import store, { selectApp, setShowSource, setShowPanel, setShowOutput, /* selectRunning, */ setShowClients, selectIsActive, selectFilterString } from '~/lib/redux'
+import store, { selectApp, setShowSource, setShowPanel, setShowOutput, /* selectRunning, */ setShowClients, selectIsActive, selectFilterString, selectTransformString } from '~/lib/redux'
 import Panel from '../Panel'
 import styles from './index.module.scss'
 import useClasses from '~/lib/useClasses'
@@ -106,6 +106,7 @@ const App = () => {
 	const app = useSelector(selectApp)
 	const isActive = useSelector(selectIsActive)
 	const filterString = useSelector(selectFilterString)
+	const transformString = useSelector(selectTransformString)
 
 	useDoubleClick({
 		onDoubleClick: () => {
@@ -170,31 +171,32 @@ const App = () => {
 	useEffect(() => {
 		logger.info(`isActive > ${isActive ? chalk.greenBright('True') : chalk.redBright('False')}`)
 		clearInterval(v_interval)
+		if (window.stream) {
+			logger.info('Stopping stream')
+			const tracks = window.stream.getTracks()
+			tracks.forEach(track => track.stop())
+			window.stream = null
+		}
 
 		if (isActive) {
-			// frameId = source_vid.requestVideoFrameCallback(drawVideo)
-			if (!window.stream) {
-				logger.info('Starting stream')
-				v_interval = setInterval(drawVideo, 1000 / 30)
-				window.stream = canvas.captureStream(20)
-				socket.replaceTrack(window.stream)
-			}
-		} else {
-			// cancelFrame()
-			if (window.stream) {
-				logger.info('Stopping stream')
-				const tracks = window.stream.getTracks()
-				tracks.forEach(track => track.stop())
-				window.stream = null
-			}
+			v_interval = setInterval(drawVideo, 1000 / app.fps)
+			logger.info('Starting stream')
+			window.stream = canvas.captureStream(app.fps)
+			socket.replaceTrack(window.stream)
 		}
-	}, [isActive])
+	}, [isActive, app.fps])
 
 	useEffect(() => {
-		// logger.info(`Filter > ${filterString}`)
+		logger.info(`Filter > ${filterString}`)
 		source_vid.style.filter = filterString
 		ctx.filter = filterString
 	}, [filterString])
+
+	useEffect(() => {
+		logger.info(`Transform > ${transformString}`)
+		source_vid.style.transform = transformString
+		ctx.transform = transformString
+	}, [transformString])
 
 	// useEffect(() => {
 	// 	if (running) {

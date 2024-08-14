@@ -26,7 +26,10 @@ const initialState = {
 	show_source: true,
 	show_output: true,
 	filter: {},
-	transform: {},
+	transform: {
+		flip_x: false,
+		flip_y: false,
+	},
 	presence: {
 		parameters: initialParameters,
 		connections: [],
@@ -65,19 +68,11 @@ export const appSlice = createSlice({
 		setShowClients: (s, { payload }) => {
 			s.show_clients = payload
 		},
-		setFlipped: (s, { payload }) => {
-			s.flipped = payload
-		},
-		setInverted: (s, { payload }) => {
-			s.inverted = payload
-		},
 		setShowSource: (s, { payload }) => {
 			s.show_source = payload
-			if (!s.show_source && !s.show_output) s.show_output = true
 		},
 		setShowOutput: (s, { payload }) => {
 			s.show_output = payload
-			if (!s.show_source && !s.show_output) s.show_source = true
 		},
 		setFPS: (s, { payload }) => {
 			const fps = parseInt(payload)
@@ -88,14 +83,17 @@ export const appSlice = createSlice({
 		},
 		applyFilter: (s, { payload }) => {
 			for (const [k, v] of Object.entries(payload)) {
-				if (v === null || v === FILTERS_SCHEMA[k].default) delete s.filter[k]
+				if (v === null || v === (FILTERS_SCHEMA[k]?.default || 0)) delete s.filter[k]
 				else s.filter[k] = v
 			}
+		},
+		applyTransform: (s, { payload }) => {
+			Object.assign(s.transform, payload)
 		},
 	},
 })
 
-export const { setActive, setCamera, setCameras, setConnected, setFlipped, setFPS, setPresence, setShowClients, setShowOutput, setShowPanel, setShowSource, applyFilter } = appSlice.actions
+export const { setActive, setCamera, setCameras, setConnected, applyTransform, setFPS, setPresence, setShowClients, setShowOutput, setShowPanel, setShowSource, applyFilter } = appSlice.actions
 
 /* Selectors */
 
@@ -106,10 +104,6 @@ export const selectPresence = s => s.app.presence
 export const selectCamera = s => s.app.camera
 
 export const selectCameras = s => s.app.cameras
-
-export const selectFilter = s => s.app.filter
-
-export const selectTransform = s => s.app.transform
 
 export const selectConnected = s => s.app.connected
 
@@ -129,6 +123,8 @@ export const selectRunning = createSelector(selectConnected, selectIsActive, (co
 
 export const selectConnections = createSelector(selectPresence, p => p.connections)
 
+export const selectFilter = s => s.app.filter
+
 export const selectFilterString = createSelector(selectFilter, f => {
 	const props = Object.entries(f)
 	if (!props.length) return 'none'
@@ -142,6 +138,28 @@ export const selectFilterString = createSelector(selectFilter, f => {
 				return `${k}(${v})`
 			}
 		})
+		.join(' ')
+})
+
+export const selectTransform = s => s.app.transform
+
+const transform_map = {
+	flip_x: 'scaleX',
+	flip_y: 'scaleY',
+}
+
+export const selectTransformString = createSelector(selectTransform, t => {
+	const props = Object.entries(t)
+	if (!props.length) return 'none'
+	return props
+		.map(([k, v]) => {
+			if (!v) return
+			if (k in transform_map) {
+				return `${transform_map[k]}(-1)`
+			}
+			return `${k}(${v})`
+		})
+		.filter(Boolean)
 		.join(' ')
 })
 

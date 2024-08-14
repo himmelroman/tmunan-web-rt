@@ -54,9 +54,10 @@ export const FILTERS_SCHEMA = {
 		step: 1,
 	},
 	saturate: {
+		label: 'saturation',
 		default: 1,
 		min: 0,
-		max: 5,
+		max: 10,
 		step: 0.1,
 	},
 	sepia: {

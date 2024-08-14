@@ -28,7 +28,7 @@ const Check = forwardRef(
 		ref
 	) => {
 		const onClick = () => {
-			onChange && onChange(!value, name)
+			onChange?.(!value, name)
 		}
 
 		const onKeyDown = e => {
@@ -40,7 +40,7 @@ const Check = forwardRef(
 		const cls = useClasses(styles.cont, className, value ? styles.checked : styles.unchecked)
 
 		return (
-			<div className={cls} {...props} ref={ref} data-checked={value || null} onClick={onClick} onKeyDown={onKeyDown}>
+			<div className={cls} {...props} ref={ref} data-check data-checked={value || null} onClick={onClick} onKeyDown={onKeyDown}>
 				{children}
 			</div>
 		)

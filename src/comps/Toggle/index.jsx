@@ -15,7 +15,7 @@ const noop = e => {
 	e.preventDefault()
 }
 
-const Toggle = ({ name, onChange = noop, value, className, disabled, style, ...props }) => {
+const Toggle = ({ name, onChange, value, className, disabled, style, ...props }) => {
 	const inputRef = useRef()
 	const timeRef = useRef()
 
@@ -51,7 +51,7 @@ const Toggle = ({ name, onChange = noop, value, className, disabled, style, ...p
 	// Events
 
 	const onInnerChange = useCallback(() => {
-		onChange(name, !value)
+		onChange(!value, name)
 	}, [value])
 
 	const onDragStart = clientX => {
@@ -77,7 +77,7 @@ const Toggle = ({ name, onChange = noop, value, className, disabled, style, ...p
 	const onDragStop = useCallback(() => {
 		const dif = Date.now() - timeRef.current
 		if (!dragRef.current || dif < 100) {
-			onChange(name, !value)
+			onChange(!value, name)
 			return
 		}
 
@@ -85,7 +85,7 @@ const Toggle = ({ name, onChange = noop, value, className, disabled, style, ...p
 		const nextValue = posRef.current >= half
 
 		if (value !== nextValue) {
-			onChange(name, nextValue)
+			onChange(nextValue, name)
 		} else {
 			setPos(value ? checkedPos : uncheckedPos)
 		}
@@ -131,7 +131,7 @@ const Toggle = ({ name, onChange = noop, value, className, disabled, style, ...p
 		e => {
 			if (e.target.className.includes('handle')) return
 			e.preventDefault()
-			onChange(name, !value)
+			onChange(!value, name)
 		},
 		[value]
 	)

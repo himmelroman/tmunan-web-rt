@@ -23,6 +23,7 @@ html {
 	--deep-2: hsl(236, 20%, 16%);
 	--deep-21: hsl(236, 20%, 20%);
 	--deep-3: hsl(236, 21%, 26%);
+	--deep-35: hsl(236, 21%, 30%);
 	--deep-4: hsl(230, 21%, 40%);
 	--deep-5: hsl(229, 24%, 74%);
 	--deep-6: hsl(229, 24%, 85%);
@@ -113,13 +114,17 @@ textarea {
 	color: var(--deep-5);
 	background-color: var(--deep-3);
 
+	&:focus-visible {
+		background-color: var(--deep-35);
+	}
+
 	&:focus {
 		outline: none;
 	}
 }
 
 textarea {
-	min-height: 100px;
+	min-height: calc(4em + 24px);
 }
 
 input[type="range"] {
@@ -162,7 +167,7 @@ input[type="range"] {
 		width: 100%;
 		height: 3px;
 		border-radius: 2px;
-		background-color: var(--deep-4);
+		background-color: var(--deep-3);
 	}
 
 	&:hover {

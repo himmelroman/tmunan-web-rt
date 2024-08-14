@@ -10,12 +10,10 @@ import { useCallback, useEffect, useMemo, forwardRef } from 'react'
 import useClasses from '~/lib/useClasses'
 import styles from './index.module.scss'
 
-const noop = () => {}
-
 const noToString = item => item
 
 const Select = forwardRef((props, eref) => {
-	const { name, className, options = [], value, onChange = noop, itemToString = noToString, buttonPrefix = '', disabled } = props
+	const { name, className, options = [], value, onChange, itemToString = noToString, buttonPrefix = '', disabled } = props
 
 	const itemToValue = props.itemToValue || itemToString
 
@@ -31,7 +29,7 @@ const Select = forwardRef((props, eref) => {
 
 	const onSelectedItemChange = useCallback(
 		({ selectedItem }) => {
-			onChange(name, itemToValue(selectedItem))
+			onChange?.(itemToValue(selectedItem), name)
 		},
 		[onChange, options]
 	)
@@ -61,7 +59,7 @@ const Select = forwardRef((props, eref) => {
 	const cls = useClasses(styles.cont, className, (disabled || options.length < 2) && styles.disabled)
 
 	return (
-		<div id={`${name}-select`} name={name} className={cls} tabIndex={disabled ? -1 : null} data-select>
+		<div id={name ? `${name}-select` : undefined} name={name} className={cls} tabIndex={disabled ? -1 : null} data-select>
 			<div {...getMenuProps()} className={`${styles.menu} ${isOpen && styles.is_open}`} data-menu>
 				{options.map((item, index) => {
 					const itemValue = itemToValue(item)
