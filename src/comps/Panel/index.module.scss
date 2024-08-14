@@ -79,16 +79,16 @@
 		}
 	}
 
-	@media only screen and (max-height: 400px) {
-		position: absolute;
-		top: 0;
-		left: 0;
-		width: 100dvw;
-		height: 100dvh;
-		opacity: 0.9;
-		overflow-y: scroll;
-		min-width: unset;
-	}
+	// @media only screen and (max-height: 400px) {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100dvw;
+	height: 100dvh;
+	opacity: 0.9;
+	overflow-y: scroll;
+	min-width: unset;
+	// }
 
 	@media (orientation: portrait) {
 		position: absolute;

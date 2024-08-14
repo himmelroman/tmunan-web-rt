@@ -28,7 +28,7 @@ window.ctx = ctx
 let camera_busy
 let source_vid
 
-async function drawVideo(now) {
+async function drawVideo() {
 	// if (now - lastMillis < THROTTLE) {
 	// 	frameId = source_vid.requestVideoFrameCallback(drawVideo)
 	// 	return
@@ -184,23 +184,6 @@ const App = () => {
 				window.stream = null
 			}
 		}
-
-		// const { stream } = window
-		// if (isActive) {
-		// 	if (stream) socket.replaceTrack(stream)
-		// 	else getCamera(app.camera)
-		// } else if (stream) {
-		// 	stream.getTracks().forEach(track => track.stop())
-		// 	window.stream = null
-		// 	cancelFrame()
-		// }
-		// socket.setTrack(isActive)
-		// if (isActive) {
-		// 	if (stream) socket.setTrack(true)
-		// 	else getStream(app.camera)
-		// } else {
-		// 	socket.setTrack(false)
-		// }
 	}, [isActive])
 
 	// useEffect(() => {
