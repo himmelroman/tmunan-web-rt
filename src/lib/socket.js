@@ -206,27 +206,6 @@ export const connect = async () => {
 
 	pc.addTransceiver('video')
 	console.log('Added transciever', pc.getTransceivers())
-
-	// if (should_send) {
-	// 	logger.info('Sending flag true, getting stream and adding track')
-	// 	const { camera } = getState().app
-	// 	window.camera = camera
-
-	// 	let stream = window.stream
-	// 	if (!stream) {
-	// 		stream = await navigator.mediaDevices.getUserMedia({
-	// 			video: {
-	// 				deviceId: camera,
-	// 				width: 9999,
-	// 			},
-	// 		})
-	// 		window.stream = stream
-	// 		window.source_vid.srcObject = stream
-	// 	}
-
-	// 	logger.info('Adding track')
-	// 	pc.addTrack(stream.getVideoTracks()[0], stream)
-	// }
 }
 
 export const replaceTrack = async stream => {
@@ -257,11 +236,6 @@ export const setTrack = isActive => {
 		pc.removeTrack(sender)
 		return
 	}
-	// } else if (should_send) {
-	// 	const track = stream.getVideoTracks()[0]
-	// 	logger.info('\tAdding track')
-	// 	pc.addTrack(track, stream)
-	// }
 }
 
 window.setTrack = setTrack

@@ -6,3 +6,4 @@ ssl
 .env
 .env.local
 dist.zip
+*.bak

@@ -34,6 +34,8 @@ const initialState = {
 		parameters: initialParameters,
 		connections: [],
 	},
+	frames: [],
+	frame_index: 0,
 }
 
 export const appSlice = createSlice({
@@ -162,6 +164,12 @@ export const selectTransformString = createSelector(selectTransform, t => {
 		.filter(Boolean)
 		.join(' ')
 })
+
+export const selectFrames = s => s.app.frames
+
+export const selectFrameIndex = s => s.app.frame_index
+
+export const selectFrame = createSelector(selectFrames, selectFrameIndex, (frames, index) => (frames ? frames[index] : null))
 
 /* Store */
 
