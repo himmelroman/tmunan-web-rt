@@ -12,57 +12,58 @@ import useClasses from '~/lib/useClasses'
 // import sleep from '~/lib/sleep'
 import chalk from 'chalk'
 
-// let cint
+// const THROTTLE = 1000 / 30
 // let frameId
-
-// const THROTTLE = 1000 / 60
 // let lastMillis = 0
+
+let v_interval
 
 const canvas = document.createElement('canvas')
 canvas.width = WIDTH
 canvas.height = HEIGHT
 
 const ctx = canvas.getContext('2d')
-
 window.ctx = ctx
 
-// async function onFrame(now) {
-// 	if (now - lastMillis < THROTTLE) {
-// 		frameId = source.requestVideoFrameCallback(onFrame)
-// 		return
-// 	}
+let camera_busy
+let source_vid
 
-// 	const vwidth = source.videoWidth
-// 	const vheight = source.videoHeight
-// 	let width
-// 	let height
-// 	let x
-// 	let y
+async function drawVideo(now) {
+	// if (now - lastMillis < THROTTLE) {
+	// 	frameId = source_vid.requestVideoFrameCallback(drawVideo)
+	// 	return
+	// }
 
-// 	if (vwidth / vheight > WIDTH / HEIGHT) {
-// 		width = vheight * (WIDTH / HEIGHT)
-// 		height = vheight
-// 		x = (vwidth - width) / 2
-// 		y = 0
-// 	} else {
-// 		width = vwidth
-// 		height = vwidth * (HEIGHT / WIDTH)
-// 		x = 0
-// 		y = (vheight - height) / 2
-// 	}
+	const vwidth = source_vid.videoWidth
+	const vheight = source_vid.videoHeight
+	let width
+	let height
+	let x
+	let y
 
-// 	ctx.drawImage(source, x, y, width, height, 0, 0, WIDTH, HEIGHT)
+	if (vwidth / vheight > WIDTH / HEIGHT) {
+		width = vheight * (WIDTH / HEIGHT)
+		height = vheight
+		x = (vwidth - width) / 2
+		y = 0
+	} else {
+		width = vwidth
+		height = vwidth * (HEIGHT / WIDTH)
+		x = 0
+		y = (vheight - height) / 2
+	}
 
-// 	const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.96))
-// 	window.blob = blob
+	ctx.drawImage(source_vid, x, y, width, height, 0, 0, WIDTH, HEIGHT)
 
-// 	frameId = source.requestVideoFrameCallback(onFrame)
-// }
+	// const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.96))
+	// window.blob = blob
+	// frameId = source_vid.requestVideoFrameCallback(drawVideo)
+}
 
-// const cancelFrame = reason => {
-// 	if (!window.src_video || !frameId) return
-// 	logger.info('Cancelling frame', reason)
-// 	window.src_video.cancelVideoFrameCallback(frameId)
+// const cancelFrame = () => {
+// 	if (!frameId) return
+// 	logger.info('Cancelling frame')
+// 	if (source_vid) source_vid.cancelVideoFrameCallback(frameId)
 // 	frameId = null
 // }
 
@@ -97,44 +98,12 @@ const onKeyDown = e => {
 	}
 }
 
-const getStream = async camera => {
-	if (camera === window.camera) {
-		logger.debug("Camera didn't change, skipping.")
-	}
-	window.camera = camera
-	logger.info(`Getting stream...`)
-
-	if (window.camera_busy) {
-		logger.warn('Camera busy')
-		return
-	}
-
-	window.camera_busy = true
-	const stream = await navigator.mediaDevices.getUserMedia({
-		video: {
-			deviceId: camera,
-			width: 9999,
-		},
-	})
-	window.camera_busy = false
-	window.stream = stream
-
-	window.source_vid.srcObject = stream
-
-	const isActive = selectIsActive(store.getState())
-
-	logger.info('Got stream.', { stream, isActive })
-
-	socket.setTrack(isActive)
-}
-
 const App = () => {
 	const ref = useRef()
 	// const img = useRef()
 
 	const dispatch = useDispatch()
 	const app = useSelector(selectApp)
-	// const running = useSelector(selectRunning)
 	const isActive = useSelector(selectIsActive)
 
 	useDoubleClick({
@@ -153,22 +122,85 @@ const App = () => {
 		return () => {
 			logger.info('App unmounted')
 			window.removeEventListener('keydown', onKeyDown)
-			// cancelFrame('app unmount')
+			clearInterval(v_interval)
+			// cancelFrame()
+			if (source_vid.srcObject) {
+				const tracks = source_vid.srcObject.getTracks()
+				tracks.forEach(track => track.stop())
+				source_vid.srcObject = null
+			}
 			if (window.stream) {
 				const tracks = window.stream.getTracks()
 				tracks.forEach(track => track.stop())
+				window.stream = null
 			}
 		}
 	}, [])
 
 	useEffect(() => {
+		if (app.camera === window.camera) {
+			logger.debug('Camera > no change')
+		}
 		logger.info(`Camera > ${chalk.cyan(window.cmap[app.camera])}`)
-		getStream(app.camera)
+		window.camera = app.camera
+
+		const getCamera = async () => {
+			logger.info(`Getting camera stream...`)
+
+			if (camera_busy) {
+				logger.warn('Camera busy')
+				return
+			}
+			camera_busy = true
+			const stream = await navigator.mediaDevices.getUserMedia({
+				video: {
+					deviceId: app.camera,
+					width: 9999,
+				},
+			})
+			camera_busy = false
+			source_vid.srcObject = stream
+
+			logger.info('Got camera stream', stream)
+		}
+		getCamera()
 	}, [app.camera])
 
 	useEffect(() => {
 		logger.info(`isActive > ${isActive ? chalk.greenBright('True') : chalk.redBright('False')}`)
-		socket.setTrack(isActive)
+		clearInterval(v_interval)
+
+		if (isActive) {
+			// frameId = source_vid.requestVideoFrameCallback(drawVideo)
+			v_interval = setInterval(drawVideo, 1000 / 30)
+			window.stream = canvas.captureStream(20)
+			socket.replaceTrack(window.stream)
+			// socket.replaceTrack(stream)
+		} else {
+			// cancelFrame()
+			if (window.stream) {
+				const tracks = window.stream.getTracks()
+				tracks.forEach(track => track.stop())
+				window.stream = null
+			}
+		}
+
+		// const { stream } = window
+		// if (isActive) {
+		// 	if (stream) socket.replaceTrack(stream)
+		// 	else getCamera(app.camera)
+		// } else if (stream) {
+		// 	stream.getTracks().forEach(track => track.stop())
+		// 	window.stream = null
+		// 	cancelFrame()
+		// }
+		// socket.setTrack(isActive)
+		// if (isActive) {
+		// 	if (stream) socket.setTrack(true)
+		// 	else getStream(app.camera)
+		// } else {
+		// 	socket.setTrack(false)
+		// }
 	}, [isActive])
 
 	// useEffect(() => {
@@ -198,6 +230,7 @@ const App = () => {
 				autoPlay
 				className={styles.source}
 				ref={r => {
+					source_vid = r
 					window.source_vid = r
 				}}
 			/>

@@ -1,7 +1,7 @@
 import chalk from 'chalk'
-import { /* CODES, SOCKET_URL, */ BASE_URL, FPS, NAME } from './constants'
+import { /* CODES, SOCKET_URL, */ BASE_URL, NAME } from './constants'
 import logger from './logger'
-import store, { setConnected, setPresence, selectIsActive } from './redux'
+import store, { setConnected, setPresence } from './redux'
 
 const { dispatch, getState } = store
 
@@ -9,10 +9,8 @@ const { dispatch, getState } = store
 let pc
 let dc
 
-let wsTimeout
+let rcTimeout
 let retries = 0
-
-let should_send = false
 
 const sctpCauseCodes = [
 	'No SCTP error',
@@ -39,13 +37,13 @@ export const send = (type, payload) => {
 }
 
 export const reconnect = () => {
-	clearTimeout(wsTimeout)
+	clearTimeout(rcTimeout)
 	dispatch(setConnected(false))
 
 	const RECONNECT_INTERVAL = parseInt(Math.min(Math.max(2, Math.pow(retries, 1.5)), 60))
 	logger.debug(`Reconnecting in ${RECONNECT_INTERVAL}s...`)
 
-	wsTimeout = setTimeout(connect, RECONNECT_INTERVAL * 1000)
+	rcTimeout = setTimeout(connect, RECONNECT_INTERVAL * 1000)
 	retries++
 }
 
@@ -64,7 +62,9 @@ export const connect = async () => {
 	}
 
 	pc.oniceconnectionstatechange = () => {
-		logger.debug(`ICE Connection state > ${chalk.cyanBright(pc.iceConnectionState)}`)
+		const s = pc.iceConnectionState
+		const c = s === 'connected' ? chalk.greenBright : s === 'disconnected' ? chalk.redBright : chalk.white
+		logger.debug(`ICE Connection state > ${c(s)}`)
 		if (pc.iceConnectionState === 'disconnected') {
 			reconnect()
 		}
@@ -78,11 +78,6 @@ export const connect = async () => {
 		logger.info(chalk.blueBright('On track'), e)
 		window.output_vid.srcObject = e.streams[0]
 	}
-
-	/* 
-	
-	
-	*/
 
 	pc.onnegotiationneeded = () => {
 		logger.debug('Creating offer...')
@@ -128,7 +123,7 @@ export const connect = async () => {
 				})
 					.then(res => res.json())
 					.then(answer => {
-						logger.info(`${chalk.greenBright('Answer received.')} Setting remote description`, answer)
+						logger.info(`${chalk.greenBright('Answer received')} setting remote description`, answer)
 						pc.setRemoteDescription(answer)
 					})
 					.catch(e => {
@@ -167,9 +162,6 @@ export const connect = async () => {
 			}
 			case 'error': {
 				logger.error(`Data error code: ${payload.code}`, payload)
-				// if (payload.code === CODES.NON_ACTIVE_PUBLISH) {
-				// 	dispatch(setActive(false))
-				// }
 				break
 			}
 			default:
@@ -183,6 +175,7 @@ export const connect = async () => {
 
 	dc.onerror = ({ error }) => {
 		// if (!retries)
+		if (error.sctpCauseCode === 12) return
 		logger.warn('Data channel error:', error.message)
 
 		switch (error.errorDetail) {
@@ -210,6 +203,8 @@ export const connect = async () => {
 		}
 	}
 
+	pc.addTransceiver('video')
+
 	// if (should_send) {
 	// 	logger.info('Sending flag true, getting stream and adding track')
 	// 	const { camera } = getState().app
@@ -232,28 +227,39 @@ export const connect = async () => {
 	// }
 }
 
+export const replaceTrack = async stream => {
+	logger.info('Replacing track')
+	const sender = pc.getSenders()[0]
+	const track = stream.getVideoTracks()[0]
+	if ('contentHint' in track) {
+		track.contentHint = 'detail'
+	}
+	sender.replaceTrack(track)
+}
+
 // Add, remove or replace track
-export const setTrack = on => {
+export const setTrack = isActive => {
 	const { stream } = window
 	const stream_present = !!stream
-	logger.info(`Set outgoing track > ${on ? chalk.greenBright('ON') : chalk.redBright('OFF')} | stream: ${stream_present}`)
+	logger.info(`Set outgoing track > ${isActive ? chalk.greenBright('ON') : chalk.redBright('OFF')} ${stream_present ? '' : chalk.redBright('NO STREAM')}`)
 
-	should_send = on && stream_present
 	const sender = pc.getSenders()[0]
-	if (sender) {
-		if (should_send) {
-			logger.info('\tReplacing track')
+	if (isActive) {
+		logger.info('\tReplacing track')
+		if (stream) sender.replaceTrack(stream.getVideoTracks()[0])
+		else {
 			sender.replaceTrack(stream.getVideoTracks()[0])
-		} else {
-			logger.info('\tRemoving track')
-			pc.removeTrack(sender)
-			return
 		}
-	} else if (should_send) {
-		const track = stream.getVideoTracks()[0]
-		logger.info('\tAdding track')
-		pc.addTrack(track, stream)
+	} else {
+		logger.info('\tRemoving track')
+		pc.removeTrack(sender)
+		return
 	}
+	// } else if (should_send) {
+	// 	const track = stream.getVideoTracks()[0]
+	// 	logger.info('\tAdding track')
+	// 	pc.addTrack(track, stream)
+	// }
 }
 
 window.setTrack = setTrack
@@ -263,4 +269,5 @@ export default {
 	connect,
 	send,
 	setTrack,
+	replaceTrack,
 }

@@ -1,6 +1,6 @@
 import { createSlice, configureStore, createSelector } from '@reduxjs/toolkit'
-import { persistReducer, persistStore } from 'redux-persist'
-import storage from 'redux-persist/lib/storage'
+// import { persistReducer, persistStore } from 'redux-persist'
+// import storage from 'redux-persist/lib/storage'
 import { WIDTH, HEIGHT, NAME } from './constants'
 
 export const initialParameters = {
@@ -136,6 +136,6 @@ const store = configureStore({
 	middleware: d => d({ serializableCheck: false }),
 })
 
-export const persistor = persistStore(store)
+// export const persistor = persistStore(store)
 
 export default store
