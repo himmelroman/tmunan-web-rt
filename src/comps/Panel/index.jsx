@@ -10,7 +10,7 @@ import { useDispatch, useSelector } from 'react-redux'
 // import { NAME } from '~/lib/constants'
 import { FILTER_LIST, NAME } from '~/lib/constants'
 import logger from '~/lib/logger'
-import { applyFilter, selectApp, setCamera, applyTransform, setFPS, setShowClients, setShowOutput, setShowPanel, setShowSource } from '~/lib/redux'
+import { setFilter, selectApp, setCamera, setTransform, setFPS, setShowClients, setShowOutput, setShowPanel, setShowSource } from '~/lib/redux'
 import socket from '~/lib/socket'
 import useClasses from '~/lib/useClasses'
 import Range from '../Range'
@@ -76,15 +76,15 @@ const Panel = () => {
 	}
 
 	const onTransform = (value, name) => {
-		dispatch(applyTransform({ [name]: value }))
+		dispatch(setTransform({ [name]: value }))
 	}
 
 	const onInvert = value => {
-		dispatch(applyFilter({ invert: value ? 1 : 0 }))
+		dispatch(setFilter({ invert: value ? 1 : 0 }))
 	}
 
 	const onFilterChange = (value, name) => {
-		dispatch(applyFilter({ [name]: value }))
+		dispatch(setFilter({ [name]: value }))
 	}
 
 	const outsideClick = e => {

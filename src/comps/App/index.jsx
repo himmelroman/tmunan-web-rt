@@ -11,6 +11,7 @@ import styles from './index.module.scss'
 import useClasses from '~/lib/useClasses'
 // import sleep from '~/lib/sleep'
 import chalk from 'chalk'
+import sleep from '~/lib/sleep'
 
 // const THROTTLE = 1000 / 30
 // let frameId
@@ -148,6 +149,14 @@ const App = () => {
 		window.camera = app.camera
 
 		const getCamera = async () => {
+			// turn off previous camera
+			if (source_vid.srcObject) {
+				const tracks = source_vid.srcObject.getTracks()
+				tracks.forEach(track => track.stop())
+				source_vid.srcObject = null
+				await sleep(0.65)
+			}
+
 			logger.info(`Getting camera stream...`)
 
 			if (camera_busy) {

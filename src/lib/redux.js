@@ -14,12 +14,9 @@ export const initialParameters = {
 }
 
 const initialState = {
-	connected: false,
-	active: true,
-	camera: null,
-	flipped: false,
-	inverted: false,
 	cameras: [],
+	connected: false,
+	camera: null,
 	fps: 6,
 	show_panel: IS_CONTROL,
 	show_clients: true,
@@ -42,28 +39,23 @@ export const appSlice = createSlice({
 	name: 'app',
 	initialState,
 	reducers: {
-		setConnected: (s, { payload }) => {
-			if (!payload) {
-				s.connected = false
-				s.connectionId = null
-				return
-			}
-			s.connected = true
-			s.connectionId = payload.connection_id
-			s.active = payload.active
-		},
-		setActive: (s, { payload }) => {
-			s.active = payload
-		},
 		setCameras: (s, { payload }) => {
 			s.cameras = payload
 			if (!s.camera || !payload.includes(s.camera)) {
 				s.camera = s.cameras[0]
 			}
 		},
-		setCamera: (s, { payload }) => {
-			s.camera = payload
+		setConnected: (s, { payload }) => {
+			if (!payload) {
+				s.connected = false
+				return
+			}
+			s.connected = true
 		},
+		setPresence: (s, { payload }) => {
+			s.presence = payload
+		},
+		// ui
 		setShowPanel: (s, { payload }) => {
 			s.show_panel = payload
 		},
@@ -76,26 +68,66 @@ export const appSlice = createSlice({
 		setShowOutput: (s, { payload }) => {
 			s.show_output = payload
 		},
+		// image
+		setCamera: (s, { payload }) => {
+			s.camera = payload
+		},
 		setFPS: (s, { payload }) => {
 			const fps = parseInt(payload)
 			s.fps = fps || initialState.fps
 		},
-		setPresence: (s, { payload }) => {
-			s.presence = payload
-		},
-		applyFilter: (s, { payload }) => {
+		setFilter: (s, { payload }) => {
 			for (const [k, v] of Object.entries(payload)) {
 				if (v === null || v === (FILTERS_SCHEMA[k]?.default || 0)) delete s.filter[k]
 				else s.filter[k] = v
 			}
 		},
-		applyTransform: (s, { payload }) => {
+		setTransform: (s, { payload }) => {
 			Object.assign(s.transform, payload)
+		},
+		// frames
+		addFrame: s => {
+			s.frames.push({ ...s.presence.parameters })
+			s.frame_index = s.frames.length - 1
+		},
+		saveFrame: s => {
+			s.frames[s.frame_index] = { ...s.presence.parameters }
+		},
+		removeFrame: (s, { payload }) => {
+			s.frames.splice(payload, 1)
+			if (s.frame_index >= s.frames.length) {
+				s.frame_index = s.frames.length - 1
+			}
+		},
+		clearFrames: s => {
+			s.frames = []
+			s.frame_index = -1
+		},
+		setFrameIndex: (s, { payload }) => {
+			s.frame_index = payload
 		},
 	},
 })
 
-export const { setActive, setCamera, setCameras, setConnected, applyTransform, setFPS, setPresence, setShowClients, setShowOutput, setShowPanel, setShowSource, applyFilter } = appSlice.actions
+export const {
+	addFrame,
+	setFilter,
+	setTransform,
+	clearFrames,
+	removeFrame,
+	saveFrame,
+	setActive,
+	setCamera,
+	setCameras,
+	setConnected,
+	setFPS,
+	setFrameIndex,
+	setPresence,
+	setShowClients,
+	setShowOutput,
+	setShowPanel,
+	setShowSource,
+} = appSlice.actions
 
 /* Selectors */
 

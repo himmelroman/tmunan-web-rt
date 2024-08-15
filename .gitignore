@@ -7,3 +7,4 @@ ssl
 .env.local
 dist.zip
 *.bak
+*.bak.js
