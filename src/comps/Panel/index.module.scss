@@ -24,15 +24,43 @@
 		display: flex;
 		flex-direction: column;
 		align-items: stretch;
-		flex: 1;
+		height: 100%;
+	}
+
+	.header {
+		display: flex;
+		flex-direction: row;
+		align-items: center;
+		gap: 20px;
+
+		height: 50px;
+		padding: 0 15px;
+		border-bottom: $border;
+
+		span {
+			flex: 1;
+		}
+
+		button:has(svg),
+		[data-check] {
+			background-color: transparent;
+		}
+
+		.right {
+			display: flex;
+			flex-direction: row;
+			align-items: center;
+			gap: 15px;
+
+			margin-left: auto;
+		}
 	}
 
 	main {
-		flex: 1;
 		display: flex;
 		flex-direction: row;
 		align-items: stretch;
-		overflow-y: scroll;
+		height: calc(100% - 50px);
 	}
 
 	section {
@@ -123,34 +151,6 @@
 		opacity: 0.8;
 		// overflow-y: scroll;
 		min-width: unset;
-	}
-}
-
-.header {
-	display: flex;
-	flex-direction: row;
-	align-items: center;
-	gap: 20px;
-
-	padding: 10px 15px;
-	border-bottom: $border;
-
-	span {
-		flex: 1;
-	}
-
-	button:has(svg),
-	[data-check] {
-		background-color: transparent;
-	}
-
-	.right {
-		display: flex;
-		flex-direction: row;
-		align-items: center;
-		gap: 15px;
-
-		margin-left: auto;
 	}
 }
 
@@ -252,12 +252,16 @@
 }
 
 .connections {
+	flex-shrink: 1;
 	display: flex;
 	flex-direction: column;
 	align-items: stretch;
 	// padding: 5px 0;
 
-	border-bottom: $border;
+	// border-bottom: $border;
+
+	overflow-y: scroll;
+	// height: 100px;
 }
 
 .connection {

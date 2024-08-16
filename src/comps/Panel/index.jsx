@@ -37,7 +37,7 @@ const debouncedSend = debounce(socket.send, 200)
 const Panel = () => {
 	const dispatch = useDispatch()
 
-	const { blackout, fps, camera, transform, filter, cameras, connected, active, show_clients, show_source, show_output, presence, cues, cue_index } = useSelector(selectApp)
+	const { blackout, fps, camera, transform, filter, cameras, connected, active, show_cuelist, show_source, show_output, presence, cues, cue_index } = useSelector(selectApp)
 
 	const { parameters, connections, active_connection_name } = presence
 
@@ -161,7 +161,7 @@ const Panel = () => {
 					>
 						<MdRefresh />
 					</button>
-					<button onClick={() => dispatch(setShowClients(show_clients ? false : true))}>
+					<button onClick={() => dispatch(setShowClients(show_cuelist ? false : true))}>
 						<MdReorder />
 					</button>
 					<Check name='show_source' value={show_source} onChange={onChange}>
@@ -212,7 +212,6 @@ const Panel = () => {
 								<textarea name='negative_prompt' value={parameters.negativePrompt} placeholder='Negative prompt' onChange={onText} />
 							</div>
 						</div>
-
 						<div className={styles.row} data-4>
 							<div className={styles.col}>
 								<label>Flip X</label>
@@ -234,27 +233,27 @@ const Panel = () => {
 						<div className={styles.row}>{[ranges[0], ranges[1]]}</div>
 						<div className={styles.row}>{[ranges[2], ranges[3]]}</div>
 						<div className={styles.row}>{[ranges[4], ranges[5]]}</div>
+						{connections.length ? (
+							<div className={styles.connections}>
+								{connections.map((c, i) => (
+									<div
+										key={i}
+										className={styles.connection}
+										data-name={c.name}
+										data-self={NAME === c.name || null}
+										data-active={c.name === active_connection_name || null}
+										onClick={onConnectionClick}
+									>
+										{c.name}
+										{NAME === c.name && ' (You)'}
+									</div>
+								))}
+							</div>
+						) : null}
 					</section>
-					{show_clients && (
+					{show_cuelist && (
 						<section>
 							{/* <div className={styles.heading}>Connections</div> */}
-							{connections.length ? (
-								<div className={styles.connections}>
-									{connections.map((c, i) => (
-										<div
-											key={i}
-											className={styles.connection}
-											data-name={c.name}
-											data-self={NAME === c.name || null}
-											data-active={c.name === active_connection_name || null}
-											onClick={onConnectionClick}
-										>
-											{c.name}
-											{NAME === c.name && ' (You)'}
-										</div>
-									))}
-								</div>
-							) : null}
 							<CueList />
 						</section>
 					)}

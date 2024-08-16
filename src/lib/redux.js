@@ -2,7 +2,7 @@ import { createSlice, configureStore, createSelector } from '@reduxjs/toolkit'
 // import { persistReducer, persistStore } from 'redux-persist'
 // import storage from 'redux-persist/lib/storage'
 import logger from './logger'
-import { WIDTH, HEIGHT, NAME, IS_CONTROL, FILTERS_SCHEMA } from './constants'
+import { WIDTH, HEIGHT, NAME, IS_CONTROL, FILTERS_SCHEMA, OFFLINE } from './constants'
 
 export const initialParameters = {
 	strength: 1,
@@ -25,9 +25,9 @@ export const initialState = {
 	},
 	// ui
 	show_panel: IS_CONTROL,
-	show_clients: true,
+	show_cuelist: true,
 	show_source: false,
-	show_output: false,
+	show_output: !OFFLINE,
 	// settings
 	camera: null,
 	fps: 16,
@@ -97,7 +97,7 @@ export const appSlice = createSlice({
 			s.show_panel = payload
 		},
 		setShowClients: (s, { payload }) => {
-			s.show_clients = payload
+			s.show_cuelist = payload
 		},
 		setProp: (s, { payload }) => {
 			const [k, v] = payload
@@ -181,7 +181,7 @@ export const selectCameras = s => s.app.cameras
 
 // ui
 
-export const selectShowClients = s => s.app.show_clients
+export const selectShowClients = s => s.app.show_cuelist
 
 export const selectShowPanel = s => s.app.show_panel
 
