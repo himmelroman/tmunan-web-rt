@@ -16,6 +16,7 @@
 	background-color: var(--deep-2);
 
 	font-family: "Roboto Mono", monospace;
+	font-weight: 300;
 	font-size: 13px;
 	letter-spacing: 1px;
 
@@ -45,7 +46,7 @@
 	}
 
 	textarea {
-		padding: 12px;
+		padding: 8px;
 		letter-spacing: 1px;
 	}
 
@@ -62,6 +63,10 @@
 		&[data-checked] {
 			color: #7c7;
 		}
+	}
+
+	[name="open"] {
+		font-size: 18px;
 	}
 
 	[name="blackout"] {

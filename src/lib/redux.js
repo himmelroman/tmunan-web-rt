@@ -1,6 +1,7 @@
 import { createSlice, configureStore, createSelector } from '@reduxjs/toolkit'
 // import { persistReducer, persistStore } from 'redux-persist'
 // import storage from 'redux-persist/lib/storage'
+import logger from './logger'
 import { WIDTH, HEIGHT, NAME, IS_CONTROL, FILTERS_SCHEMA } from './constants'
 
 export const initialParameters = {
@@ -41,6 +42,36 @@ export const initialState = {
 	cue_index: -1,
 }
 
+const localState = JSON.parse(localStorage.getItem(`${NAME}-state`))
+if (localState) {
+	console.log('LS restore', localState)
+	// Object.assign(initialState, localState)
+	const cue = localState.cues[localState.cue_index]
+	if (cue) {
+		initialState.cues = localState.cues
+		initialState.cue_index = localState.cue_index
+		const { camera, blackout, fps, filter, transform, parameters } = cue
+		initialState.camera = camera
+		initialState.blackout = blackout
+		initialState.fps = fps
+		initialState.filter = filter
+		initialState.transform = transform
+		initialState.presence.parameters = parameters
+	} else {
+		logger.warn('Cue error in LS', localState)
+	}
+}
+
+const saveLocal = s => {
+	localStorage.setItem(
+		`${NAME}-state`,
+		JSON.stringify({
+			cues: s.cues,
+			cue_index: s.cue_index,
+		})
+	)
+}
+
 export const appSlice = createSlice({
 	name: 'app',
 	initialState,
@@ -68,25 +99,12 @@ export const appSlice = createSlice({
 		setShowClients: (s, { payload }) => {
 			s.show_clients = payload
 		},
-		setShowSource: (s, { payload }) => {
-			s.show_source = payload
-		},
-		setShowOutput: (s, { payload }) => {
-			s.show_output = payload
-		},
 		setProp: (s, { payload }) => {
 			const [k, v] = payload
 			if ((!k) in s) return
 			s[k] = v
 		},
 		// settings
-		setCamera: (s, { payload }) => {
-			s.camera = payload
-		},
-		setFPS: (s, { payload }) => {
-			const fps = parseInt(payload)
-			s.fps = fps || initialState.fps
-		},
 		setFilter: (s, { payload }) => {
 			for (const [k, v] of Object.entries(payload)) {
 				if (v === null || v === (FILTERS_SCHEMA[k]?.default || 0)) delete s.filter[k]
@@ -105,13 +123,14 @@ export const appSlice = createSlice({
 			const { camera, blackout, fps, filter, transform } = s
 			const { parameters } = s.presence
 
-			const cue = s.cues.find(f => f.name === name)
+			let cue = s.cues.find(f => f.name === name)
 			if (!cue) {
 				s.cues.push({ name, camera, blackout, fps, filter, transform, parameters })
 				s.cue_index = s.cues.length - 1
 			} else {
 				Object.assign(cue, { camera, blackout, fps, filter, transform, parameters })
 			}
+			saveLocal(s)
 		},
 		removeCueAt: (s, { payload }) => {
 			s.cues.splice(payload, 1)
@@ -136,29 +155,23 @@ export const appSlice = createSlice({
 			s.blackout = blackout
 			s.cue_index = payload.index
 		},
+		openFile: (s, { payload }) => {
+			s.cues = payload.cues
+			s.cue_index = payload.index
+			// const { camera, fps, filter, transform, parameters, blackout } = payload.cues[payload.index]
+			// s.camera = camera
+			// s.fps = fps
+			// s.filter = filter
+			// s.transform = transform
+			// s.presence.parameters = parameters
+			// s.blackout = blackout
+			// s.cue_index = payload
+		},
 	},
 })
 
-export const {
-	saveCue,
-	loadCue,
-	setFilter,
-	setTransform,
-	clearCues,
-	removeCueAt,
-	setProp,
-	setCamera,
-	setCameras,
-	setConnected,
-	setFPS,
-	setCueIndex,
-	setPresence,
-	setShowClients,
-	setShowOutput,
-	setShowPanel,
-	setShowSource,
-	setParameters,
-} = appSlice.actions
+export const { saveCue, loadCue, setFilter, setTransform, clearCues, removeCueAt, setProp, setCameras, setConnected, setCueIndex, setPresence, setShowClients, setShowPanel, setParameters, openFile } =
+	appSlice.actions
 
 /* Selectors */
 

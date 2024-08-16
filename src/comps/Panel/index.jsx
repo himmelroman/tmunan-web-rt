@@ -4,14 +4,15 @@
  *
  */
 import { memo, useEffect } from 'react'
-import { MdClose, MdFullscreen, MdFullscreenExit, MdInput, MdOutput, MdRefresh, MdReorder } from 'react-icons/md'
+import { MdClose, MdFolderOpen, MdFullscreen, MdFullscreenExit, MdInput, MdOutlineFolderOpen, MdOutput, MdRefresh, MdReorder, MdSave } from 'react-icons/md'
+import { FaFolderOpen } from 'react-icons/fa6'
 import { useDispatch, useSelector } from 'react-redux'
 import FocusLock from 'react-focus-lock'
 
 // import { NAME } from '~/lib/constants'
 import { FILTER_LIST, NAME } from '~/lib/constants'
 import logger from '~/lib/logger'
-import { setFilter, selectApp, setTransform, setShowClients, setShowPanel, setProp, setParameters, initialParameters, initialState } from '~/lib/redux'
+import { setFilter, selectApp, setTransform, setShowClients, setShowPanel, setProp, setParameters, initialParameters, initialState, openFile } from '~/lib/redux'
 import socket from '~/lib/socket'
 import useClasses from '~/lib/useClasses'
 import Range from '../Range'
@@ -36,7 +37,7 @@ const debouncedSend = debounce(socket.send, 200)
 const Panel = () => {
 	const dispatch = useDispatch()
 
-	const { blackout, fps, camera, transform, filter, cameras, connected, active, show_clients, show_source, show_output, presence } = useSelector(selectApp)
+	const { blackout, fps, camera, transform, filter, cameras, connected, active, show_clients, show_source, show_output, presence, cues, cue_index } = useSelector(selectApp)
 
 	const { parameters, connections, active_connection_name } = presence
 
@@ -76,18 +77,46 @@ const Panel = () => {
 		dispatch(setShowPanel(false))
 	}
 
+	const onConnectionClick = e => {
+		const { name } = e.target.closest(`.${styles.connection}`).dataset
+		logger.info('set active name', name)
+		socket.send('set_active_name', { name })
+	}
+
+	const onOpen = () => {
+		const input = document.createElement('input')
+		input.type = 'file'
+		input.accept = '.json'
+		input.onchange = e => {
+			const file = e.target.files[0]
+			const reader = new FileReader()
+			reader.onload = e => {
+				const data = JSON.parse(e.target.result)
+				logger.info('open', data)
+				dispatch(openFile(data))
+			}
+			reader.readAsText(file)
+		}
+		input.click()
+	}
+
+	const onSave = () => {
+		const data = JSON.stringify({ cues, cue_index })
+		const blob = new Blob([data], { type: 'application/json' })
+		const url = URL.createObjectURL(blob)
+		const a = document.createElement('a')
+		a.href = url
+		a.download = 'cues.json'
+		a.click()
+		URL.revokeObjectURL(url)
+	}
+
 	useEffect(() => {
 		window.addEventListener('pointerdown', outsideClick)
 		return () => {
 			window.removeEventListener('pointerdown', outsideClick)
 		}
 	}, [])
-
-	const onConnectionClick = e => {
-		const { name } = e.target.closest(`.${styles.connection}`).dataset
-		logger.info('set active name', name)
-		socket.send('set_active_name', { name })
-	}
 
 	const cls = useClasses(styles.cont, connected && styles.connected, active && styles.active)
 
@@ -141,6 +170,12 @@ const Panel = () => {
 					<Check name='show_output' value={show_output} onChange={onChange}>
 						<MdOutput />
 					</Check>
+					<button name='open' onClick={onOpen}>
+						<FaFolderOpen />
+					</button>
+					<button onClick={onSave}>
+						<MdSave />
+					</button>
 					<div className={styles.right}>
 						<button onClick={() => dispatch(setShowPanel(false))}>
 							<MdClose />
