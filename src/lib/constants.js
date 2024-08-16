@@ -9,6 +9,8 @@ export const QUERY = Object.fromEntries(url.searchParams.entries())
 
 export const IS_CONTROL = 'control' in QUERY
 
+export const OFFLINE = 'offline' in QUERY
+
 export const PROTOCOL = QUERY.protocol || import.meta.env.VITE_PROTOCOL || 'https'
 
 export const HOST = QUERY.host || import.meta.env.VITE_HOST
@@ -33,44 +35,82 @@ export const CODES = {
 	NON_ACTIVE_PUBLISH: 'non_active_publish',
 }
 
+export const PARAMETERS_SCHEMA = {
+	strength: {
+		type: 'range',
+		min: 1,
+		max: 2.9,
+		step: 0.05,
+		default: 1,
+	},
+	guidance_scale: {
+		type: 'range',
+		min: 0,
+		max: 1,
+		step: 0.05,
+		default: 1,
+	},
+	seed: {
+		type: 'range',
+		min: 1,
+		max: 100,
+		step: 1,
+		default: 1,
+	},
+	prompt: {
+		type: 'textarea',
+		default: '',
+	},
+	negative_prompt: {
+		type: 'textarea',
+		default: '',
+	},
+}
+
 export const FILTERS_SCHEMA = {
 	brightness: {
-		default: 1,
+		type: 'range',
 		min: 0,
 		max: 4,
 		step: 0.1,
+		default: 1,
 	},
 	contrast: {
-		default: 1,
+		type: 'range',
 		min: 0,
 		max: 5,
 		step: 0.1,
+		default: 1,
 	},
 	'hue-rotate': {
-		label: 'hue',
-		default: 0,
+		type: 'range',
 		min: -180,
 		max: 180,
 		step: 1,
+		default: 0,
+		label: 'hue',
 	},
 	saturate: {
-		label: 'saturation',
-		default: 1,
+		type: 'range',
 		min: 0,
 		max: 10,
 		step: 0.1,
+		default: 1,
+		label: 'saturation',
 	},
 	sepia: {
+		type: 'range',
 		min: 0,
 		max: 1,
-		default: 0,
 		step: 0.1,
+		default: 0,
 	},
 	blur: {
-		default: 0,
+		type: 'range',
 		min: 0,
 		max: 30,
 		step: 1,
+		default: 0,
 	},
 }
 

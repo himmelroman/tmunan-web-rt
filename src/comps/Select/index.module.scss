@@ -9,6 +9,7 @@
 
 	--color: #000;
 	--background-color: #fff;
+	--focus-color: #f0f0f0;
 	--border: solid 1px #e0e0f0;
 
 	--selected-bg: #f0f0f0;
@@ -24,6 +25,13 @@
 	background-color: var(--background-color);
 
 	cursor: pointer;
+
+	&:focus-visible,
+	&:focus-within {
+		.open_button {
+			background-color: var(--focus-color);
+		}
+	}
 }
 
 .menu {

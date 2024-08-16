@@ -25,6 +25,7 @@ module.exports = {
 		],
 		'import/prefer-default-export': 0,
 		'no-constant-condition': 0,
+		'no-case-declarations': 0,
 		'no-extra-boolean-cast': 0,
 		'no-extra-semi': 0,
 		'no-mixed-spaces-and-tabs': 0,

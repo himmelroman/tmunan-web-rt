@@ -19,6 +19,13 @@
 	font-size: 13px;
 	letter-spacing: 1px;
 
+	> div {
+		display: flex;
+		flex-direction: column;
+		align-items: stretch;
+		flex: 1;
+	}
+
 	main {
 		flex: 1;
 		display: flex;
@@ -32,21 +39,14 @@
 		display: flex;
 		flex-direction: column;
 		align-items: stretch;
-		// &:not(:last-child) {
-		border-right: $border_2;
-		// }
+		&:not(:last-child) {
+			border-right: $border_2;
+		}
 	}
 
 	textarea {
 		padding: 12px;
 		letter-spacing: 1px;
-	}
-
-	button:has(svg),
-	[data-check] {
-		font-size: 20px;
-		background-color: transparent;
-		padding: 0px;
 	}
 
 	button:has(svg):hover {
@@ -64,10 +64,15 @@
 		}
 	}
 
+	[name="blackout"] {
+		--checked: #f88;
+	}
+
 	.select {
 		--line-width: 100%;
 		--line-height: 40px;
 		--background-color: var(--deep-3);
+		--focus-color: var(--deep-35);
 		--color: var(--deep-5);
 		--selected-bg: var(--deep-4);
 		--border: none;
@@ -120,15 +125,19 @@
 	display: flex;
 	flex-direction: row;
 	align-items: center;
-	gap: 25px;
+	gap: 20px;
 
-	padding: 15px 20px;
+	padding: 10px 15px;
+	border-bottom: $border;
 
 	span {
 		flex: 1;
 	}
 
-	border-bottom: $border;
+	button:has(svg),
+	[data-check] {
+		background-color: transparent;
+	}
 
 	.right {
 		display: flex;
@@ -144,12 +153,12 @@
 	display: grid;
 	flex-direction: row;
 	flex-wrap: wrap;
-	padding: 20px 15px;
+	padding: 15px 15px;
 	gap: 20px;
 
-	&:not(:last-child) {
-		border-bottom: $border;
-	}
+	// &:not(:last-child) {
+	border-bottom: $border;
+	// }
 
 	&[data-1] {
 		grid-template-columns: 1fr;
@@ -225,9 +234,6 @@
 	textarea {
 		height: 100%;
 		max-height: 120px;
-		&::placeholder {
-			color: var(--deep-4);
-		}
 	}
 
 	[name="negative_prompt"] {

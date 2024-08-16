@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { HEIGHT, WIDTH } from '~/lib/constants'
 import logger from '~/lib/logger'
 import socket from '~/lib/socket'
-import store, { selectApp, setShowSource, setShowPanel, setShowOutput, /* selectRunning, */ setShowClients, selectIsActive, selectFilterString, selectTransformString } from '~/lib/redux'
+import store, { selectApp, selectIsActive, selectFilterString, selectTransformString, setProp } from '~/lib/redux'
 import Panel from '../Panel'
 import styles from './index.module.scss'
 import useClasses from '~/lib/useClasses'
@@ -73,7 +73,7 @@ const onKeyDown = e => {
 	const s = store.getState()
 
 	if (e.code === 'Escape') {
-		if (s.app.show_panel) store.dispatch(setShowPanel(false))
+		if (s.app.show_panel) store.dispatch(setProp('show_panel', false))
 		return
 	}
 
@@ -81,16 +81,13 @@ const onKeyDown = e => {
 
 	switch (e.code) {
 		case 'KeyQ':
-			store.dispatch(setShowPanel(!s.app.show_panel))
+			store.dispatch(setProp(['show_panel', !s.app.show_panel]))
 			break
 		case 'KeyV':
-			store.dispatch(setShowSource(!s.app.show_source))
-			break
-		case 'KeyK':
-			store.dispatch(setShowClients(!s.app.show_clients))
+			store.dispatch(setProp(['show_source', !s.app.show_source]))
 			break
 		case 'KeyC':
-			store.dispatch(setShowOutput(!s.app.show_output))
+			store.dispatch(setProp(['show_output', !s.app.show_output]))
 			break
 		case 'KeyF':
 			document.fullscreenElement ? document.exitFullscreen() : document.querySelector('body').requestFullscreen()
@@ -112,7 +109,7 @@ const App = () => {
 
 	useDoubleClick({
 		onDoubleClick: () => {
-			if (!app.show_panel) dispatch(setShowPanel(true))
+			if (!app.show_panel) dispatch(setProp(['show_panel', true]))
 		},
 		ref,
 		latency: 180,
@@ -154,7 +151,8 @@ const App = () => {
 				const tracks = source_vid.srcObject.getTracks()
 				tracks.forEach(track => track.stop())
 				source_vid.srcObject = null
-				await sleep(0.65)
+				// fix for mobile devices
+				await sleep(0.6)
 			}
 
 			logger.info(`Getting camera stream...`)
@@ -189,15 +187,14 @@ const App = () => {
 		}
 
 		if (isActive) {
-			v_interval = setInterval(drawVideo, 1000 / app.fps)
 			logger.info('Starting stream')
+			v_interval = setInterval(drawVideo, 1000 / app.fps)
 			window.stream = canvas.captureStream(app.fps)
 			socket.replaceTrack(window.stream)
 		}
 	}, [isActive, app.fps])
 
 	useEffect(() => {
-		logger.info(`Filter > ${filterString}`)
 		source_vid.style.filter = filterString
 		ctx.filter = filterString
 	}, [filterString])

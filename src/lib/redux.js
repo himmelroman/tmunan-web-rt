@@ -13,26 +13,32 @@ export const initialParameters = {
 	height: HEIGHT,
 }
 
-const initialState = {
+export const initialState = {
+	// env
 	cameras: [],
 	connected: false,
-	camera: null,
-	fps: 6,
+	presence: {
+		active_connection_name: null,
+		parameters: initialParameters,
+		connections: [],
+	},
+	// ui
 	show_panel: IS_CONTROL,
 	show_clients: true,
-	show_source: true,
-	show_output: true,
+	show_source: false,
+	show_output: false,
+	// settings
+	camera: null,
+	fps: 16,
 	filter: {},
 	transform: {
 		flip_x: false,
 		flip_y: false,
 	},
-	presence: {
-		parameters: initialParameters,
-		connections: [],
-	},
-	frames: [],
-	frame_index: 0,
+	blackout: false,
+	// cues
+	cues: [],
+	cue_index: -1,
 }
 
 export const appSlice = createSlice({
@@ -68,7 +74,12 @@ export const appSlice = createSlice({
 		setShowOutput: (s, { payload }) => {
 			s.show_output = payload
 		},
-		// image
+		setProp: (s, { payload }) => {
+			const [k, v] = payload
+			if ((!k) in s) return
+			s[k] = v
+		},
+		// settings
 		setCamera: (s, { payload }) => {
 			s.camera = payload
 		},
@@ -85,65 +96,77 @@ export const appSlice = createSlice({
 		setTransform: (s, { payload }) => {
 			Object.assign(s.transform, payload)
 		},
-		// frames
-		addFrame: s => {
-			s.frames.push({ ...s.presence.parameters })
-			s.frame_index = s.frames.length - 1
+		setParameters: (s, { payload }) => {
+			console.log('setParameters', payload)
+			Object.assign(s.presence.parameters, payload)
 		},
-		saveFrame: s => {
-			s.frames[s.frame_index] = { ...s.presence.parameters }
-		},
-		removeFrame: (s, { payload }) => {
-			s.frames.splice(payload, 1)
-			if (s.frame_index >= s.frames.length) {
-				s.frame_index = s.frames.length - 1
+		// cues
+		saveCue: (s, { payload: name }) => {
+			const { camera, blackout, fps, filter, transform } = s
+			const { parameters } = s.presence
+
+			const cue = s.cues.find(f => f.name === name)
+			if (!cue) {
+				s.cues.push({ name, camera, blackout, fps, filter, transform, parameters })
+				s.cue_index = s.cues.length - 1
+			} else {
+				Object.assign(cue, { camera, blackout, fps, filter, transform, parameters })
 			}
 		},
-		clearFrames: s => {
-			s.frames = []
-			s.frame_index = -1
+		removeCueAt: (s, { payload }) => {
+			s.cues.splice(payload, 1)
+			if (s.cue_index >= s.cues.length) {
+				s.cue_index = s.cues.length - 1
+			}
 		},
-		setFrameIndex: (s, { payload }) => {
-			s.frame_index = payload
+		clearCues: s => {
+			s.cues = []
+			s.cue_index = -1
+		},
+		setCueIndex: (s, { payload }) => {
+			s.cue_index = payload
+		},
+		loadCue: (s, { payload }) => {
+			const { camera, fps, filter, transform, parameters, blackout } = payload.cue
+			s.camera = camera
+			s.fps = fps
+			s.filter = filter
+			s.transform = transform
+			s.presence.parameters = parameters
+			s.blackout = blackout
+			s.cue_index = payload.index
 		},
 	},
 })
 
 export const {
-	addFrame,
+	saveCue,
+	loadCue,
 	setFilter,
 	setTransform,
-	clearFrames,
-	removeFrame,
-	saveFrame,
-	setActive,
+	clearCues,
+	removeCueAt,
+	setProp,
 	setCamera,
 	setCameras,
 	setConnected,
 	setFPS,
-	setFrameIndex,
+	setCueIndex,
 	setPresence,
 	setShowClients,
 	setShowOutput,
 	setShowPanel,
 	setShowSource,
+	setParameters,
 } = appSlice.actions
 
 /* Selectors */
 
 export const selectApp = s => s.app
 
-export const selectPresence = s => s.app.presence
-
-export const selectCamera = s => s.app.camera
-
 export const selectCameras = s => s.app.cameras
 
-export const selectConnected = s => s.app.connected
-
-export const selectFPS = s => s.app.fps
-
-export const selectParameters = s => s.app.parameters
+// ui
 
 export const selectShowClients = s => s.app.show_clients
 
@@ -151,11 +174,17 @@ export const selectShowPanel = s => s.app.show_panel
 
 export const selectShowSource = s => s.app.show_source
 
-export const selectIsActive = createSelector(selectPresence, p => p.active_connection_name === NAME)
+// settings
 
-export const selectRunning = createSelector(selectConnected, selectIsActive, (connected, active) => connected && active)
+export const selectCamera = s => s.app.camera
 
-export const selectConnections = createSelector(selectPresence, p => p.connections)
+export const selectConnected = s => s.app.connected
+
+export const selectFPS = s => s.app.fps
+
+export const selectParameters = s => s.app.parameters
+
+export const selectIsBlackout = s => s.app.blackout
 
 export const selectFilter = s => s.app.filter
 
@@ -197,11 +226,63 @@ export const selectTransformString = createSelector(selectTransform, t => {
 		.join(' ')
 })
 
-export const selectFrames = s => s.app.frames
+// cues
 
-export const selectFrameIndex = s => s.app.frame_index
+export const selectCues = s => s.app.cues
 
-export const selectFrame = createSelector(selectFrames, selectFrameIndex, (frames, index) => (frames ? frames[index] : null))
+export const selectCueIndex = s => s.app.cue_index
+
+export const selectCurrentCue = createSelector(selectCues, selectCueIndex, (cues, index) => (cues ? cues[index] : null))
+
+export const selectCurrentState = createSelector(selectApp, app => {
+	const { camera, blackout, fps, filter, transform } = app
+	const { parameters } = app.presence
+	return { camera, blackout, fps, filter, transform, parameters }
+})
+
+export const selectCueChanged = createSelector(selectCurrentCue, selectCurrentState, (cue, state) => {
+	if (!cue) return false
+	const { camera, blackout, fps, filter, transform, parameters } = state
+	return (
+		cue.camera !== camera ||
+		cue.blackout !== blackout ||
+		cue.fps !== fps ||
+		JSON.stringify(cue.filter) !== JSON.stringify(filter) ||
+		JSON.stringify(cue.transform) !== JSON.stringify(transform) ||
+		JSON.stringify(cue.parameters) !== JSON.stringify(parameters)
+	)
+})
+
+// connection
+
+export const selectPresence = s => s.app.presence
+
+export const selectConnections = createSelector(selectPresence, p => p.connections)
+
+export const selectIsActive = createSelector(selectPresence, p => p.active_connection_name === NAME)
+
+export const selectIsRunning = createSelector(selectConnected, selectIsActive, selectIsBlackout, (connected, active, blackout) => connected && active && !blackout)
+
+/* Thunks */
+
+// export const loadCue = name => (dispatch, getState) => {
+// 	const s = getState().app
+// 	const cue = s.cues.find(f => f.name === name)
+// 	if (!cue) return
+// 	if (s.connected) {
+// 		socket.send('set_parameters', { ...cue.parameters, override: true })
+// 	}
+// 	dispatch(setCue(cue))
+// }
+
+// export const loadCue = index => (dispatch, getState) => {
+// 	const s = getState().app
+// 	const cue = s.cues[index]
+// 	if (!cue) return
+// 	s.cue_index = index
+// 	const { }
+// 	dispatch()
+// }
 
 /* Store */
 

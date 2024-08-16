@@ -15,7 +15,7 @@ const Range = ({ name, label, value, onChange, min = 0, max = 100, initial = 0, 
 	useDoubleClick({
 		onDoubleClick: e => {
 			e.preventDefault()
-			onChange?.(null, name)
+			onChange?.(initial, name)
 		},
 		ref: labelRef,
 	})

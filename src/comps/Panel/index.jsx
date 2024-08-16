@@ -3,14 +3,15 @@
  * Panel
  *
  */
-import { memo, useEffect, useState } from 'react'
+import { memo, useEffect } from 'react'
 import { MdClose, MdFullscreen, MdFullscreenExit, MdInput, MdOutput, MdRefresh, MdReorder } from 'react-icons/md'
 import { useDispatch, useSelector } from 'react-redux'
+import FocusLock from 'react-focus-lock'
 
 // import { NAME } from '~/lib/constants'
 import { FILTER_LIST, NAME } from '~/lib/constants'
 import logger from '~/lib/logger'
-import { setFilter, selectApp, setCamera, setTransform, setFPS, setShowClients, setShowOutput, setShowPanel, setShowSource } from '~/lib/redux'
+import { setFilter, selectApp, setTransform, setShowClients, setShowPanel, setProp, setParameters, initialParameters, initialState } from '~/lib/redux'
 import socket from '~/lib/socket'
 import useClasses from '~/lib/useClasses'
 import Range from '../Range'
@@ -18,6 +19,7 @@ import Select from '../Select'
 import Toggle from '../Toggle'
 import styles from './index.module.scss'
 import Check from '../Check'
+import CueList from '../CueList'
 
 function debounce(func, timeout = 300) {
 	let timer
@@ -29,50 +31,32 @@ function debounce(func, timeout = 300) {
 	}
 }
 
-const debouncedSend = debounce(socket.send, 500)
+const debouncedSend = debounce(socket.send, 200)
 
 const Panel = () => {
 	const dispatch = useDispatch()
 
-	const { fps, camera, transform, filter, cameras, connected, active, show_clients, show_source, show_output, presence } = useSelector(selectApp)
+	const { blackout, fps, camera, transform, filter, cameras, connected, active, show_clients, show_source, show_output, presence } = useSelector(selectApp)
 
 	const { parameters, connections, active_connection_name } = presence
 
-	const [prompt, setPrompt] = useState('')
-	const [negativePrompt, setNegativePrompt] = useState('')
+	// const [prompt, setPrompt] = useState('')
+	// const [negativePrompt, setNegativePrompt] = useState('')
 
-	const onNewChange = (value, name) => {
-		socket.send('set_parameters', { [name]: Number(value), override: true })
-	}
-
-	const onText = e => {
-		e.stopPropagation()
-		const { name, value } = e.target
-		if (name === 'prompt') setPrompt(value)
-		else setNegativePrompt(value)
-		localStorage.setItem(name, value)
+	const onParameter = (value, name) => {
+		dispatch(setParameters({ [name]: value }))
+		// socket.send('set_parameters', { [name]: Number(value), override: true })
 		if (connected) debouncedSend('set_parameters', { [name]: value, override: true })
 	}
 
-	useEffect(() => {
-		setPrompt(parameters.prompt)
-		setNegativePrompt(parameters.negative)
-	}, [parameters])
-
-	const onFPS = value => {
-		dispatch(setFPS(value))
+	const onText = e => {
+		const { name, value } = e.target
+		dispatch(setParameters({ [name]: value }))
+		if (connected) debouncedSend('set_parameters', { [name]: value, override: true })
 	}
 
-	const onCamera = value => {
-		dispatch(setCamera(value))
-	}
-
-	const onSource = value => {
-		dispatch(setShowSource(value))
-	}
-
-	const onOutput = value => {
-		dispatch(setShowOutput(value))
+	const onChange = (value, name) => {
+		dispatch(setProp([name, value]))
 	}
 
 	const onTransform = (value, name) => {
@@ -111,101 +95,136 @@ const Panel = () => {
 		<Range key={f.name} name={f.name} label={f.label} value={f.name in filter ? filter[f.name] : f.default} onChange={onFilterChange} min={f.min} max={f.max} step={f.step} initial={f.default} />
 	))
 
-	return (
-		<div className={cls}>
-			<div className={styles.header}>
-				<div className={styles.led} data-connected />
-				<button
-					className={styles.fullscreen}
-					onClick={() => {
-						document.fullscreenElement ? document.exitFullscreen() : document.querySelector('body').requestFullscreen()
-					}}
-				>
-					{document.fullscreenElement ? <MdFullscreenExit /> : <MdFullscreen />}
-				</button>
-				<button
-					onClick={() => {
-						window.location.reload()
-					}}
-				>
-					<MdRefresh />
-				</button>
-				<button onClick={() => dispatch(setShowClients(show_clients ? false : true))}>
-					<MdReorder />
-				</button>
-				<Check value={show_source} onChange={onSource}>
-					<MdInput />
-				</Check>
-				<Check value={show_output} onChange={onOutput}>
-					<MdOutput />
-				</Check>
-				<div className={styles.right}>
-					<button onClick={() => dispatch(setShowPanel(false))}>
-						<MdClose />
-					</button>
-				</div>
-			</div>
-			<main>
-				<section>
-					<div className={styles.row} data-1>
-						<div className={styles.col}>
-							<Select className={styles.select} name='camera' itemToString={a => window.cmap[a]} itemToValue={a => a} options={cameras} value={camera} onChange={onCamera} />
-						</div>
-					</div>
-					<div className={styles.row}>
-						<Range name='strength' label='Strength' value={parameters.strength} onChange={onNewChange} min={1} max={3} step={0.01} />
-						<Range name='guidance_scale' label='Guidance' value={parameters.guidance_scale} onChange={onNewChange} min={0} max={1} step={0.01} />
-					</div>
-					<div className={styles.row}>
-						<Range name='seed' label='Seed' value={parameters.seed} onChange={onNewChange} min={0} max={30} step={1} />
-						<Range name='fps' label='FPS' value={fps} onChange={onFPS} min={1} max={30} step={1} />
-					</div>
-					<div className={`${styles.row} ${styles.prompt}`} data-1>
-						<div className={styles.col}>
-							<textarea name='prompt' value={prompt} placeholder='Prompt' onChange={onText} />
-							<textarea name='negative_prompt' value={negativePrompt} placeholder='Negative prompt' onChange={onText} />
-						</div>
-					</div>
+	const onKeyDown = e => {
+		// return if target is textarea or input of type text
+		if (e.target.tagName === 'TEXTAREA' || (e.target.tagName === 'INPUT' && e.target.type === 'text')) return
+		switch (e.code) {
+			// case 'Escape':
+			// 	dispatch(setShowPanel(false))
+			// 	break
+			case 'KeyN':
+				e.preventDefault()
+				const name_input = document.getElementById('cue_name_input')
+				if (name_input) name_input.focus()
+				break
+			default:
+				break
+		}
+	}
 
-					<div className={styles.row} data-4>
-						<div className={styles.col}>
-							<label>Flip X</label>
-							<Toggle name='flip_x' value={transform.flip_x} onChange={onTransform} />
-						</div>
-						<div className={styles.col}>
-							<label>Flip Y</label>
-							<Toggle name='flip_y' value={transform.flip_y} onChange={onTransform} />
-						</div>
-						<div className={styles.col}>
-							<label>Invert</label>
-							<Toggle name='invert' value={filter.invert || 0} onChange={onInvert} />
-						</div>
+	return (
+		<div className={cls} onKeyDown={onKeyDown}>
+			<FocusLock>
+				<div className={styles.header}>
+					<div className={styles.led} data-connected />
+					<button
+						className={styles.fullscreen}
+						onClick={() => {
+							document.fullscreenElement ? document.exitFullscreen() : document.querySelector('body').requestFullscreen()
+						}}
+					>
+						{document.fullscreenElement ? <MdFullscreenExit /> : <MdFullscreen />}
+					</button>
+					<button
+						onClick={() => {
+							window.location.reload()
+						}}
+					>
+						<MdRefresh />
+					</button>
+					<button onClick={() => dispatch(setShowClients(show_clients ? false : true))}>
+						<MdReorder />
+					</button>
+					<Check name='show_source' value={show_source} onChange={onChange}>
+						<MdInput />
+					</Check>
+					<Check name='show_output' value={show_output} onChange={onChange}>
+						<MdOutput />
+					</Check>
+					<div className={styles.right}>
+						<button onClick={() => dispatch(setShowPanel(false))}>
+							<MdClose />
+						</button>
 					</div>
-					<div className={styles.row}>{[ranges[0], ranges[1]]}</div>
-					<div className={styles.row}>{[ranges[2], ranges[3]]}</div>
-					<div className={styles.row}>{[ranges[4], ranges[5]]}</div>
-				</section>
-				{show_clients && (
+				</div>
+				<main>
 					<section>
-						{/* <div className={styles.heading}>Connections</div> */}
-						<div className={styles.connections}>
-							{connections.map((c, i) => (
-								<div
-									key={i}
-									className={styles.connection}
-									data-name={c.name}
-									data-self={NAME === c.name || null}
-									data-active={c.name === active_connection_name || null}
-									onClick={onConnectionClick}
-								>
-									{c.name}
-									{NAME === c.name && ' (You)'}
-								</div>
-							))}
+						<div className={styles.row} data-1>
+							<div className={styles.col}>
+								<Select className={styles.select} name='camera' itemToString={a => window.cmap[a]} itemToValue={a => a} options={cameras} value={camera} onChange={onChange} />
+							</div>
 						</div>
+						<div className={styles.row}>
+							<Range name='strength' label='Strength' value={parameters.strength} onChange={onParameter} min={1} max={3} step={0.01} initial={initialParameters.strength} />
+							<Range
+								name='guidance_scale'
+								label='Guidance'
+								value={parameters.guidance_scale}
+								onChange={onParameter}
+								min={0}
+								max={1}
+								step={0.01}
+								initial={initialParameters.guidance_scale}
+							/>
+						</div>
+						<div className={styles.row}>
+							<Range name='seed' label='Seed' value={parameters.seed} onChange={onParameter} min={0} max={30} step={1} initial={initialParameters.seed} />
+							<Range name='fps' label='FPS' value={fps} onChange={onChange} min={1} max={30} step={1} initial={initialState.fps} />
+						</div>
+						<div className={`${styles.row} ${styles.prompt}`} data-1>
+							<div className={styles.col}>
+								<textarea name='prompt' value={parameters.prompt} placeholder='Prompt' onChange={onText} />
+								<textarea name='negative_prompt' value={parameters.negativePrompt} placeholder='Negative prompt' onChange={onText} />
+							</div>
+						</div>
+
+						<div className={styles.row} data-4>
+							<div className={styles.col}>
+								<label>Flip X</label>
+								<Toggle name='flip_x' value={transform.flip_x} onChange={onTransform} />
+							</div>
+							<div className={styles.col}>
+								<label>Flip Y</label>
+								<Toggle name='flip_y' value={transform.flip_y} onChange={onTransform} />
+							</div>
+							<div className={styles.col}>
+								<label>Invert</label>
+								<Toggle name='invert' value={filter.invert || 0} onChange={onInvert} />
+							</div>
+							<div className={styles.col}>
+								<label>Blackout</label>
+								<Toggle name='blackout' value={blackout} onChange={onChange} />
+							</div>
+						</div>
+						<div className={styles.row}>{[ranges[0], ranges[1]]}</div>
+						<div className={styles.row}>{[ranges[2], ranges[3]]}</div>
+						<div className={styles.row}>{[ranges[4], ranges[5]]}</div>
 					</section>
-				)}
-			</main>
+					{show_clients && (
+						<section>
+							{/* <div className={styles.heading}>Connections</div> */}
+							{connections.length ? (
+								<div className={styles.connections}>
+									{connections.map((c, i) => (
+										<div
+											key={i}
+											className={styles.connection}
+											data-name={c.name}
+											data-self={NAME === c.name || null}
+											data-active={c.name === active_connection_name || null}
+											onClick={onConnectionClick}
+										>
+											{c.name}
+											{NAME === c.name && ' (You)'}
+										</div>
+									))}
+								</div>
+							) : null}
+							<CueList />
+						</section>
+					)}
+				</main>
+			</FocusLock>
 		</div>
 	)
 }

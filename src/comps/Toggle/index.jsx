@@ -139,7 +139,7 @@ const Toggle = ({ name, onChange, value, className, disabled, style, ...props })
 	const cls = useClasses(styles.cont, className, disabled && styles.disabled, isDragging && styles.dragging, value && styles.checked)
 
 	return (
-		<div name={name} id={`toggle_${name}`} className={cls} style={style} data-input='boolean' data-toggle onClick={onClick} onMouseDown={noop}>
+		<div name={name} id={`toggle_${name}`} className={cls} style={style} data-input='boolean' data-toggle data-checked={value || undefined} onClick={onClick} onMouseDown={noop}>
 			<div className={styles.bg} data-el='bg' ref={bgRef}>
 				<div
 					className={styles.handle}

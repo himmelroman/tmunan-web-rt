@@ -40,7 +40,9 @@ export const reconnect = () => {
 	clearTimeout(rcTimeout)
 	dispatch(setConnected(false))
 
-	const RECONNECT_INTERVAL = parseInt(Math.min(Math.max(2, Math.pow(retries, 1.5)), 60))
+	let RECONNECT_INTERVAL = parseInt(Math.min(Math.max(2, Math.pow(retries, 1.5)), 60))
+	if (retries === 5) RECONNECT_INTERVAL += 15
+	else if (retries === 20) RECONNECT_INTERVAL += 30
 	logger.debug(`Reconnecting in ${RECONNECT_INTERVAL}s...`)
 
 	rcTimeout = setTimeout(connect, RECONNECT_INTERVAL * 1000)
@@ -105,9 +107,8 @@ export const connect = async () => {
 			)
 			.then(() => {
 				const offer = pc.localDescription
-
-				let query = `${BASE_URL}/offer?name=${NAME}`
-				if (getState().app.show_output) query += '&output=true'
+				// const { show_output } = getState().app
+				const query = `${BASE_URL}/offer?name=${NAME}&output=true`
 
 				logger.debug('Sending offer to', query)
 

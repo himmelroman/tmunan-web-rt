@@ -56,9 +56,7 @@ html {
 button {
 	// reset
 	appearance: none;
-	background-color: unset;
 	border: unset;
-	color: inherit;
 	line-height: inherit;
 	word-spacing: inherit;
 	text-shadow: inherit;
@@ -69,9 +67,12 @@ button {
 	display: flex;
 	justify-content: center;
 	align-items: center;
+	padding-block: 0;
+	padding-inline: 0;
 
 	// defaults
-	padding: 16px 20px;
+	padding: 6px;
+	font-size: 20px;
 	border-radius: 2px;
 
 	color: var(--deep-5);
@@ -90,6 +91,17 @@ button {
 	&:hover {
 		background-color: var(--deep-4);
 	}
+
+	&:focus {
+		outline: none;
+		background-color: var(--deep-21);
+	}
+
+	&[disabled] {
+		opacity: 0.5;
+		pointer-events: none;
+		color: var(--deep-4);
+	}
 }
 
 input[type="text"],
@@ -107,7 +119,6 @@ textarea {
 	cursor: text;
 	resize: none;
 
-	border-radius: 2px;
 	font-family: inherit;
 	font-size: inherit;
 
@@ -118,12 +129,17 @@ textarea {
 		background-color: var(--deep-35);
 	}
 
+	&::placeholder {
+		color: var(--deep-4);
+	}
+
 	&:focus {
 		outline: none;
 	}
 }
 
 textarea {
+	border-radius: 2px;
 	min-height: calc(4em + 24px);
 }
 
@@ -152,4 +168,8 @@ input[type="range"] {
 	&:focus {
 		outline: none;
 	}
+}
+
+*:focus {
+	outline: none;
 }
