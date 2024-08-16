@@ -4,7 +4,7 @@
  *
  */
 import { memo, useEffect } from 'react'
-import { MdClose, MdFolderOpen, MdFullscreen, MdFullscreenExit, MdInput, MdOutlineFolderOpen, MdOutput, MdRefresh, MdReorder, MdSave } from 'react-icons/md'
+import { MdClose, MdFullscreen, MdFullscreenExit, MdInput, MdOutput, MdRefresh, MdReorder, MdSave } from 'react-icons/md'
 import { FaFolderOpen } from 'react-icons/fa6'
 import { useDispatch, useSelector } from 'react-redux'
 import FocusLock from 'react-focus-lock'
@@ -106,7 +106,7 @@ const Panel = () => {
 		const url = URL.createObjectURL(blob)
 		const a = document.createElement('a')
 		a.href = url
-		a.download = 'cues.json'
+		a.download = `tmunan_${NAME}.json`
 		a.click()
 		URL.revokeObjectURL(url)
 	}
