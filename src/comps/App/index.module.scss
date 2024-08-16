@@ -7,7 +7,7 @@
 @import "@/variables";
 
 .cont {
-	width: 100dvw;
+	width: calc(100dvw - 2px);
 	height: 100dvh;
 
 	display: flex;
@@ -19,11 +19,17 @@
 		.source {
 			display: block;
 		}
+		.output {
+			max-width: calc(50% - 5px);
+		}
 	}
 
 	&.show_output {
 		.output {
 			display: block;
+		}
+		.source {
+			max-width: calc(50% - 5px);
 		}
 	}
 
@@ -34,29 +40,47 @@
 		}
 	}
 
-	&.flipped {
-		.source,
-		.output {
-			transform: scaleX(-1);
+	&.show_panel {
+		.view {
+			background-color: var(--deep-0);
+			padding: 10px;
+			gap: 10px;
 		}
 	}
+	// flex-direction: column;
+
+	// .video {
+	// object-fit: contain;
+	// max-height: calc(50dvh - 15px);
+	// max-height: 50dvh;
+	// max-width: 50%;
+	// 		}
+	// 	}
+	// }
 }
 
-.source {
+.view {
 	flex: 1;
-	min-width: 50dvh;
-	min-height: 50dvh;
-	object-fit: cover;
-	display: none;
+	display: flex;
+	align-items: stretch;
+	overflow: hidden;
+
+	box-sizing: border-box;
 }
 
-.output {
+.video {
 	flex: 1;
-	min-width: 50dvh;
-	min-height: 50dvh;
 	object-fit: cover;
 	display: none;
+	max-width: 100%;
+	max-height: 100%;
 }
+
+// .output {
+// 	flex: 1;
+// 	object-fit: cover;
+// 	display: none;
+// }
 
 // .image {
 // 	flex: 1;

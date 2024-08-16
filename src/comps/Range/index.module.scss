@@ -60,6 +60,11 @@ input.text {
 		cursor: pointer;
 		// margin-top: -5px;
 		margin-top: calc(var(--handle-height) / -2 + var(--track-height) / 2);
+		border: solid 2px var(--deep-35);
+	}
+
+	&:hover::-webkit-slider-thumb {
+		border-color: var(--deep-4);
 	}
 
 	&::-webkit-slider-runnable-track {

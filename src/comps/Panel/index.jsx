@@ -10,9 +10,9 @@ import { useDispatch, useSelector } from 'react-redux'
 import FocusLock from 'react-focus-lock'
 
 // import { NAME } from '~/lib/constants'
-import { FILTER_LIST, NAME } from '~/lib/constants'
+import { FILTER_LIST, NAME, VERSION } from '~/lib/constants'
 import logger from '~/lib/logger'
-import { setFilter, selectApp, setTransform, setShowClients, setShowPanel, setProp, setParameters, initialParameters, initialState, openFile } from '~/lib/redux'
+import { setFilter, selectApp, setTransform, setShowCueList, setShowPanel, setProp, setParameters, initialParameters, initialState, openFile, loadCue } from '~/lib/redux'
 import socket from '~/lib/socket'
 import useClasses from '~/lib/useClasses'
 import Range from '../Range'
@@ -125,16 +125,24 @@ const Panel = () => {
 	))
 
 	const onKeyDown = e => {
+		console.log('keydown', e.key)
 		// return if target is textarea or input of type text
 		if (e.target.tagName === 'TEXTAREA' || (e.target.tagName === 'INPUT' && e.target.type === 'text')) return
 		switch (e.code) {
-			// case 'Escape':
-			// 	dispatch(setShowPanel(false))
-			// 	break
+			case 'Enter':
+				e.preventDefault()
+				const index = cue_index + 1
+				const cue = cues[index]
+				if (cues[index]) dispatch(loadCue({ cue, index }))
+				break
 			case 'KeyN':
 				e.preventDefault()
 				const name_input = document.getElementById('cue_name_input')
 				if (name_input) name_input.focus()
+				break
+			case 'KeyC':
+				e.preventDefault()
+				dispatch(setShowCueList(show_cuelist ? false : true))
 				break
 			default:
 				break
@@ -142,10 +150,24 @@ const Panel = () => {
 	}
 
 	return (
-		<div className={cls} onKeyDown={onKeyDown}>
-			<FocusLock>
+		<FocusLock className={styles.lock}>
+			<div className={cls} onKeyDown={onKeyDown} tabIndex={0}>
 				<div className={styles.header}>
 					<div className={styles.led} data-connected />
+					<button
+						name='reload'
+						onDoubleClick={() => {
+							window.location.reload()
+						}}
+					>
+						<MdRefresh />
+					</button>
+					<Check name='show_source' value={show_source} onChange={onChange}>
+						<MdInput />
+					</Check>
+					<Check name='show_output' value={show_output} onChange={onChange}>
+						<MdOutput />
+					</Check>
 					<button
 						className={styles.fullscreen}
 						onClick={() => {
@@ -154,28 +176,20 @@ const Panel = () => {
 					>
 						{document.fullscreenElement ? <MdFullscreenExit /> : <MdFullscreen />}
 					</button>
-					<button
-						onClick={() => {
-							window.location.reload()
-						}}
-					>
-						<MdRefresh />
-					</button>
-					<button onClick={() => dispatch(setShowClients(show_cuelist ? false : true))}>
+					<div className={styles.sep}>/</div>
+					<button onClick={() => dispatch(setShowCueList(show_cuelist ? false : true))}>
 						<MdReorder />
 					</button>
-					<Check name='show_source' value={show_source} onChange={onChange}>
-						<MdInput />
-					</Check>
-					<Check name='show_output' value={show_output} onChange={onChange}>
-						<MdOutput />
-					</Check>
-					<button name='open' onClick={onOpen}>
-						<FaFolderOpen />
-					</button>
-					<button onClick={onSave}>
-						<MdSave />
-					</button>
+					{show_cuelist && (
+						<>
+							<button name='open' onClick={onOpen}>
+								<FaFolderOpen />
+							</button>
+							<button name='save' onClick={onSave}>
+								<MdSave />
+							</button>
+						</>
+					)}
 					<div className={styles.right}>
 						<button onClick={() => dispatch(setShowPanel(false))}>
 							<MdClose />
@@ -258,8 +272,9 @@ const Panel = () => {
 						</section>
 					)}
 				</main>
-			</FocusLock>
-		</div>
+				<div className={styles.version}>{VERSION}</div>
+			</div>
+		</FocusLock>
 	)
 }
 

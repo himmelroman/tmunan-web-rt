@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { HEIGHT, WIDTH } from '~/lib/constants'
 import logger from '~/lib/logger'
 import socket from '~/lib/socket'
-import store, { selectApp, selectIsActive, selectFilterString, selectTransformString, setProp } from '~/lib/redux'
+import store, { selectApp, /* selectIsActive, */ selectFilterString, selectTransformString, setProp, selectIsRunning } from '~/lib/redux'
 import Panel from '../Panel'
 import styles from './index.module.scss'
 import useClasses from '~/lib/useClasses'
@@ -70,10 +70,10 @@ async function drawVideo() {
 // }
 
 const onKeyDown = e => {
-	const s = store.getState()
+	const s = store.getState().app
 
 	if (e.code === 'Escape') {
-		if (s.app.show_panel) store.dispatch(setProp('show_panel', false))
+		if (s.show_panel) store.dispatch(setProp('show_panel', false))
 		return
 	}
 
@@ -81,13 +81,16 @@ const onKeyDown = e => {
 
 	switch (e.code) {
 		case 'KeyQ':
-			store.dispatch(setProp(['show_panel', !s.app.show_panel]))
+			store.dispatch(setProp(['show_panel', !s.show_panel]))
 			break
 		case 'KeyV':
-			store.dispatch(setProp(['show_source', !s.app.show_source]))
+			store.dispatch(setProp(['show_source', !s.show_source]))
 			break
 		case 'KeyC':
-			store.dispatch(setProp(['show_output', !s.app.show_output]))
+			store.dispatch(setProp(['show_output', !s.show_output]))
+			break
+		case 'KeyB':
+			store.dispatch(setProp(['blackout', s.blackout ? 0 : 1]))
 			break
 		case 'KeyF':
 			document.fullscreenElement ? document.exitFullscreen() : document.querySelector('body').requestFullscreen()
@@ -103,7 +106,8 @@ const App = () => {
 
 	const dispatch = useDispatch()
 	const app = useSelector(selectApp)
-	const isActive = useSelector(selectIsActive)
+	// const isActive = useSelector(selectIsActive)
+	const isRunning = useSelector(selectIsRunning)
 	const filterString = useSelector(selectFilterString)
 	const transformString = useSelector(selectTransformString)
 
@@ -177,7 +181,7 @@ const App = () => {
 	}, [app.camera])
 
 	useEffect(() => {
-		logger.info(`isActive > ${isActive ? chalk.greenBright('True') : chalk.redBright('False')}`)
+		logger.info(`isRunning > ${isRunning ? chalk.greenBright('True') : chalk.redBright('False')}`)
 		clearInterval(v_interval)
 		if (window.stream) {
 			logger.info('Stopping stream')
@@ -186,13 +190,13 @@ const App = () => {
 			window.stream = null
 		}
 
-		if (isActive) {
+		if (isRunning) {
 			logger.info('Starting stream')
 			v_interval = setInterval(drawVideo, 1000 / app.fps)
 			window.stream = canvas.captureStream(app.fps)
 			socket.replaceTrack(window.stream)
 		}
-	}, [isActive, app.fps])
+	}, [isRunning, app.fps])
 
 	useEffect(() => {
 		source_vid.style.filter = filterString
@@ -235,29 +239,31 @@ const App = () => {
 	// 	}
 	// }, [app.fps, running])
 
-	const cls = useClasses(styles.cont, app.show_panel && styles.panel, app.show_source && styles.show_source, app.show_output && styles.show_output)
+	const cls = useClasses(styles.cont, app.show_panel && styles.show_panel, app.show_source && styles.show_source, app.show_output && styles.show_output)
 
 	return (
 		<div className={cls} ref={ref}>
 			{app.show_panel && <Panel />}
-			<video
-				id='source'
-				autoPlay
-				className={styles.source}
-				ref={r => {
-					source_vid = r
-					window.source_vid = r
-				}}
-			/>
-			<video
-				id='output'
-				autoPlay
-				className={styles.output}
-				ref={r => {
-					output_vid = r
-					window.output_vid = r
-				}}
-			/>
+			<div className={styles.view}>
+				<video
+					id='source'
+					autoPlay
+					className={`${styles.video} ${styles.source}`}
+					ref={r => {
+						source_vid = r
+						window.source_vid = r
+					}}
+				/>
+				<video
+					id='output'
+					autoPlay
+					className={`${styles.video} ${styles.output}`}
+					ref={r => {
+						output_vid = r
+						window.output_vid = r
+					}}
+				/>
+			</div>
 		</div>
 	)
 }

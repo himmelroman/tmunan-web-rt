@@ -96,7 +96,7 @@ export const appSlice = createSlice({
 		setShowPanel: (s, { payload }) => {
 			s.show_panel = payload
 		},
-		setShowClients: (s, { payload }) => {
+		setShowCueList: (s, { payload }) => {
 			s.show_cuelist = payload
 		},
 		setProp: (s, { payload }) => {
@@ -119,14 +119,15 @@ export const appSlice = createSlice({
 			Object.assign(s.presence.parameters, payload)
 		},
 		// cues
-		saveCue: (s, { payload: name }) => {
+		saveCue: (s, { payload }) => {
+			const { name, index } = payload
 			const { camera, blackout, fps, filter, transform } = s
 			const { parameters } = s.presence
 
 			let cue = s.cues.find(f => f.name === name)
 			if (!cue) {
-				s.cues.push({ name, camera, blackout, fps, filter, transform, parameters })
-				s.cue_index = s.cues.length - 1
+				s.cues.splice(index, 0, { name, camera, blackout, fps, filter, transform, parameters })
+				s.cue_index = index
 			} else {
 				Object.assign(cue, { camera, blackout, fps, filter, transform, parameters })
 			}
@@ -134,13 +135,15 @@ export const appSlice = createSlice({
 		},
 		removeCueAt: (s, { payload }) => {
 			s.cues.splice(payload, 1)
-			if (s.cue_index >= s.cues.length) {
-				s.cue_index = s.cues.length - 1
+			if (s.cue_index <= payload) {
+				s.cue_index = -1
 			}
+			saveLocal(s)
 		},
 		clearCues: s => {
 			s.cues = []
 			s.cue_index = -1
+			saveLocal(s)
 		},
 		setCueIndex: (s, { payload }) => {
 			s.cue_index = payload
@@ -170,7 +173,7 @@ export const appSlice = createSlice({
 	},
 })
 
-export const { saveCue, loadCue, setFilter, setTransform, clearCues, removeCueAt, setProp, setCameras, setConnected, setCueIndex, setPresence, setShowClients, setShowPanel, setParameters, openFile } =
+export const { saveCue, loadCue, setFilter, setTransform, clearCues, removeCueAt, setProp, setCameras, setConnected, setCueIndex, setPresence, setShowCueList, setShowPanel, setParameters, openFile } =
 	appSlice.actions
 
 /* Selectors */

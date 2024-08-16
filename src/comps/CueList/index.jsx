@@ -28,7 +28,7 @@ const CueList = () => {
 	const changed = useSelector(selectCueChanged)
 
 	const onAddSave = () => {
-		dispatch(saveCue(inputValue || `Cue ${cues.length + 1}`))
+		dispatch(saveCue({ name: inputValue || `Cue ${cues.length + 1}`, index: existingCue ? index + 1 : cues.length }))
 	}
 
 	const onListClick = e => {
