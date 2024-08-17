@@ -21,8 +21,11 @@
 	color: var(--deep-5);
 	background-color: var(--deep-2);
 
-	font-family: "Roboto Mono", monospace;
-	font-weight: 300;
+	// font-family: "Roboto Mono", monospace;
+	font-family: "Open Sans", sans-serif;
+	font-optical-sizing: auto;
+	font-weight: 350;
+	font-variation-settings: "wdth" 100;
 	font-size: 13px;
 	letter-spacing: 1px;
 
@@ -116,7 +119,7 @@
 		font-size: 18px;
 	}
 
-	[name="blackout"] {
+	[name="freeze"] {
 		--checked: #f66;
 	}
 
@@ -126,7 +129,7 @@
 		--background-color: var(--deep-3);
 		--focus-color: var(--deep-35);
 		--color: var(--deep-5);
-		--selected-bg: var(--deep-4);
+		--selected-bg: var(--deep-35);
 		--border: none;
 
 		font-size: inherit;
@@ -271,16 +274,13 @@
 }
 
 .connections {
-	flex-shrink: 1;
 	display: flex;
 	flex-direction: column;
 	align-items: stretch;
-	// padding: 5px 0;
-
-	// border-bottom: $border;
-
 	overflow-y: scroll;
-	// height: 100px;
+
+	background-color: var(--deep-1);
+	flex: 1;
 }
 
 .connection {

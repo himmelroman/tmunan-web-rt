@@ -108,18 +108,3 @@
 
 	transition: all 0.2s;
 }
-
-.log {
-	position: absolute;
-	top: 0;
-	left: 0;
-	right: 0;
-	bottom: 0;
-	overflow-y: scroll;
-
-	padding: 5px;
-
-	font-family: "Courier New", Courier, monospace;
-	line-height: 1.25em;
-	white-space: pre-wrap;
-}

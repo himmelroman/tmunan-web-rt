@@ -3,34 +3,35 @@
  * Panel
  *
  */
+import debounce from 'debounce'
 import { memo, useEffect } from 'react'
-import { MdClose, MdFullscreen, MdFullscreenExit, MdInput, MdOutput, MdRefresh, MdReorder, MdSave } from 'react-icons/md'
-import { FaFolderOpen } from 'react-icons/fa6'
-import { useDispatch, useSelector } from 'react-redux'
 import FocusLock from 'react-focus-lock'
+import { FaFolderOpen } from 'react-icons/fa6'
+import { MdClose, MdFullscreen, MdFullscreenExit, MdInput, MdOutput, MdRefresh, MdReorder, MdSave } from 'react-icons/md'
+import { useDispatch, useSelector } from 'react-redux'
 
 // import { NAME } from '~/lib/constants'
 import { FILTER_LIST, NAME, VERSION } from '~/lib/constants'
 import logger from '~/lib/logger'
-import { setFilter, selectApp, setTransform, setShowCueList, setShowPanel, setProp, setParameters, initialParameters, initialState, openFile, loadCue } from '~/lib/redux'
+import { initialParameters, initialState, loadCue, openFile, selectApp, setFilter, setParameters, setProp, setShowCueList, setShowPanel, setTransform } from '~/lib/redux'
 import socket from '~/lib/socket'
 import useClasses from '~/lib/useClasses'
+import Check from '../Check'
+import CueList from '../CueList'
 import Range from '../Range'
 import Select from '../Select'
 import Toggle from '../Toggle'
 import styles from './index.module.scss'
-import Check from '../Check'
-import CueList from '../CueList'
 
-function debounce(func, timeout = 500) {
-	let timer
-	return (...args) => {
-		clearTimeout(timer)
-		timer = setTimeout(() => {
-			func.apply(this, args)
-		}, timeout)
-	}
-}
+// function debounce(func, timeout = 500) {
+// 	let timer
+// 	return (...args) => {
+// 		clearTimeout(timer)
+// 		timer = setTimeout(() => {
+// 			func.apply(this, args)
+// 		}, timeout)
+// 	}
+// }
 
 const debouncedSend = debounce(socket.send, 200)
 
@@ -39,7 +40,7 @@ const debouncedText = debounce(socket.send, 500)
 const Panel = () => {
 	const dispatch = useDispatch()
 
-	const { blackout, fps, camera, transform, filter, cameras, connected, active, show_cuelist, show_source, show_output, presence, cues, cue_index } = useSelector(selectApp)
+	const { freeze, fps, camera, transform, filter, cameras, connected, active, show_cuelist, show_source, show_output, presence, cues, cue_index } = useSelector(selectApp)
 
 	const { parameters, connections, active_connection_name } = presence
 
@@ -127,10 +128,10 @@ const Panel = () => {
 	))
 
 	const onKeyDown = e => {
-		console.log('keydown', e.key)
-		// return if target is textarea or input of type text
+		// console.log('keydown', e.key)
 		if (e.target.tagName === 'TEXTAREA' || (e.target.tagName === 'INPUT' && e.target.type === 'text')) return
-		switch (e.code) {
+		const { code, shiftKey, ctrlKey } = e
+		switch (code) {
 			case 'Enter':
 				e.preventDefault()
 				const index = cue_index + 1
@@ -140,7 +141,8 @@ const Panel = () => {
 			case 'KeyN':
 				e.preventDefault()
 				const name_input = document.getElementById('cue_name_input')
-				if (name_input) name_input.focus()
+				name_input.focus()
+				// if (ctrlKey) {}
 				break
 			case 'KeyC':
 				e.preventDefault()
@@ -242,8 +244,8 @@ const Panel = () => {
 								<Toggle name='invert' value={filter.invert || 0} onChange={onInvert} />
 							</div>
 							<div className={styles.col}>
-								<label>Blackout</label>
-								<Toggle name='blackout' value={blackout} onChange={onChange} />
+								<label>Stop</label>
+								<Toggle name='freeze' value={freeze} onChange={onChange} />
 							</div>
 						</div>
 						<div className={styles.row}>{[ranges[0], ranges[1]]}</div>

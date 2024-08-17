@@ -2,9 +2,9 @@
 
 .cont {
 	--width: 32px;
-	--height: 16px;
-	--handle-height: 14px;
-	--bar-height: 4px;
+	--height: 10px;
+	--handle-height: 10px;
+	--bar-height: 10px;
 	--checked: var(--accent-0);
 
 	position: relative;
@@ -12,7 +12,6 @@
 
 	width: var(--width);
 	height: var(--height);
-	border-radius: calc(var(--bar-height) / 2);
 
 	text-align: left;
 	direction: ltr;
@@ -49,13 +48,15 @@
 
 .bg {
 	position: absolute;
-	top: calc((var(--height) - var(--bar-height)) / 2);
 	width: var(--width);
 	height: var(--bar-height);
-	border-radius: calc(var(--bar-height) / 2);
+
+	box-sizing: content-box;
+	border: solid 6px var(--deep-2);
+	top: calc((var(--height) - var(--bar-height)) / 2 - 6px);
+	left: -6px;
 
 	background-color: var(--deep-3);
-
 	transition: background-color 0.25s;
 	cursor: pointer;
 }
@@ -85,11 +86,11 @@
 	width: var(--handle-height);
 	transform: translate(-50%, -50%);
 
-	border-radius: 50%;
+	// border-radius: 50%;
 	background-color: var(--deep-5);
 
 	transition: all 0.2s;
 
-	box-sizing: border-box;
-	border: solid 2px var(--deep-35);
+	// box-sizing: content-box;
+	// border: solid 4px var(--deep-4);
 }

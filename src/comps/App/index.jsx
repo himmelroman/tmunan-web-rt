@@ -1,16 +1,17 @@
+import chalk from 'chalk'
+import gsap from 'gsap'
 import { memo, useEffect, useRef } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
 import useDoubleClick from 'use-double-click'
 
-import { useDispatch, useSelector } from 'react-redux'
 import { HEIGHT, WIDTH } from '~/lib/constants'
 import logger from '~/lib/logger'
+import store, { selectApp, selectFilter, /* selectIsActive, */ selectFilterString, selectIsRunning, selectTransformString, setProp } from '~/lib/redux'
 import socket from '~/lib/socket'
-import store, { selectApp, /* selectIsActive, */ selectFilterString, selectTransformString, setProp, selectIsRunning } from '~/lib/redux'
+import useClasses from '~/lib/useClasses'
 import Panel from '../Panel'
 import styles from './index.module.scss'
-import useClasses from '~/lib/useClasses'
 // import sleep from '~/lib/sleep'
-import chalk from 'chalk'
 import sleep from '~/lib/sleep'
 
 // const THROTTLE = 1000 / 30
@@ -90,7 +91,7 @@ const onKeyDown = e => {
 			store.dispatch(setProp(['show_output', !s.show_output]))
 			break
 		case 'KeyB':
-			store.dispatch(setProp(['blackout', s.blackout ? 0 : 1]))
+			store.dispatch(setProp(['freeze', s.freeze ? 0 : 1]))
 			break
 		case 'KeyF':
 			document.fullscreenElement ? document.exitFullscreen() : document.querySelector('body').requestFullscreen()
@@ -108,6 +109,7 @@ const App = () => {
 	const app = useSelector(selectApp)
 	// const isActive = useSelector(selectIsActive)
 	const isRunning = useSelector(selectIsRunning)
+	// const filter = useSelector(selectFilter)
 	const filterString = useSelector(selectFilterString)
 	const transformString = useSelector(selectTransformString)
 
@@ -175,7 +177,13 @@ const App = () => {
 			camera_busy = false
 			source_vid.srcObject = stream
 
-			logger.info('Got camera stream', stream)
+			logger.info('Got camera stream')
+
+			const track = stream.getVideoTracks()[0]
+			const capabilities = track.getCapabilities()
+			logger.info('Capabilities', JSON.parse(JSON.stringify(capabilities)))
+			const settings = track.getSettings()
+			logger.info('Settings', JSON.parse(JSON.stringify(settings)))
 		}
 		getCamera()
 	}, [app.camera])
@@ -200,7 +208,8 @@ const App = () => {
 
 	useEffect(() => {
 		source_vid.style.filter = filterString
-		ctx.filter = filterString
+		// ctx.filter = filterString
+		gsap.to(ctx, { duration: 0.5, filter: filterString })
 	}, [filterString])
 
 	useEffect(() => {

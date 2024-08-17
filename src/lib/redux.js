@@ -14,6 +14,8 @@ export const initialParameters = {
 	height: HEIGHT,
 }
 
+// export const CAMERA_PROPS = ['brightness', 'colorTemperature', 'contrast', 'exposureTime', 'exposureCompensation', 'exposureMode', 'focusDistance', 'focusMode', 'frameRate', 'saturation', 'sharpness']
+
 export const initialState = {
 	// env
 	cameras: [],
@@ -28,15 +30,17 @@ export const initialState = {
 	show_cuelist: true,
 	show_source: false,
 	show_output: !OFFLINE,
+	// exp
+	camera_settings: null,
 	// settings
 	camera: null,
-	fps: 16,
+	// fps: 16,
 	filter: {},
 	transform: {
 		flip_x: false,
 		flip_y: false,
 	},
-	blackout: false,
+	freeze: false,
 	// cues
 	cues: [],
 	cue_index: -1,
@@ -50,9 +54,9 @@ if (localState) {
 	if (cue) {
 		initialState.cues = localState.cues
 		initialState.cue_index = localState.cue_index
-		const { camera, blackout, fps, filter, transform, parameters } = cue
+		const { camera, freeze, fps, filter, transform, parameters } = cue
 		initialState.camera = camera
-		initialState.blackout = blackout
+		initialState.freeze = freeze
 		initialState.fps = fps
 		initialState.filter = filter
 		initialState.transform = transform
@@ -121,15 +125,15 @@ export const appSlice = createSlice({
 		// cues
 		saveCue: (s, { payload }) => {
 			const { name, index } = payload
-			const { camera, blackout, fps, filter, transform } = s
+			const { camera, freeze, fps, filter, transform } = s
 			const { parameters } = s.presence
 
 			let cue = s.cues.find(f => f.name === name)
 			if (!cue) {
-				s.cues.splice(index, 0, { name, camera, blackout, fps, filter, transform, parameters })
+				s.cues.splice(index, 0, { name, camera, freeze, fps, filter, transform, parameters })
 				s.cue_index = index
 			} else {
-				Object.assign(cue, { camera, blackout, fps, filter, transform, parameters })
+				Object.assign(cue, { camera, freeze, fps, filter, transform, parameters })
 			}
 			saveLocal(s)
 		},
@@ -149,27 +153,26 @@ export const appSlice = createSlice({
 			s.cue_index = payload
 		},
 		loadCue: (s, { payload }) => {
-			const { camera, fps, filter, transform, parameters, blackout } = payload.cue
+			const { camera, fps, filter, transform, parameters, freeze } = payload.cue
 			s.camera = camera
 			s.fps = fps
 			s.filter = filter
 			s.transform = transform
 			s.presence.parameters = parameters
-			s.blackout = blackout
+			s.freeze = freeze
 			s.cue_index = payload.index
 		},
 		openFile: (s, { payload }) => {
 			s.cues = payload.cues
 			s.cue_index = payload.index
-			// const { camera, fps, filter, transform, parameters, blackout } = payload.cues[payload.index]
-			// s.camera = camera
-			// s.fps = fps
-			// s.filter = filter
-			// s.transform = transform
-			// s.presence.parameters = parameters
-			// s.blackout = blackout
-			// s.cue_index = payload
 		},
+		// setCameraSettings: (s, { payload }) => {
+		// 	CAMERA_PROPS.forEach(k => {
+		// 		if (k in payload) {
+		// 			s.camera_settings[k] = payload[k]
+		// 		}
+		// 	}
+		// },
 	},
 })
 
@@ -200,7 +203,7 @@ export const selectFPS = s => s.app.fps
 
 export const selectParameters = s => s.app.parameters
 
-export const selectIsBlackout = s => s.app.blackout
+export const selectIsBlackout = s => s.app.freeze
 
 export const selectFilter = s => s.app.filter
 
@@ -251,17 +254,17 @@ export const selectCueIndex = s => s.app.cue_index
 export const selectCurrentCue = createSelector(selectCues, selectCueIndex, (cues, index) => (cues ? cues[index] : null))
 
 export const selectCurrentState = createSelector(selectApp, app => {
-	const { camera, blackout, fps, filter, transform } = app
+	const { camera, freeze, fps, filter, transform } = app
 	const { parameters } = app.presence
-	return { camera, blackout, fps, filter, transform, parameters }
+	return { camera, freeze, fps, filter, transform, parameters }
 })
 
 export const selectCueChanged = createSelector(selectCurrentCue, selectCurrentState, (cue, state) => {
 	if (!cue) return false
-	const { camera, blackout, fps, filter, transform, parameters } = state
+	const { camera, freeze, fps, filter, transform, parameters } = state
 	return (
 		cue.camera !== camera ||
-		cue.blackout !== blackout ||
+		cue.freeze !== freeze ||
 		cue.fps !== fps ||
 		JSON.stringify(cue.filter) !== JSON.stringify(filter) ||
 		JSON.stringify(cue.transform) !== JSON.stringify(transform) ||
@@ -277,7 +280,7 @@ export const selectConnections = createSelector(selectPresence, p => p.connectio
 
 export const selectIsActive = createSelector(selectPresence, p => p.active_connection_name === NAME)
 
-export const selectIsRunning = createSelector(selectConnected, selectIsActive, selectIsBlackout, (connected, active, blackout) => connected && active && !blackout)
+export const selectIsRunning = createSelector(selectConnected, selectIsActive, selectIsBlackout, (connected, active, freeze) => connected && active && !freeze)
 
 /* Thunks */
 
