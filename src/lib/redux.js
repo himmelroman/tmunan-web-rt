@@ -34,8 +34,16 @@ export const initialState = {
 	camera_settings: null,
 	// settings
 	camera: null,
-	// fps: 16,
-	filter: {},
+	fps: 16,
+	filter: {
+		sepia: 0,
+		contrast: 1,
+		brightness: 1,
+		saturate: 1,
+		'hue-rotate': 0,
+		blur: 0,
+		invert: 0,
+	},
 	transform: {
 		flip_x: false,
 		flip_y: false,
@@ -44,6 +52,7 @@ export const initialState = {
 	// cues
 	cues: [],
 	cue_index: -1,
+	transition_duration: 5,
 }
 
 const localState = JSON.parse(localStorage.getItem(`${NAME}-state`))
@@ -110,10 +119,10 @@ export const appSlice = createSlice({
 		},
 		// settings
 		setFilter: (s, { payload }) => {
-			for (const [k, v] of Object.entries(payload)) {
-				if (v === null || v === (FILTERS_SCHEMA[k]?.default || 0)) delete s.filter[k]
-				else s.filter[k] = v
-			}
+			// for (const [k, v] of Object.entries(payload)) {
+			// 	s.filter[k] = v === null ? FILTERS_SCHEMA[k].default : v
+			// }
+			Object.assign(s.filter, payload)
 		},
 		setTransform: (s, { payload }) => {
 			Object.assign(s.transform, payload)
@@ -134,6 +143,14 @@ export const appSlice = createSlice({
 				s.cue_index = index
 			} else {
 				Object.assign(cue, { camera, freeze, fps, filter, transform, parameters })
+			}
+			saveLocal(s)
+		},
+		renameCue: (s, { payload }) => {
+			const { name, index } = payload
+			const cue = s.cues[index]
+			if (cue) {
+				cue.name = name
 			}
 			saveLocal(s)
 		},
@@ -166,6 +183,48 @@ export const appSlice = createSlice({
 			s.cues = payload.cues
 			s.cue_index = payload.index
 		},
+		reset: s => {
+			Object.assign(s.presence.parameters, initialParameters)
+			Object.assign(s.filter, initialState.filter)
+			Object.assign(s.transform, initialState.transform)
+			s.fps = initialState.fps
+		},
+		// reorderCue: (s, { payload }) => {
+		// 	const { dragId, dropId, after } = payload
+		// 	const { criteria } = s.document
+
+		// 	const dragItem = criteria.find(c => c.id === dragId)
+		// 	const dragSiblings = criteria.filter(c => c.chapter === dragChapter)
+		// 	dragSiblings.sort((a, b) => a.order - b.order)
+		// 	const dragOrder = dragItem.order
+
+		// 	const dropItem = criteria.find(c => c.id === dropId)
+
+		// 	let dropOrder = dropItem.order
+		// 	if (after) dropOrder++
+
+		// 	if (dragOrder === dropOrder) {
+		// 		console.log('%cSame order', 'color:orange')
+		// 		return
+		// 	}
+
+		// 	if (dragOrder <= dropOrder) {
+		// 		for (let i = dragOrder + 1; i < dropOrder; i++) {
+		// 			dragSiblings[i].order--
+		// 		}
+		// 		dropOrder--
+		// 	} else {
+		// 		for (let i = dropOrder; i < dragOrder; i++) {
+		// 			dragSiblings[i].order++
+		// 		}
+		// 	}
+		// 	dragItem.order = dropOrder
+		// 	const divs = Array.from(document.querySelectorAll('[data-selectable]'))
+		// 	const dragIndex = divs.findIndex(c => c.id === dragId)
+		// 	let dropIndex = divs.findIndex(c => c.id === dropId)
+		// 	if (dragIndex < dropIndex) dropIndex--
+		// 	if (after) dropIndex++
+		// },
 		// setCameraSettings: (s, { payload }) => {
 		// 	CAMERA_PROPS.forEach(k => {
 		// 		if (k in payload) {
@@ -176,8 +235,25 @@ export const appSlice = createSlice({
 	},
 })
 
-export const { saveCue, loadCue, setFilter, setTransform, clearCues, removeCueAt, setProp, setCameras, setConnected, setCueIndex, setPresence, setShowCueList, setShowPanel, setParameters, openFile } =
-	appSlice.actions
+export const {
+	saveCue,
+	loadCue,
+	setFilter,
+	setTransform,
+	clearCues,
+	removeCueAt,
+	renameCue,
+	setProp,
+	setCameras,
+	setConnected,
+	setCueIndex,
+	setPresence,
+	setShowCueList,
+	setShowPanel,
+	setParameters,
+	openFile,
+	reset,
+} = appSlice.actions
 
 /* Selectors */
 

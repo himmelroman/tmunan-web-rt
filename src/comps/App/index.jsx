@@ -6,17 +6,18 @@ import useDoubleClick from 'use-double-click'
 
 import { HEIGHT, WIDTH } from '~/lib/constants'
 import logger from '~/lib/logger'
-import store, { selectApp, selectFilter, /* selectIsActive, */ selectFilterString, selectIsRunning, selectTransformString, setProp } from '~/lib/redux'
+import store, { selectApp, /* selectIsActive, */ selectFilterString, selectIsRunning, selectTransformString, setProp } from '~/lib/redux'
 import socket from '~/lib/socket'
 import useClasses from '~/lib/useClasses'
 import Panel from '../Panel'
 import styles from './index.module.scss'
-// import sleep from '~/lib/sleep'
 import sleep from '~/lib/sleep'
 
 // const THROTTLE = 1000 / 30
 // let frameId
 // let lastMillis = 0
+
+window.gsap = gsap
 
 let v_interval
 
@@ -78,7 +79,10 @@ const onKeyDown = e => {
 		return
 	}
 
-	if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return
+	if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+		if (e.code === 'Enter') e.target.blur()
+		return
+	}
 
 	switch (e.code) {
 		case 'KeyQ':
@@ -207,10 +211,13 @@ const App = () => {
 	}, [isRunning, app.fps])
 
 	useEffect(() => {
+		console.log('filterString', filterString)
+		const duration = app.transition_duration
 		source_vid.style.filter = filterString
 		// ctx.filter = filterString
-		gsap.to(ctx, { duration: 0.5, filter: filterString })
-	}, [filterString])
+		gsap.killTweensOf(ctx)
+		gsap.to(ctx, { duration, filter: filterString })
+	}, [filterString, app.transition_duration])
 
 	useEffect(() => {
 		// const { string, scales } = transform

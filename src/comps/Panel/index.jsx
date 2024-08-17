@@ -7,13 +7,13 @@ import debounce from 'debounce'
 import { memo, useEffect } from 'react'
 import FocusLock from 'react-focus-lock'
 import { FaFolderOpen } from 'react-icons/fa6'
-import { MdClose, MdFullscreen, MdFullscreenExit, MdInput, MdOutput, MdRefresh, MdReorder, MdSave } from 'react-icons/md'
+import { MdClose, MdFullscreen, MdFullscreenExit, MdInput, MdLayersClear, MdOutput, MdRefresh, MdReorder, MdSave } from 'react-icons/md'
 import { useDispatch, useSelector } from 'react-redux'
 
 // import { NAME } from '~/lib/constants'
 import { FILTER_LIST, NAME, VERSION } from '~/lib/constants'
 import logger from '~/lib/logger'
-import { initialParameters, initialState, loadCue, openFile, selectApp, setFilter, setParameters, setProp, setShowCueList, setShowPanel, setTransform } from '~/lib/redux'
+import { initialParameters, initialState, loadCue, openFile, reset, saveCue, selectApp, setFilter, setParameters, setProp, setShowCueList, setShowPanel, setTransform } from '~/lib/redux'
 import socket from '~/lib/socket'
 import useClasses from '~/lib/useClasses'
 import Check from '../Check'
@@ -114,6 +114,11 @@ const Panel = () => {
 		URL.revokeObjectURL(url)
 	}
 
+	const onReset = () => {
+		socket.send('set_parameters', { ...initialParameters, override: true })
+		dispatch(reset())
+	}
+
 	useEffect(() => {
 		window.addEventListener('pointerdown', outsideClick)
 		return () => {
@@ -130,7 +135,7 @@ const Panel = () => {
 	const onKeyDown = e => {
 		// console.log('keydown', e.key)
 		if (e.target.tagName === 'TEXTAREA' || (e.target.tagName === 'INPUT' && e.target.type === 'text')) return
-		const { code, shiftKey, ctrlKey } = e
+		const { code, ctrlKey } = e
 		switch (code) {
 			case 'Enter':
 				e.preventDefault()
@@ -142,7 +147,10 @@ const Panel = () => {
 				e.preventDefault()
 				const name_input = document.getElementById('cue_name_input')
 				name_input.focus()
-				// if (ctrlKey) {}
+				if (ctrlKey) {
+					// create new cue
+					dispatch(saveCue({ name: name_input.value, index: cue_index + 1 }))
+				}
 				break
 			case 'KeyC':
 				e.preventDefault()
@@ -166,6 +174,9 @@ const Panel = () => {
 					>
 						<MdRefresh />
 					</button>
+					<button name='reset' onClick={onReset}>
+						<MdLayersClear />
+					</button>
 					<Check name='show_source' value={show_source} onChange={onChange}>
 						<MdInput />
 					</Check>
@@ -183,6 +194,7 @@ const Panel = () => {
 					<div className={styles.sep}>/</div>
 					<button onClick={() => dispatch(setShowCueList(show_cuelist ? false : true))}>
 						<MdReorder />
+						{/* <MdListAlt /> */}
 					</button>
 					{show_cuelist && (
 						<>
@@ -271,7 +283,6 @@ const Panel = () => {
 					</section>
 					{show_cuelist && (
 						<section>
-							{/* <div className={styles.heading}>Connections</div> */}
 							<CueList />
 						</section>
 					)}

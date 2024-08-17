@@ -28,6 +28,8 @@ const CueList = () => {
 	const changed = useSelector(selectCueChanged)
 
 	const onAddSave = () => {
+		// blur input
+		document.getElementById('cue_name_input').blur()
 		dispatch(saveCue({ name: inputValue || `Cue ${cues.length + 1}`, index: existingCue ? index + 1 : cues.length }))
 	}
 
