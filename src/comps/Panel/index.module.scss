@@ -202,6 +202,10 @@
 	&[data-4] {
 		grid-template-columns: 1fr 1fr 1fr 1fr;
 	}
+
+	&[data-5] {
+		grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+	}
 }
 
 .sep {

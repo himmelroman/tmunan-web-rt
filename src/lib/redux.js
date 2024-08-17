@@ -2,7 +2,7 @@ import { createSlice, configureStore, createSelector } from '@reduxjs/toolkit'
 // import { persistReducer, persistStore } from 'redux-persist'
 // import storage from 'redux-persist/lib/storage'
 import logger from './logger'
-import { WIDTH, HEIGHT, NAME, IS_CONTROL, FILTERS_SCHEMA, OFFLINE } from './constants'
+import { WIDTH, HEIGHT, NAME, IS_CONTROL, OFFLINE } from './constants'
 
 export const initialParameters = {
 	strength: 1,

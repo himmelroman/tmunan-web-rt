@@ -6,7 +6,7 @@ import useDoubleClick from 'use-double-click'
 
 import { HEIGHT, WIDTH } from '~/lib/constants'
 import logger from '~/lib/logger'
-import store, { selectApp, /* selectIsActive, */ selectFilterString, selectIsRunning, selectTransformString, setProp } from '~/lib/redux'
+import store, { initialState, selectApp, /* selectIsActive, */ selectFilterString, selectIsRunning, selectTransformString, setProp } from '~/lib/redux'
 import socket from '~/lib/socket'
 import useClasses from '~/lib/useClasses'
 import Panel from '../Panel'
@@ -24,13 +24,15 @@ let v_interval
 const canvas = document.createElement('canvas')
 canvas.width = WIDTH
 canvas.height = HEIGHT
+window.canvas = canvas
 
 const ctx = canvas.getContext('2d')
 window.ctx = ctx
 
 let camera_busy
 let source_vid
-let output_vid
+
+const transformRef = { ...initialState.transform }
 
 async function drawVideo() {
 	// if (now - lastMillis < THROTTLE) {
@@ -63,6 +65,16 @@ async function drawVideo() {
 	// window.blob = blob
 	// frameId = source_vid.requestVideoFrameCallback(drawVideo)
 }
+
+export const stopStream = () => {
+	if (window.stream) {
+		logger.info('Stopping stream')
+		const tracks = window.stream.getTracks()
+		tracks.forEach(track => track.stop())
+		window.stream = null
+	}
+}
+window.stopStream = stopStream
 
 // const cancelFrame = () => {
 // 	if (!frameId) return
@@ -195,12 +207,7 @@ const App = () => {
 	useEffect(() => {
 		logger.info(`isRunning > ${isRunning ? chalk.greenBright('True') : chalk.redBright('False')}`)
 		clearInterval(v_interval)
-		if (window.stream) {
-			logger.info('Stopping stream')
-			const tracks = window.stream.getTracks()
-			tracks.forEach(track => track.stop())
-			window.stream = null
-		}
+		stopStream()
 
 		if (isRunning) {
 			logger.info('Starting stream')
@@ -220,23 +227,18 @@ const App = () => {
 	}, [filterString, app.transition_duration])
 
 	useEffect(() => {
-		// const { string, scales } = transform
-		// logger.info(`Transform > ${string}`)
 		source_vid.style.transform = transformString
-		// ctx.translate(scales[0] < 0 ? WIDTH : 0, 0)
-
-		// const sx = prevScales[0] / scales[0]
-		// const sy = prevScales[1] / scales[1]
-
-		// console.log('scales', prevScales, scales, sx, sy)
-
-		// ctx.scale(sx, sy)
-		// drawVideo()
-
-		// prevScales[0] = scales[0]
-		// prevScales[1] = scales[1]
-		output_vid.style.transform = transformString
-	}, [transformString])
+		if (transformRef.flip_x !== app.transform.flip_x) {
+			ctx.translate(WIDTH, 0)
+			ctx.scale(-1, 1)
+		}
+		if (transformRef.flip_y !== app.transform.flip_y) {
+			ctx.translate(0, HEIGHT)
+			ctx.scale(1, -1)
+		}
+		transformRef.flip_x = app.transform.flip_x
+		transformRef.flip_y = app.transform.flip_y
+	}, [transformString, app.transform])
 
 	// useEffect(() => {
 	// 	if (running) {
@@ -275,7 +277,6 @@ const App = () => {
 					autoPlay
 					className={`${styles.video} ${styles.output}`}
 					ref={r => {
-						output_vid = r
 						window.output_vid = r
 					}}
 				/>

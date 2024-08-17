@@ -11,7 +11,7 @@ import { MdClose, MdFullscreen, MdFullscreenExit, MdInput, MdLayersClear, MdOutp
 import { useDispatch, useSelector } from 'react-redux'
 
 // import { NAME } from '~/lib/constants'
-import { FILTER_LIST, NAME, VERSION } from '~/lib/constants'
+import { FILTER_LIST, HEIGHT, NAME, VERSION, WIDTH } from '~/lib/constants'
 import logger from '~/lib/logger'
 import { initialParameters, initialState, loadCue, openFile, reset, saveCue, selectApp, setFilter, setParameters, setProp, setShowCueList, setShowPanel, setTransform } from '~/lib/redux'
 import socket from '~/lib/socket'
@@ -61,6 +61,15 @@ const Panel = () => {
 
 	const onChange = (value, name) => {
 		dispatch(setProp([name, value]))
+	}
+
+	const onBlack = value => {
+		if (value) {
+			window.ctx.fillRect(0, 0, WIDTH, HEIGHT)
+			window.stopStream()
+		}
+
+		dispatch(setProp(['freeze', value]))
 	}
 
 	const onTransform = (value, name) => {
@@ -242,7 +251,7 @@ const Panel = () => {
 								<textarea name='negative_prompt' value={parameters.negativePrompt} placeholder='Negative prompt' onChange={onText} />
 							</div>
 						</div>
-						<div className={styles.row} data-4>
+						<div className={styles.row} data-5>
 							<div className={styles.col}>
 								<label>Flip X</label>
 								<Toggle name='flip_x' value={transform.flip_x} onChange={onTransform} />
@@ -258,6 +267,10 @@ const Panel = () => {
 							<div className={styles.col}>
 								<label>Stop</label>
 								<Toggle name='freeze' value={freeze} onChange={onChange} />
+							</div>
+							<div className={styles.col}>
+								<label>Black</label>
+								<Toggle name='black' value={freeze} onChange={onBlack} />
 							</div>
 						</div>
 						<div className={styles.row}>{[ranges[0], ranges[1]]}</div>
