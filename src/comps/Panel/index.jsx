@@ -22,7 +22,7 @@ import styles from './index.module.scss'
 import Check from '../Check'
 import CueList from '../CueList'
 
-function debounce(func, timeout = 300) {
+function debounce(func, timeout = 500) {
 	let timer
 	return (...args) => {
 		clearTimeout(timer)
@@ -33,6 +33,8 @@ function debounce(func, timeout = 300) {
 }
 
 const debouncedSend = debounce(socket.send, 200)
+
+const debouncedText = debounce(socket.send, 500)
 
 const Panel = () => {
 	const dispatch = useDispatch()
@@ -53,7 +55,7 @@ const Panel = () => {
 	const onText = e => {
 		const { name, value } = e.target
 		dispatch(setParameters({ [name]: value }))
-		if (connected) debouncedSend('set_parameters', { [name]: value, override: true })
+		if (connected) debouncedText('set_parameters', { [name]: value, override: true })
 	}
 
 	const onChange = (value, name) => {
