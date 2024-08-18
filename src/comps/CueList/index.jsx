@@ -41,7 +41,7 @@ const CueList = () => {
 			const index = cues.findIndex(a => a.name === e.target.dataset.name)
 			if (index === -1) return
 			const cue = cues[index]
-			socket.send('set_parameters', { ...cue.parameters, override: true })
+			socket.send('parameters', { ...cue.parameters, override: true })
 			dispatch(loadCue({ cue, index }))
 		}
 	}

@@ -1,3 +1,8 @@
+/**
+ *
+ * App
+ *
+ */
 import chalk from 'chalk'
 import gsap from 'gsap'
 import { memo, useEffect, useRef } from 'react'
@@ -6,7 +11,7 @@ import useDoubleClick from 'use-double-click'
 
 import { HEIGHT, WIDTH } from '~/lib/constants'
 import logger from '~/lib/logger'
-import store, { initialState, selectApp, /* selectIsActive, */ selectFilterString, selectIsRunning, selectTransformString, setProp } from '~/lib/redux'
+import store, { initialState, selectApp, /* selectIsActive, */ selectFilterString, selectIsRunning, selectTransformString, setLocalProp } from '~/lib/redux'
 import socket from '~/lib/socket'
 import useClasses from '~/lib/useClasses'
 import Panel from '../Panel'
@@ -87,7 +92,7 @@ const onKeyDown = e => {
 	const s = store.getState().app
 
 	if (e.code === 'Escape') {
-		if (s.show_panel) store.dispatch(setProp('show_panel', false))
+		if (s.show_panel) store.dispatch(setLocalProp('show_panel', false))
 		return
 	}
 
@@ -98,16 +103,16 @@ const onKeyDown = e => {
 
 	switch (e.code) {
 		case 'KeyQ':
-			store.dispatch(setProp(['show_panel', !s.show_panel]))
+			store.dispatch(setLocalProp(['show_panel', !s.show_panel]))
 			break
 		case 'KeyV':
-			store.dispatch(setProp(['show_source', !s.show_source]))
+			store.dispatch(setLocalProp(['show_source', !s.show_source]))
 			break
 		case 'KeyC':
-			store.dispatch(setProp(['show_output', !s.show_output]))
+			store.dispatch(setLocalProp(['show_output', !s.show_output]))
 			break
 		case 'KeyB':
-			store.dispatch(setProp(['freeze', s.freeze ? 0 : 1]))
+			store.dispatch(setLocalProp(['freeze', s.freeze ? 0 : 1]))
 			break
 		case 'KeyF':
 			document.fullscreenElement ? document.exitFullscreen() : document.querySelector('body').requestFullscreen()
@@ -123,15 +128,14 @@ const App = () => {
 
 	const dispatch = useDispatch()
 	const app = useSelector(selectApp)
-	// const isActive = useSelector(selectIsActive)
+	const clientParams = app.parameters.client
 	const isRunning = useSelector(selectIsRunning)
-	// const filter = useSelector(selectFilter)
 	const filterString = useSelector(selectFilterString)
 	const transformString = useSelector(selectTransformString)
 
 	useDoubleClick({
 		onDoubleClick: () => {
-			if (!app.show_panel) dispatch(setProp(['show_panel', true]))
+			if (!app.show_panel) dispatch(setLocalProp(['show_panel', true]))
 		},
 		ref,
 		latency: 180,
@@ -211,34 +215,32 @@ const App = () => {
 
 		if (isRunning) {
 			logger.info('Starting stream')
-			v_interval = setInterval(drawVideo, 1000 / app.fps)
-			window.stream = canvas.captureStream(app.fps)
+			v_interval = setInterval(drawVideo, 1000 / clientParams.fps)
+			window.stream = canvas.captureStream(clientParams.fps)
 			socket.replaceTrack(window.stream)
 		}
-	}, [isRunning, app.fps])
+	}, [isRunning, clientParams.fps])
 
 	useEffect(() => {
-		console.log('filterString', filterString)
-		const duration = app.transition_duration
+		const duration = clientParams.transition_duration
 		source_vid.style.filter = filterString
-		// ctx.filter = filterString
 		gsap.killTweensOf(ctx)
 		gsap.to(ctx, { duration, filter: filterString })
-	}, [filterString, app.transition_duration])
+	}, [filterString, clientParams.transition_duration])
 
 	useEffect(() => {
 		source_vid.style.transform = transformString
-		if (transformRef.flip_x !== app.transform.flip_x) {
+		if (transformRef.flip_x !== clientParams.transform.flip_x) {
 			ctx.translate(WIDTH, 0)
 			ctx.scale(-1, 1)
 		}
-		if (transformRef.flip_y !== app.transform.flip_y) {
+		if (transformRef.flip_y !== clientParams.transform.flip_y) {
 			ctx.translate(0, HEIGHT)
 			ctx.scale(1, -1)
 		}
-		transformRef.flip_x = app.transform.flip_x
-		transformRef.flip_y = app.transform.flip_y
-	}, [transformString, app.transform])
+		transformRef.flip_x = clientParams.transform.flip_x
+		transformRef.flip_y = clientParams.transform.flip_y
+	}, [transformString, clientParams.transform])
 
 	// useEffect(() => {
 	// 	if (running) {

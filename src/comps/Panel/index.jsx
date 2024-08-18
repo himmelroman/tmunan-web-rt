@@ -10,10 +10,9 @@ import { FaFolderOpen } from 'react-icons/fa6'
 import { MdClose, MdFullscreen, MdFullscreenExit, MdInput, MdLayersClear, MdOutput, MdRefresh, MdReorder, MdSave } from 'react-icons/md'
 import { useDispatch, useSelector } from 'react-redux'
 
-// import { NAME } from '~/lib/constants'
-import { FILTER_LIST, HEIGHT, NAME, VERSION, WIDTH } from '~/lib/constants'
+import { FILTER_LIST, NAME, VERSION } from '~/lib/constants'
 import logger from '~/lib/logger'
-import { initialParameters, initialState, loadCue, openFile, reset, saveCue, selectApp, setFilter, setParameters, setProp, setShowCueList, setShowPanel, setTransform } from '~/lib/redux'
+import { initialState, loadCue, openFile, reset, saveCue, selectApp, setClientParameter, setDiffusionParameter, setFilter, setLocalProp, setShowCueList, setShowPanel, setTransform } from '~/lib/redux'
 import socket from '~/lib/socket'
 import useClasses from '~/lib/useClasses'
 import Check from '../Check'
@@ -40,49 +39,59 @@ const debouncedText = debounce(socket.send, 500)
 const Panel = () => {
 	const dispatch = useDispatch()
 
-	const { freeze, fps, camera, transform, filter, cameras, connected, active, show_cuelist, show_source, show_output, presence, cues, cue_index } = useSelector(selectApp)
+	const app = useSelector(selectApp)
 
-	const { parameters, connections, active_connection_name } = presence
+	const { camera, cameras, connected, cue_index, cues, presence, show_cuelist, show_output, show_source } = app
 
-	// const [prompt, setPrompt] = useState('')
-	// const [negativePrompt, setNegativePrompt] = useState('')
+	const { diffusion } = app.parameters
 
-	const onParameter = (value, name) => {
-		dispatch(setParameters({ [name]: value }))
-		// socket.send('set_parameters', { [name]: Number(value), override: true })
-		if (connected) debouncedSend('set_parameters', { [name]: value, override: true })
+	const { filter, transform, fps, freeze, transition_duration } = app.parameters.client
+
+	const { connections, active_connection_name } = presence
+
+	const onLocalChange = (value, name) => {
+		dispatch(setLocalProp([name, value]))
+	}
+
+	const onDiffusionParameter = (value, name) => {
+		dispatch(setDiffusionParameter([name, value]))
+		// socket.send('parameters', { [name]: Number(value), override: true })
+		if (connected) debouncedSend('parameters', { diffusion: { [name]: value }, override: true })
 	}
 
 	const onText = e => {
 		const { name, value } = e.target
-		dispatch(setParameters({ [name]: value }))
-		if (connected) debouncedText('set_parameters', { [name]: value, override: true })
+		dispatch(setDiffusionParameter([name, value]))
+		if (connected) debouncedText('parameters', { diffusion: { [name]: value }, override: true })
 	}
 
-	const onChange = (value, name) => {
-		dispatch(setProp([name, value]))
+	const onClientParameter = (value, name) => {
+		dispatch(setClientParameter([name, value]))
+		if (connected) debouncedSend('parameters', { client: { [name]: value }, override: true })
 	}
 
-	const onBlack = value => {
-		if (value) {
-			window.ctx.fillRect(0, 0, WIDTH, HEIGHT)
-			window.stopStream()
-		}
-
-		dispatch(setProp(['freeze', value]))
-	}
-
-	const onTransform = (value, name) => {
+	const onTransformChange = (value, name) => {
 		dispatch(setTransform({ [name]: value }))
-	}
-
-	const onInvert = value => {
-		dispatch(setFilter({ invert: value ? 1 : 0 }))
+		if (connected) debouncedSend('parameters', { client: { transform: { [name]: value } }, override: true })
 	}
 
 	const onFilterChange = (value, name) => {
 		dispatch(setFilter({ [name]: value }))
+		if (connected) debouncedSend('parameters', { client: { filter: { [name]: value } }, override: true })
 	}
+
+	const onInvert = value => {
+		dispatch(setFilter({ invert: value ? 1 : 0 }))
+		if (connected) debouncedSend('parameters', { client: { filter: { [name]: value } }, override: true })
+	}
+
+	// const onBlack = value => {
+	// 	if (value) {
+	// 		window.ctx.fillRect(0, 0, WIDTH, HEIGHT)
+	// 		window.stopStream()
+	// 	}
+	// 	dispatch(setLocalProp(['freeze', value]))
+	// }
 
 	const outsideClick = e => {
 		if (e.target.closest(`.${styles.cont}`)) return
@@ -124,7 +133,7 @@ const Panel = () => {
 	}
 
 	const onReset = () => {
-		socket.send('set_parameters', { ...initialParameters, override: true })
+		socket.send('parameters', { ...initialState.parameters, override: true })
 		dispatch(reset())
 	}
 
@@ -135,7 +144,7 @@ const Panel = () => {
 		}
 	}, [])
 
-	const cls = useClasses(styles.cont, connected && styles.connected, active && styles.active)
+	const cls = useClasses(styles.cont, connected && styles.connected)
 
 	const ranges = FILTER_LIST.map(f => (
 		<Range key={f.name} name={f.name} label={f.label} value={f.name in filter ? filter[f.name] : f.default} onChange={onFilterChange} min={f.min} max={f.max} step={f.step} initial={f.default} />
@@ -186,10 +195,10 @@ const Panel = () => {
 					<button name='reset' onClick={onReset}>
 						<MdLayersClear />
 					</button>
-					<Check name='show_source' value={show_source} onChange={onChange}>
+					<Check name='show_source' value={show_source} onChange={onLocalChange}>
 						<MdInput />
 					</Check>
-					<Check name='show_output' value={show_output} onChange={onChange}>
+					<Check name='show_output' value={show_output} onChange={onLocalChange}>
 						<MdOutput />
 					</Check>
 					<button
@@ -225,40 +234,49 @@ const Panel = () => {
 					<section>
 						<div className={styles.row} data-1>
 							<div className={styles.col}>
-								<Select className={styles.select} name='camera' itemToString={a => window.cmap[a]} itemToValue={a => a} options={cameras} value={camera} onChange={onChange} />
+								<Select className={styles.select} name='camera' itemToString={a => window.cmap[a]} itemToValue={a => a} options={cameras} value={camera} onChange={onLocalChange} />
 							</div>
 						</div>
 						<div className={styles.row}>
-							<Range name='strength' label='Strength' value={parameters.strength} onChange={onParameter} min={1} max={3} step={0.01} initial={initialParameters.strength} />
+							<Range
+								name='strength'
+								label='Strength'
+								value={diffusion.strength}
+								onChange={onDiffusionParameter}
+								min={1}
+								max={3}
+								step={0.01}
+								initial={initialState.parameters.diffusion.strength}
+							/>
 							<Range
 								name='guidance_scale'
 								label='Guidance'
-								value={parameters.guidance_scale}
-								onChange={onParameter}
+								value={diffusion.guidance_scale}
+								onChange={onDiffusionParameter}
 								min={0}
 								max={1}
 								step={0.01}
-								initial={initialParameters.guidance_scale}
+								initial={initialState.parameters.diffusion.guidance_scale}
 							/>
 						</div>
 						<div className={styles.row}>
-							<Range name='seed' label='Seed' value={parameters.seed} onChange={onParameter} min={0} max={30} step={1} initial={initialParameters.seed} />
-							<Range name='fps' label='FPS' value={fps} onChange={onChange} min={1} max={30} step={1} initial={initialState.fps} />
+							<Range name='seed' label='Seed' value={diffusion.seed} onChange={onDiffusionParameter} min={0} max={30} step={1} initial={initialState.parameters.diffusion.seed} />
+							<Range name='fps' label='FPS' value={fps} onChange={onClientParameter} min={1} max={30} step={1} initial={initialState.parameters.fps} />
 						</div>
 						<div className={`${styles.row} ${styles.prompt}`} data-1>
 							<div className={styles.col}>
-								<textarea name='prompt' value={parameters.prompt} placeholder='Prompt' onChange={onText} />
-								<textarea name='negative_prompt' value={parameters.negativePrompt} placeholder='Negative prompt' onChange={onText} />
+								<textarea name='prompt' value={diffusion.prompt} placeholder='Prompt' onChange={onText} />
+								{/* <textarea name='negative_prompt' value={diffusion.negative_prompt} placeholder='Negative prompt' onChange={onText} /> */}
 							</div>
 						</div>
-						<div className={styles.row} data-5>
+						<div className={styles.row} data-4>
 							<div className={styles.col}>
 								<label>Flip X</label>
-								<Toggle name='flip_x' value={transform.flip_x} onChange={onTransform} />
+								<Toggle name='flip_x' value={transform.flip_x} onChange={onTransformChange} />
 							</div>
 							<div className={styles.col}>
 								<label>Flip Y</label>
-								<Toggle name='flip_y' value={transform.flip_y} onChange={onTransform} />
+								<Toggle name='flip_y' value={transform.flip_y} onChange={onTransformChange} />
 							</div>
 							<div className={styles.col}>
 								<label>Invert</label>
@@ -266,16 +284,24 @@ const Panel = () => {
 							</div>
 							<div className={styles.col}>
 								<label>Stop</label>
-								<Toggle name='freeze' value={freeze} onChange={onChange} />
-							</div>
-							<div className={styles.col}>
-								<label>Black</label>
-								<Toggle name='black' value={freeze} onChange={onBlack} />
+								<Toggle name='freeze' value={freeze} onChange={onClientParameter} />
 							</div>
 						</div>
 						<div className={styles.row}>{[ranges[0], ranges[1]]}</div>
 						<div className={styles.row}>{[ranges[2], ranges[3]]}</div>
 						<div className={styles.row}>{[ranges[4], ranges[5]]}</div>
+						<div className={styles.row}>
+							<Range
+								name='transition_duration'
+								label='Transition'
+								value={transition_duration}
+								onChange={onClientParameter}
+								min={0}
+								max={10}
+								step={0.1}
+								initial={initialState.parameters.transition_duration}
+							/>
+						</div>
 						{connections.length ? (
 							<div className={styles.connections}>
 								{connections.map((c, i) => (

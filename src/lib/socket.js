@@ -1,7 +1,7 @@
 import chalk from 'chalk'
 import { /* CODES, SOCKET_URL, */ BASE_URL, NAME } from './constants'
 import logger from './logger'
-import store, { setConnected, setPresence } from './redux'
+import store, { setConnected, setParameters, setPresence } from './redux'
 
 const { dispatch, getState } = store
 
@@ -155,11 +155,15 @@ export const connect = async () => {
 			case 'connected': {
 				dispatch(setConnected(payload))
 				const { parameters } = getState().app.presence
-				send('set_parameters', { ...parameters, override: false })
+				send('parameters', { ...parameters, override: false })
 				break
 			}
-			case 'state': {
+			case 'presence': {
 				dispatch(setPresence(payload))
+				break
+			}
+			case 'parameters': {
+				dispatch(setParameters(payload))
 				break
 			}
 			case 'error': {
