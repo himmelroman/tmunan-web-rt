@@ -1,5 +1,5 @@
 import chalk from 'chalk'
-import { SCTP_CAUSE_CODES, ABLY_TOKEN, NAME, CONNECTION_STATES, ABLY_CHANNEL } from './constants'
+import { SCTP_CAUSE_CODES, ABLY_TOKEN, NAME, BASE_URL, CONNECTION_STATES, ABLY_CHANNEL } from './constants'
 import logger from './logger'
 import store, { setAblyState, setParameters, setPresence, setRTCState } from './redux'
 import * as Ably from 'ably'
@@ -25,6 +25,7 @@ const ably = new Ably.Realtime({
 		cb(true)
 	},
 })
+
 const channel = ably.channels.get(ABLY_CHANNEL)
 
 channel.subscribe('answer', answer => {
@@ -43,7 +44,50 @@ ably.connection.on(change => {
 	}
 })
 
+// const publishOffer = () => {
+// 	logger.info('Publishing offer...')
+// 	const offer = pc.localDescription
+
+// 	channel.publish(
+// 		'offer',
+// 		JSON.stringify({
+// 			name: NAME,
+// 			output: true,
+// 			type: offer.type,
+// 			sdp: offer.sdp,
+// 		})
+// 	)
+// }
+
 // WebRTC
+
+const postOffer = () => {
+	logger.info('Publishing offer...')
+	const offer = pc.localDescription
+	const query = `${BASE_URL}/offer?name=${NAME}&output=true`
+	logger.debug('Sending offer to', query)
+
+	fetch(query, {
+		body: JSON.stringify({
+			type: offer.type,
+			sdp: offer.sdp,
+			name: NAME,
+		}),
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		method: 'POST',
+	})
+		.then(res => res.json())
+		.then(answer => {
+			logger.info(`${chalk.greenBright('Answer received')} setting remote description`, answer)
+			pc.setRemoteDescription(answer)
+		})
+		.catch(e => {
+			logger.error('Failed to connect', e)
+			reconnect()
+		})
+}
 
 export const initiatePeerConnection = async () => {
 	logger.info(`Initiating peer connection...`)
@@ -100,20 +144,7 @@ export const initiatePeerConnection = async () => {
 						}
 					})
 			)
-			.then(() => {
-				logger.info('Publishing offer...')
-				const offer = pc.localDescription
-
-				channel.publish(
-					'offer',
-					JSON.stringify({
-						name: NAME,
-						output: true,
-						type: offer.type,
-						sdp: offer.sdp,
-					})
-				)
-			})
+			.then(postOffer)
 			.catch(e => {
 				logger.error('Failed to create offer', e)
 			})
