@@ -51,7 +51,7 @@ window.ctx = ctx
 let camera_busy
 let source_vid
 
-const transformRef = { ...initialState.transform }
+const transformRef = { ...initialState.parameters.client.transform }
 
 async function drawVideo() {
 	const vwidth = source_vid.videoWidth

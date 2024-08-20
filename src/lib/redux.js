@@ -36,8 +36,8 @@ export const initialState = {
 			fps: 16,
 			filter: {
 				sepia: 0,
-				brightness: 1,
 				invert: 0,
+				brightness: 1,
 				contrast: 1,
 				saturate: 1,
 				'hue-rotate': 0,
