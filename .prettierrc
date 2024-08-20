@@ -4,7 +4,7 @@
 	"endOfLine": "lf",
 	"jsxSingleQuote": true,
 	"useTabs": true,
-	"printWidth": 200,
+	"printWidth": 120,
 	"semi": false,
 	"singleQuote": true,
 	"tabWidth": 4,

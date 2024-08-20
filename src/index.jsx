@@ -38,7 +38,6 @@ export async function getCameras() {
 				logger.info(chalk.blueBright(label))
 				return deviceId
 			})
-		// logger.info(`Found ${chalk.blueBright(cameras.length)} cameras`)
 		window.cameras = cameras
 		store.dispatch(setCameras(cameras))
 		return true
@@ -58,7 +57,7 @@ async function main() {
 		return
 	}
 
-	logger.info(chalk.green('START'))
+	logger.info(chalk.greenBright('START'))
 	print('Version', VERSION)
 	print('Websocket URL', SOCKET_URL)
 	print('Image URL', IMG_URL)

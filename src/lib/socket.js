@@ -26,7 +26,7 @@ const ably = new Ably.Realtime({
 const channel = ably.channels.get('tmunan_local')
 
 channel.subscribe('answer', answer => {
-	answer = JSON.parse(JSON.parse(answer.data))
+	answer = JSON.parse(answer.data)
 	logger.info(chalk.greenBright('Answer received'), answer)
 	pc.setRemoteDescription(answer)
 })
@@ -162,23 +162,25 @@ const createDataChannel = () => {
 		logger.info(chalk.greenBright('Data channel opened'))
 		// dispatch(setConnected(true))
 		retries = 0
+		const { parameters } = getState().app.presence
+		send('parameters', { ...parameters, override: false })
 	}
 
 	dc.onmessage = e => {
 		const { type, payload } = JSON.parse(e.data)
 		logger.info('Data channel message', { type, payload })
 		switch (type) {
-			case 'connected': {
-				const { parameters } = getState().app.presence
-				send('parameters', { ...parameters, override: false })
-				break
-			}
+			// case 'connected': {
+			// 	const { parameters } = getState().app.presence
+			// 	send('parameters', { ...parameters, override: false })
+			// 	break
+			// }
 			case 'presence': {
 				dispatch(setPresence(payload))
 				break
 			}
 			case 'parameters': {
-				payload.diffusion = JSON.parse(payload.diffusion)
+				// payload.diffusion = JSON.parse(payload.diffusion)
 				dispatch(setParameters(payload))
 				break
 			}

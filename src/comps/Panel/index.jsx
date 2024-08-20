@@ -4,13 +4,24 @@
  *
  */
 import debounce from 'debounce'
-import { memo, useEffect } from 'react'
+import { memo, useEffect, useMemo, useState } from 'react'
 import FocusLock from 'react-focus-lock'
 import { FaFolderOpen } from 'react-icons/fa6'
-import { MdClose, MdFullscreen, MdFullscreenExit, MdInput, MdOutput, MdRefresh, MdReorder, MdSave } from 'react-icons/md'
+import {
+	MdArrowDropDown,
+	MdClose,
+	MdFullscreen,
+	MdFullscreenExit,
+	MdInput,
+	MdOutput,
+	MdRefresh,
+	MdReorder,
+	MdSave,
+	MdTune,
+} from 'react-icons/md'
 import { useDispatch, useSelector } from 'react-redux'
 
-import { FILTER_LIST, NAME, VERSION } from '~/lib/constants'
+import { CAMERA_PROPS, FILTER_LIST, NAME, VERSION } from '~/lib/constants'
 import logger from '~/lib/logger'
 import {
 	initialState,
@@ -20,6 +31,7 @@ import {
 	saveCue,
 	selectApp,
 	selectConnected,
+	setCameraSetting,
 	setClientParameter,
 	setDiffusionParameter,
 	setFilter,
@@ -36,6 +48,7 @@ import Range from '../Range'
 import Select from '../Select'
 import Toggle from '../Toggle'
 import styles from './index.module.scss'
+import { camelToFlat } from '~/lib/utils'
 
 // function debounce(func, timeout = 500) {
 // 	let timer
@@ -51,19 +64,55 @@ const debouncedSend = debounce(socket.send, 200)
 
 const debouncedText = debounce(socket.send, 500)
 
+const Section = ({ name, children }) => {
+	const [expanded, setExpanded] = useState(false)
+	return (
+		<div className={styles.section} data-expanded={expanded || null}>
+			<div className={styles.section_header} onClick={() => setExpanded(!expanded)}>
+				{name}
+			</div>
+			{children}
+		</div>
+	)
+}
+
 const Panel = () => {
 	const dispatch = useDispatch()
 
 	const app = useSelector(selectApp)
 	const connected = useSelector(selectConnected)
 
-	const { ably_state, rtc_state, camera, cameras, cue_index, cues, presence, show_cuelist, show_output, show_source } = app
-
+	const {
+		ably_state,
+		rtc_state,
+		camera,
+		cameras,
+		camera_settings,
+		cue_index,
+		cues,
+		presence,
+		show_cuelist,
+		show_output,
+		show_source,
+	} = app
 	const { diffusion } = app.parameters
-
 	const { filter, transform, fps, freeze, transition_duration } = app.parameters.client
-
 	const { connections, active_connection_name } = presence
+
+	const [camExpanded, setCameExpanded] = useState(false)
+
+	const onCameraSettingChange = (value, name) => {
+		console.log('set camera setting', name, value)
+		dispatch(setCameraSetting([name, value]))
+		window.camera_track.applyConstraints({ [name]: value })
+	}
+
+	const onCameraAuto = e => {
+		const { name } = e.target
+		const value = camera_settings[name].value === 'manual' ? 'continuous' : 'manual'
+		dispatch(setCameraSetting([name, value]))
+		window.camera_track.applyConstraints({ [name]: value })
+	}
 
 	const onLocalChange = (value, name) => {
 		dispatch(setLocalProp([name, value]))
@@ -160,11 +209,88 @@ const Panel = () => {
 		}
 	}, [])
 
+	useEffect(() => {
+		const pdiv = document.getElementById('camera-wrap')
+		if (camExpanded) {
+			const cdiv = document.getElementById('camera-settings')
+			const { height } = cdiv.getBoundingClientRect()
+			pdiv.style.setProperty('max-height', `${height}px`)
+		} else {
+			pdiv.style.removeProperty('max-height')
+		}
+	}, [camExpanded])
+
 	const cls = useClasses(styles.cont, connected && styles.connected)
 
-	const ranges = FILTER_LIST.map(f => (
-		<Range key={f.name} name={f.name} label={f.label} value={f.name in filter ? filter[f.name] : f.default} onChange={onFilterChange} min={f.min} max={f.max} step={f.step} initial={f.default} />
+	const filterDivs = FILTER_LIST.map(f => (
+		<Range
+			key={f.name}
+			name={f.name}
+			label={f.label}
+			value={f.name in filter ? filter[f.name] : f.default}
+			onChange={onFilterChange}
+			min={f.min}
+			max={f.max}
+			step={f.step}
+			initial={f.default}
+		/>
 	))
+
+	const cameraSettingsDiv = useMemo(() => {
+		if (!camera_settings) return null
+
+		const rows = []
+		const prev_parents = {}
+
+		CAMERA_PROPS.forEach(({ name, label, row, parent }) => {
+			const entry = camera_settings[name]
+			if (row === undefined || !entry) return
+			if (!rows[row]) rows[row] = []
+
+			let auto
+			if (parent && !prev_parents[parent]) {
+				prev_parents[parent] = true
+				const manual = camera_settings[parent].value === 'manual'
+				auto = (
+					<button
+						className={styles.camera_auto}
+						name={parent}
+						data-active={manual || null}
+						onClick={onCameraAuto}
+					>
+						{manual ? 'M' : 'A'}
+					</button>
+				)
+			}
+
+			rows[row].push(
+				<Range
+					key={name}
+					name={name}
+					label={label || camelToFlat(name)}
+					value={parseInt(entry.value)}
+					onChange={onCameraSettingChange}
+					min={entry.min}
+					max={entry.max}
+					step={entry.step}
+					initial={entry.initial}
+					disabled={entry.disabled}
+				>
+					{auto}
+				</Range>
+			)
+		})
+
+		return (
+			<div id='camera-settings' className={styles.camera_settings}>
+				{rows.map((r, i) => (
+					<div key={i} className={styles.row}>
+						{r}
+					</div>
+				))}
+			</div>
+		)
+	}, [camera_settings])
 
 	const onKeyDown = e => {
 		// console.log('keydown', e.key)
@@ -211,12 +337,6 @@ const Panel = () => {
 					>
 						<MdRefresh />
 					</button>
-					<button name='reset' onClick={onReset}>
-						{/* <MdLayersClear /> */}
-						<span className='material-symbols-outlined' data-reset>
-							reset_image
-						</span>
-					</button>
 					<Check name='show_source' value={show_source} onChange={onLocalChange}>
 						<MdInput />
 					</Check>
@@ -226,10 +346,18 @@ const Panel = () => {
 					<button
 						className={styles.fullscreen}
 						onClick={() => {
-							document.fullscreenElement ? document.exitFullscreen() : document.querySelector('body').requestFullscreen()
+							document.fullscreenElement
+								? document.exitFullscreen()
+								: document.querySelector('body').requestFullscreen()
 						}}
 					>
 						{document.fullscreenElement ? <MdFullscreenExit /> : <MdFullscreen />}
+					</button>
+					<button name='reset' onClick={onReset}>
+						{/* <MdLayersClear /> */}
+						<span className='material-symbols-outlined' data-reset>
+							reset_image
+						</span>
 					</button>
 					<div className={styles.sep}>/</div>
 					<button onClick={() => dispatch(setShowCueList(show_cuelist ? false : true))}>
@@ -253,10 +381,26 @@ const Panel = () => {
 					</div>
 				</div>
 				<main>
-					<section>
-						<div className={styles.row} data-1>
-							<div className={styles.col}>
-								<Select className={styles.select} name='camera' itemToString={a => window.cmap[a]} itemToValue={a => a} options={cameras} value={camera} onChange={onLocalChange} />
+					<div className={styles.column}>
+						<div id='camera-field' className={styles.camera_field} data-expanded={camExpanded || null}>
+							<div className={styles.header}>
+								<Select
+									className={styles.select}
+									name='camera'
+									itemToString={a => window.cmap[a]}
+									itemToValue={a => a}
+									options={cameras}
+									value={camera}
+									onChange={onLocalChange}
+								/>
+								{camera_settings && (
+									<button onClick={() => setCameExpanded(!camExpanded)}>
+										<MdTune />
+									</button>
+								)}
+							</div>
+							<div id='camera-wrap' className={styles.wrap}>
+								{cameraSettingsDiv}
 							</div>
 						</div>
 						<div className={styles.row}>
@@ -282,36 +426,63 @@ const Panel = () => {
 							/>
 						</div>
 						<div className={styles.row}>
-							<Range name='seed' label='Seed' value={diffusion.seed} onChange={onDiffusionParameter} min={0} max={30} step={1} initial={initialState.parameters.diffusion.seed} />
-							<Range name='fps' label='FPS' value={fps} onChange={onClientParameter} min={1} max={30} step={1} initial={initialState.parameters.fps} />
+							<Range
+								name='seed'
+								label='Seed'
+								value={diffusion.seed}
+								onChange={onDiffusionParameter}
+								min={0}
+								max={30}
+								step={1}
+								initial={initialState.parameters.diffusion.seed}
+							/>
+							<Range
+								name='fps'
+								label='FPS'
+								value={fps}
+								onChange={onClientParameter}
+								min={1}
+								max={30}
+								step={1}
+								initial={initialState.parameters.fps}
+							/>
 						</div>
 						<div className={`${styles.row} ${styles.prompt}`} data-1>
-							<div className={styles.col}>
-								<textarea name='prompt' value={diffusion.prompt} placeholder='Prompt' onChange={onText} />
+							<div className={styles.field}>
+								{/* <label>Prompt</label> */}
+								<textarea
+									name='prompt'
+									value={diffusion.prompt}
+									placeholder='Prompt'
+									onChange={onText}
+								/>
 								{/* <textarea name='negative_prompt' value={diffusion.negative_prompt} placeholder='Negative prompt' onChange={onText} /> */}
 							</div>
 						</div>
+						<div className={styles.rsep} />
 						<div className={styles.row} data-4>
-							<div className={styles.col}>
+							<div className={styles.field}>
 								<label>Flip X</label>
 								<Toggle name='flip_x' value={transform.flip_x} onChange={onTransformChange} />
 							</div>
-							<div className={styles.col}>
+							<div className={styles.field}>
 								<label>Flip Y</label>
 								<Toggle name='flip_y' value={transform.flip_y} onChange={onTransformChange} />
 							</div>
-							<div className={styles.col}>
+							<div className={styles.field}>
 								<label>Invert</label>
 								<Toggle name='invert' value={filter.invert || 0} onChange={onInvert} />
 							</div>
-							<div className={styles.col}>
+							<div className={styles.field}>
 								<label>Stop</label>
 								<Toggle name='freeze' value={freeze} onChange={onClientParameter} />
 							</div>
 						</div>
-						<div className={styles.row}>{[ranges[0], ranges[1]]}</div>
-						<div className={styles.row}>{[ranges[2], ranges[3]]}</div>
-						<div className={styles.row}>{[ranges[4], ranges[5]]}</div>
+						<div className={styles.rsep} />
+						<div className={styles.row}>{[filterDivs[0], filterDivs[1]]}</div>
+						<div className={styles.row}>{[filterDivs[2], filterDivs[3]]}</div>
+						<div className={styles.row}>{[filterDivs[4], filterDivs[5]]}</div>
+						<div className={styles.rsep} />
 						<div className={styles.row}>
 							<Range
 								name='transition_duration'
@@ -324,6 +495,7 @@ const Panel = () => {
 								initial={initialState.parameters.transition_duration}
 							/>
 						</div>
+						<div className={styles.rsep} />
 						{connections.length ? (
 							<div className={styles.connections}>
 								{connections.map((c, i) => (
@@ -341,11 +513,11 @@ const Panel = () => {
 								))}
 							</div>
 						) : null}
-					</section>
+					</div>
 					{show_cuelist && (
-						<section>
+						<div className={styles.column}>
 							<CueList />
-						</section>
+						</div>
 					)}
 				</main>
 				<div className={styles.version}>{VERSION}</div>

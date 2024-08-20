@@ -1,9 +1,8 @@
 import { createSlice, configureStore, createSelector } from '@reduxjs/toolkit'
 import merge from '@bundled-es-modules/deepmerge'
+// eslint-disable-next-line no-unused-vars
 import logger from './logger'
-import { WIDTH, HEIGHT, NAME, IS_CONTROL, OFFLINE, CONNECTION_STATES } from './constants'
-
-// export const CAMERA_PROPS = ['brightness', 'colorTemperature', 'contrast', 'exposureTime', 'exposureCompensation', 'exposureMode', 'focusDistance', 'focusMode', 'frameRate', 'saturation', 'sharpness']
+import { WIDTH, HEIGHT, NAME, IS_CONTROL, OFFLINE, CONNECTION_STATES, CAMERA_PROPS } from './constants'
 
 export const initialState = {
 	// env
@@ -16,7 +15,7 @@ export const initialState = {
 	},
 	// ui
 	show_panel: IS_CONTROL,
-	show_cuelist: true,
+	show_cuelist: false,
 	show_source: false,
 	show_output: !OFFLINE,
 	// exp
@@ -60,15 +59,13 @@ export const initialState = {
 const localState = JSON.parse(localStorage.getItem(`${NAME}-state`))
 if (localState) {
 	console.log('LS restore', localState)
+	initialState.cue_index = localState.cue_index
+	initialState.cues = localState.cues
 	const cue = localState.cues[localState.cue_index]
 	if (cue) {
-		initialState.cues = localState.cues
 		const assigned = { ...cue }
 		delete assigned.name
 		Object.assign(initialState.parameters, assigned)
-		initialState.cue_index = localState.cue_index
-	} else {
-		logger.warn('Cue error in LS', localState)
 	}
 }
 
@@ -189,6 +186,46 @@ export const appSlice = createSlice({
 		reset: s => {
 			Object.assign(s.parameters, initialState.parameters)
 		},
+		setCameraSettings: (s, { payload }) => {
+			const { capabilities, settings } = payload
+			s.camera_settings = {}
+			CAMERA_PROPS.forEach(({ name, parent }) => {
+				if (name in settings) {
+					const cap = capabilities[name]
+					if (Array.isArray(cap)) {
+						s.camera_settings[name] = {
+							options: cap,
+							value: settings[name],
+							intial: settings[name],
+						}
+					} else {
+						s.camera_settings[name] = {
+							min: capabilities[name].min,
+							max: capabilities[name].max,
+							step: capabilities[name].step,
+							value: settings[name],
+							initial: settings[name],
+							parent,
+						}
+						if (parent) {
+							s.camera_settings[name].disabled = settings[parent] !== 'manual'
+						}
+					}
+				}
+			})
+		},
+		setCameraSetting: (s, { payload }) => {
+			const [key, value] = payload
+			if (key in s.camera_settings) {
+				s.camera_settings[key].value = value
+			}
+
+			Object.values(s.camera_settings).forEach(a => {
+				if (a.parent) {
+					a.disabled = s.camera_settings[a.parent].value !== 'manual'
+				}
+			})
+		},
 		// reorderCue: (s, { payload }) => {
 		// 	const { dragId, dropId, after } = payload
 		// 	const { criteria } = s.document
@@ -225,13 +262,6 @@ export const appSlice = createSlice({
 		// 	if (dragIndex < dropIndex) dropIndex--
 		// 	if (after) dropIndex++
 		// },
-		// setCameraSettings: (s, { payload }) => {
-		// 	CAMERA_PROPS.forEach(k => {
-		// 		if (k in payload) {
-		// 			s.camera_settings[k] = payload[k]
-		// 		}
-		// 	}
-		// },
 	},
 })
 
@@ -248,7 +278,8 @@ export const {
 	removeCueAt,
 	renameCue,
 	setCameras,
-	// setConnected,
+	setCameraSettings,
+	setCameraSetting,
 	setCueIndex,
 	setLocalProp,
 	setParameters,
@@ -276,6 +307,8 @@ export const selectShowSource = s => s.app.show_source
 // settings
 
 export const selectCamera = s => s.app.camera
+
+export const selectCameraSettings = s => s.app.camera_settings
 
 export const selectConnected = s => s.app.rtc_state === CONNECTION_STATES.CONNECTED && s.app.ably_state === CONNECTION_STATES.CONNECTED
 

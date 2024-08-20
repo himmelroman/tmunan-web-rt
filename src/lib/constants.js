@@ -147,16 +147,16 @@ export const CONNECTION_STATES = {
 	FAILED: 'failed',
 }
 
-export const STATE_COLORS = {
-	[CONNECTION_STATES.NEW]: 'gray',
-	[CONNECTION_STATES.INITIALIZED]: 'gray',
-	[CONNECTION_STATES.CONNECTING]: 'yellow',
-	[CONNECTION_STATES.CONNECTED]: 'green',
-	[CONNECTION_STATES.DISCONNECTED]: 'red',
-	[CONNECTION_STATES.SUSPENDED]: 'red',
-	[CONNECTION_STATES.CLOSING]: 'orange',
-	[CONNECTION_STATES.CLOSED]: 'red',
-	[CONNECTION_STATES.FAILED]: 'red',
-}
-
-export const CAMERAS = {}
+export const CAMERA_PROPS = [
+	{ name: 'brightness', row: 0 },
+	{ name: 'contrast', row: 0 },
+	{ name: 'exposureMode' },
+	{ name: 'exposureTime', label: 'Exposure', parent: 'exposureMode', row: 1 },
+	{ name: 'exposureCompensation', label: 'Compensation', parent: 'exposureMode', row: 1 },
+	{ name: 'whiteBalanceMode' },
+	{ name: 'colorTemperature', label: 'Color temp', parent: 'whiteBalanceMode', row: 2 },
+	{ name: 'saturation', row: 2 },
+	{ name: 'focusMode' },
+	{ name: 'focusDistance', label: 'Focus', parent: 'focusMode', row: 3 },
+	{ name: 'sharpness', row: 3 },
+]

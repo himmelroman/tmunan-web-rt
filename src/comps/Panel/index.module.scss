@@ -28,11 +28,12 @@
 	font-size: 13px;
 	letter-spacing: 1px;
 
-	.header {
+	> .header {
 		position: relative;
 		display: flex;
 		align-items: center;
 		height: 50px;
+		min-height: 50px;
 		padding: 0 15px;
 		gap: 15px;
 		border-bottom: $border;
@@ -71,16 +72,6 @@
 		height: calc(100% - 50px);
 	}
 
-	section {
-		width: 422px;
-		display: flex;
-		flex-direction: column;
-		align-items: stretch;
-		&:not(:last-child) {
-			border-right: $border_2;
-		}
-	}
-
 	textarea {
 		padding: 8px;
 		letter-spacing: 1px;
@@ -112,7 +103,7 @@
 		--checked: #f66;
 	}
 
-	.select {
+	[data-select] {
 		--line-width: 100%;
 		--line-height: 40px;
 		--background-color: var(--deep-3);
@@ -159,16 +150,23 @@
 	}
 }
 
+.column {
+	width: 422px;
+	display: flex;
+	flex-direction: column;
+	align-items: stretch;
+	&:not(:last-child) {
+		border-right: $border_2;
+	}
+	overflow-y: scroll;
+}
+
 .row {
 	display: grid;
 	flex-direction: row;
 	flex-wrap: wrap;
-	padding: 15px 15px;
+	padding: 20px 15px 0 15px;
 	gap: 20px;
-
-	// &:not(:last-child) {
-	border-bottom: $border;
-	// }
 
 	&[data-1] {
 		grid-template-columns: 1fr;
@@ -192,6 +190,11 @@
 }
 
 .sep {
+	border-bottom: $border;
+}
+
+.rsep {
+	padding-bottom: 15px;
 	border-bottom: $border;
 }
 
@@ -228,15 +231,94 @@
 	}
 }
 
-.col {
+.field {
 	display: flex;
 	flex-direction: column;
 	gap: 10px;
+
+	&[data-row] {
+		flex-direction: row;
+	}
 
 	label {
 		white-space: nowrap;
 		width: 50%;
 	}
+}
+
+.camera_field {
+	display: flex;
+	flex-direction: column;
+	align-items: stretch;
+	padding: 15px 0;
+	border-bottom: $border;
+	box-sizing: border-box;
+
+	// max-height: 71px;
+	// overflow: hidden;
+	// transition: all 0.2s;
+
+	.header {
+		display: flex;
+		flex-direction: row;
+		padding: 0 15px;
+		gap: 5px;
+
+		button {
+			opacity: 0.8;
+			padding-right: 0;
+
+			svg {
+				transform: rotate(-90deg);
+				transition: transform 0.2s;
+			}
+		}
+	}
+
+	.wrap {
+		max-height: 0px;
+		overflow: hidden;
+		transition: all 0.3s;
+	}
+
+	&[data-expanded] {
+		> .header {
+			button {
+				opacity: 1;
+				filter: brightness(1.2);
+				svg {
+					transform: rotate(0deg);
+				}
+			}
+		}
+	}
+}
+
+.camera_settings {
+	display: flex;
+	flex-direction: column;
+
+	[data-range] {
+		position: relative;
+	}
+}
+
+.camera_auto {
+	position: absolute;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	pointer-events: all !important;
+
+	font-weight: 200;
+	font-size: 12px;
+	padding: 0;
+	width: 22px;
+	height: 22px;
+
+	// background-color: var(--deep-25);
+
+	left: 110px;
 }
 
 .capture {
@@ -304,7 +386,7 @@
 
 	&:hover {
 		color: var(--deep-6);
-		background-color: var(--deep-21);
+		background-color: var(--deep-25);
 	}
 
 	.active {

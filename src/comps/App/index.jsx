@@ -11,16 +11,12 @@ import useDoubleClick from 'use-double-click'
 
 import { HEIGHT, WIDTH } from '~/lib/constants'
 import logger from '~/lib/logger'
-import store, { initialState, selectApp, /* selectIsActive, */ selectFilterString, selectIsRunning, selectTransformString, setLocalProp } from '~/lib/redux'
+import store, { initialState, selectApp, /* selectIsActive, */ selectFilterString, selectIsRunning, selectTransformString, setCameraSettings, setLocalProp } from '~/lib/redux'
 import socket from '~/lib/socket'
 import useClasses from '~/lib/useClasses'
 import Panel from '../Panel'
 import styles from './index.module.scss'
 import sleep from '~/lib/sleep'
-
-// const THROTTLE = 1000 / 30
-// let frameId
-// let lastMillis = 0
 
 window.gsap = gsap
 
@@ -40,11 +36,6 @@ let source_vid
 const transformRef = { ...initialState.transform }
 
 async function drawVideo() {
-	// if (now - lastMillis < THROTTLE) {
-	// 	frameId = source_vid.requestVideoFrameCallback(drawVideo)
-	// 	return
-	// }
-
 	const vwidth = source_vid.videoWidth
 	const vheight = source_vid.videoHeight
 	let width
@@ -65,28 +56,17 @@ async function drawVideo() {
 	}
 
 	ctx.drawImage(source_vid, x, y, width, height, 0, 0, WIDTH, HEIGHT)
-
-	// const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.96))
-	// window.blob = blob
-	// frameId = source_vid.requestVideoFrameCallback(drawVideo)
 }
 
 export const stopStream = () => {
 	if (window.stream) {
-		logger.info('Stopping stream')
+		logger.info('Stopping outgoing stream')
 		const tracks = window.stream.getTracks()
 		tracks.forEach(track => track.stop())
 		window.stream = null
 	}
 }
 window.stopStream = stopStream
-
-// const cancelFrame = () => {
-// 	if (!frameId) return
-// 	logger.info('Cancelling frame')
-// 	if (source_vid) source_vid.cancelVideoFrameCallback(frameId)
-// 	frameId = null
-// }
 
 const onKeyDown = e => {
 	const s = store.getState().app
@@ -150,7 +130,6 @@ const App = () => {
 			logger.info('App unmounted')
 			window.removeEventListener('keydown', onKeyDown)
 			clearInterval(v_interval)
-			// cancelFrame()
 			if (source_vid?.srcObject) {
 				const tracks = source_vid.srcObject.getTracks()
 				tracks.forEach(track => track.stop())
@@ -197,13 +176,15 @@ const App = () => {
 			camera_busy = false
 			source_vid.srcObject = stream
 
-			logger.info('Got camera stream')
-
 			const track = stream.getVideoTracks()[0]
+			window.camera_track = track
+
 			const capabilities = track.getCapabilities()
 			logger.info('Capabilities', JSON.parse(JSON.stringify(capabilities)))
 			const settings = track.getSettings()
 			logger.info('Settings', JSON.parse(JSON.stringify(settings)))
+
+			dispatch(setCameraSettings({ capabilities, settings }))
 		}
 		getCamera()
 	}, [app.camera])
@@ -241,23 +222,6 @@ const App = () => {
 		transformRef.flip_x = clientParams.transform.flip_x
 		transformRef.flip_y = clientParams.transform.flip_y
 	}, [transformString, clientParams.transform])
-
-	// useEffect(() => {
-	// 	if (running) {
-	// 		frameId = video.requestVideoFrameCallback(onFrame)
-	// 	} else {
-	// 		cancelFrame('disconnected')
-	// 	}
-	// }, [running])
-
-	// useEffect(() => {
-	// 	clearInterval(cint)
-	// 	if (running) cint = setInterval(sendImage, 1000 / app.fps)
-
-	// 	return () => {
-	// 		clearInterval(cint)
-	// 	}
-	// }, [app.fps, running])
 
 	const cls = useClasses(styles.cont, app.show_panel && styles.show_panel, app.show_source && styles.show_source, app.show_output && styles.show_output)
 

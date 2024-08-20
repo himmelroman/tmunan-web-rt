@@ -9,7 +9,7 @@ import styles from './index.module.scss'
 import useDoubleClick from 'use-double-click'
 import { useRef } from 'react'
 
-const Range = ({ name, label, value, onChange, min = 0, max = 100, initial = 0, step = 1 }) => {
+const Range = ({ name, label, value, onChange, min = 0, max = 100, initial = 0, step = 1, disabled, children }) => {
 	const labelRef = useRef()
 
 	useDoubleClick({
@@ -41,14 +41,37 @@ const Range = ({ name, label, value, onChange, min = 0, max = 100, initial = 0, 
 	}
 
 	return (
-		<div id={name ? `range-${name}` : undefined} className={styles.cont} onKeyDown={onKeyDown}>
+		<div
+			id={name ? `range-${name}` : undefined}
+			className={styles.cont}
+			onKeyDown={onKeyDown}
+			disabled={disabled}
+			data-range
+		>
 			<div className={styles.row}>
 				<label ref={labelRef} htmlFor={name}>
 					{label || name}
 				</label>
-				<input name={`${name}-value`} type='text' className={styles.text} value={value} onChange={onTextChange} />
+				<input
+					name={`${name}-value`}
+					type='text'
+					className={styles.text}
+					value={value}
+					onChange={onTextChange}
+				/>
 			</div>
-			<input name={name} type='range' className={styles.range} value={value} min={min} max={max} step={step} onChange={onRangeChange} tabIndex={-1} />
+			<input
+				name={name}
+				type='range'
+				className={styles.range}
+				value={value}
+				min={min}
+				max={max}
+				step={step}
+				onChange={onRangeChange}
+				tabIndex={-1}
+			/>
+			{children}
 		</div>
 	)
 }
@@ -62,6 +85,8 @@ Range.propTypes = {
 	max: PropTypes.number,
 	step: PropTypes.number,
 	initial: PropTypes.number,
+	disabled: PropTypes.bool,
+	children: PropTypes.node,
 }
 
 export default Range
