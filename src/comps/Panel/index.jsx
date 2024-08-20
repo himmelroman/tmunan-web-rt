@@ -7,12 +7,27 @@ import debounce from 'debounce'
 import { memo, useEffect } from 'react'
 import FocusLock from 'react-focus-lock'
 import { FaFolderOpen } from 'react-icons/fa6'
-import { MdClose, MdFullscreen, MdFullscreenExit, MdInput, MdLayersClear, MdOutput, MdRefresh, MdReorder, MdSave } from 'react-icons/md'
+import { MdClose, MdFullscreen, MdFullscreenExit, MdInput, MdOutput, MdRefresh, MdReorder, MdSave } from 'react-icons/md'
 import { useDispatch, useSelector } from 'react-redux'
 
 import { FILTER_LIST, NAME, VERSION } from '~/lib/constants'
 import logger from '~/lib/logger'
-import { initialState, loadCue, openFile, reset, saveCue, selectApp, setClientParameter, setDiffusionParameter, setFilter, setLocalProp, setShowCueList, setShowPanel, setTransform } from '~/lib/redux'
+import {
+	initialState,
+	loadCue,
+	openFile,
+	reset,
+	saveCue,
+	selectApp,
+	selectConnected,
+	setClientParameter,
+	setDiffusionParameter,
+	setFilter,
+	setLocalProp,
+	setShowCueList,
+	setShowPanel,
+	setTransform,
+} from '~/lib/redux'
 import socket from '~/lib/socket'
 import useClasses from '~/lib/useClasses'
 import Check from '../Check'
@@ -40,8 +55,9 @@ const Panel = () => {
 	const dispatch = useDispatch()
 
 	const app = useSelector(selectApp)
+	const connected = useSelector(selectConnected)
 
-	const { camera, cameras, connected, cue_index, cues, presence, show_cuelist, show_output, show_source } = app
+	const { ably_state, rtc_state, camera, cameras, cue_index, cues, presence, show_cuelist, show_output, show_source } = app
 
 	const { diffusion } = app.parameters
 
@@ -183,7 +199,10 @@ const Panel = () => {
 		<FocusLock className={styles.lock}>
 			<div className={cls} onKeyDown={onKeyDown} tabIndex={0}>
 				<div className={styles.header}>
-					<div className={styles.led} data-connected />
+					<div className={styles.leds}>
+						<div className={styles.led} data-state={ably_state} />
+						<div className={styles.led} data-state={rtc_state} />
+					</div>
 					<button
 						name='reload'
 						onDoubleClick={() => {
@@ -193,7 +212,10 @@ const Panel = () => {
 						<MdRefresh />
 					</button>
 					<button name='reset' onClick={onReset}>
-						<MdLayersClear />
+						{/* <MdLayersClear /> */}
+						<span className='material-symbols-outlined' data-reset>
+							reset_image
+						</span>
 					</button>
 					<Check name='show_source' value={show_source} onChange={onLocalChange}>
 						<MdInput />

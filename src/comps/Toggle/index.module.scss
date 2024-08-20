@@ -34,16 +34,22 @@
 	}
 
 	&:hover {
+		// .bg {
+		// 	filter: brightness(1.1) saturate(1.1);
+		// }
 		.bg {
-			filter: brightness(1.1) saturate(1.1);
+			background-color: var(--deep-35);
+		}
+		.handle .inner_handle {
+			background-color: var(--deep-6);
 		}
 	}
 
-	&:focus-within {
-		.bg {
-			background-color: var(--deep-4);
-		}
-	}
+	// &:focus-within {
+	// 	.bg {
+	// 		background-color: var(--deep-4);
+	// 	}
+	// }
 }
 
 .bg {

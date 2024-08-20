@@ -1,56 +1,50 @@
 import chalk from 'chalk'
-import { /* CODES, SOCKET_URL, */ BASE_URL, NAME } from './constants'
+import { SCTP_CAUSE_CODES, ABLY_TOKEN, /* BASE_URL, */ NAME, CONNECTION_STATES } from './constants'
 import logger from './logger'
-import store, { setConnected, setParameters, setPresence } from './redux'
+import store, { setAblyState, setParameters, setPresence, setRTCState } from './redux'
+import * as Ably from 'ably'
 
 const { dispatch, getState } = store
 
-// let ws
+// PC
+
 let pc
 let dc
 
 let rcTimeout
 let retries = 0
 
-const sctpCauseCodes = [
-	'No SCTP error',
-	'Invalid stream identifier',
-	'Missing mandatory parameter',
-	'Stale cookie error',
-	'Sender is out of resource (i.e., memory)',
-	'Unable to resolve address',
-	'Unrecognized SCTP chunk type received',
-	'Invalid mandatory parameter',
-	'Unrecognized parameters',
-	'No user data (SCTP DATA chunk has no data)',
-	'Cookie received while shutting down',
-	'Restart of an association with new addresses',
-	'User-initiated abort',
-	'Protocol violation',
-]
+// Ably
 
-export const send = (type, payload) => {
-	if (dc?.readyState === 'open') {
-		if (typeof type === 'string') dc.send(JSON.stringify({ type, payload }))
-		else dc.send(type)
+const ably = new Ably.Realtime({
+	key: ABLY_TOKEN,
+	recover: (last, cb) => {
+		console.log('last', last)
+		cb(true)
+	},
+})
+const channel = ably.channels.get('tmunan_local')
+
+channel.subscribe('answer', answer => {
+	answer = JSON.parse(JSON.parse(answer.data))
+	logger.info(chalk.greenBright('Answer received'), answer)
+	pc.setRemoteDescription(answer)
+})
+
+ably.connection.on(change => {
+	store.dispatch(setAblyState(change.current))
+	if (change.current === CONNECTION_STATES.CONNECTED) {
+		logger.info(chalk.greenBright('Ably connected'))
+		if (!pc) initiatePeerConnection()
+	} else if (change.current === CONNECTION_STATES.DISCONNECTED) {
+		logger.info(chalk.redBright('Ably disconnected'))
 	}
-}
+})
 
-export const reconnect = () => {
-	clearTimeout(rcTimeout)
-	dispatch(setConnected(false))
+// WebRTC
 
-	let RECONNECT_INTERVAL = parseInt(Math.min(Math.max(2, Math.pow(retries, 1.5)), 60))
-	if (retries === 5) RECONNECT_INTERVAL += 15
-	else if (retries === 20) RECONNECT_INTERVAL += 30
-	logger.debug(`Reconnecting in ${RECONNECT_INTERVAL}s...`)
-
-	rcTimeout = setTimeout(connect, RECONNECT_INTERVAL * 1000)
-	retries++
-}
-
-export const connect = async () => {
-	logger.info(`Creating peer connection...`)
+export const initiatePeerConnection = async () => {
+	logger.info(`Initiating peer connection...`)
 
 	pc = new RTCPeerConnection({
 		sdpSemantics: 'unified-plan',
@@ -66,10 +60,9 @@ export const connect = async () => {
 	pc.oniceconnectionstatechange = () => {
 		const s = pc.iceConnectionState
 		const c = s === 'connected' ? chalk.greenBright : s === 'disconnected' ? chalk.redBright : chalk.white
-		logger.debug(`ICE Connection state > ${c(s)}`)
-		if (pc.iceConnectionState === 'disconnected') {
-			reconnect()
-		}
+		logger.debug(`ICE ${c(s)}`)
+		store.dispatch(setRTCState(s))
+		if (s === 'disconnected') reconnect()
 	}
 
 	pc.onsignalingstatechange = () => {
@@ -106,32 +99,18 @@ export const connect = async () => {
 					})
 			)
 			.then(() => {
+				logger.info('Publishing offer...')
 				const offer = pc.localDescription
-				// const { show_output } = getState().app
-				const query = `${BASE_URL}/offer?name=${NAME}&output=true`
 
-				logger.debug('Sending offer to', query)
-
-				fetch(query, {
-					body: JSON.stringify({
+				channel.publish(
+					'offer',
+					JSON.stringify({
+						name: NAME,
+						output: true,
 						type: offer.type,
 						sdp: offer.sdp,
-						name: NAME,
-					}),
-					headers: {
-						'Content-Type': 'application/json',
-					},
-					method: 'POST',
-				})
-					.then(res => res.json())
-					.then(answer => {
-						logger.info(`${chalk.greenBright('Answer received')} setting remote description`, answer)
-						pc.setRemoteDescription(answer)
 					})
-					.catch(e => {
-						logger.error('Failed to connect', e)
-						reconnect()
-					})
+				)
 			})
 			.catch(e => {
 				logger.error('Failed to create offer', e)
@@ -139,12 +118,49 @@ export const connect = async () => {
 	}
 
 	// create data channel
+	createDataChannel()
 
+	pc.addTransceiver('video')
+}
+
+export const send = (type, payload) => {
+	if (dc?.readyState === 'open') {
+		if (typeof type === 'string') dc.send(JSON.stringify({ type, payload }))
+		else dc.send(type)
+	}
+}
+
+export const replaceTrack = async stream => {
+	logger.info('Replacing track')
+	const sender = pc.getSenders()[0]
+	const track = stream.getVideoTracks()[0]
+	if ('contentHint' in track) {
+		track.contentHint = 'detail'
+	}
+	sender.replaceTrack(track)
+}
+
+// Transport: REST + DataChannel
+
+const reconnect = () => {
+	clearTimeout(rcTimeout)
+	// dispatch(setConnected(false))
+
+	let RECONNECT_INTERVAL = parseInt(Math.min(Math.max(2, Math.pow(retries, 1.5)), 60))
+	if (retries === 5) RECONNECT_INTERVAL += 15
+	else if (retries === 20) RECONNECT_INTERVAL += 30
+	logger.debug(`Reconnecting in ${RECONNECT_INTERVAL}s...`)
+
+	rcTimeout = setTimeout(initiatePeerConnection, RECONNECT_INTERVAL * 1000)
+	retries++
+}
+
+const createDataChannel = () => {
 	dc = pc.createDataChannel('data')
 
 	dc.onopen = () => {
 		logger.info(chalk.greenBright('Data channel opened'))
-		dispatch(setConnected(true))
+		// dispatch(setConnected(true))
 		retries = 0
 	}
 
@@ -153,7 +169,6 @@ export const connect = async () => {
 		logger.info('Data channel message', { type, payload })
 		switch (type) {
 			case 'connected': {
-				dispatch(setConnected(payload))
 				const { parameters } = getState().app.presence
 				send('parameters', { ...parameters, override: false })
 				break
@@ -163,6 +178,7 @@ export const connect = async () => {
 				break
 			}
 			case 'parameters': {
+				payload.diffusion = JSON.parse(payload.diffusion)
 				dispatch(setParameters(payload))
 				break
 			}
@@ -192,8 +208,8 @@ export const connect = async () => {
 				console.error('	Identity provider load failure: HTTP error ', error.httpRequestStatusCode)
 				break
 			case 'sctp-failure':
-				if (error.sctpCauseCode < sctpCauseCodes.length) {
-					console.error('	SCTP failure: ', error.sctpCauseCode, sctpCauseCodes[error.sctpCauseCode])
+				if (error.sctpCauseCode < SCTP_CAUSE_CODES.length) {
+					console.error('	SCTP failure: ', error.sctpCauseCode, SCTP_CAUSE_CODES[error.sctpCauseCode])
 				} else {
 					console.error('	Unknown SCTP error')
 				}
@@ -208,44 +224,11 @@ export const connect = async () => {
 				break
 		}
 	}
-
-	pc.addTransceiver('video')
-	console.log('Added transciever', pc.getTransceivers())
 }
-
-export const replaceTrack = async stream => {
-	logger.info('Replacing track')
-	const sender = pc.getSenders()[0]
-	const track = stream.getVideoTracks()[0]
-	if ('contentHint' in track) {
-		track.contentHint = 'detail'
-	}
-	sender.replaceTrack(track)
-}
-
-// Add, remove or replace track
-// export const setTrack = isActive => {
-// 	const { stream } = window
-// 	const stream_present = !!stream
-// 	logger.info(`Set outgoing track > ${isActive ? chalk.greenBright('ON') : chalk.redBright('OFF')} ${stream_present ? '' : chalk.redBright('NO STREAM')}`)
-
-// 	const sender = pc.getSenders()[0]
-// 	if (isActive) {
-// 		logger.info('\tReplacing track')
-// 		if (stream) sender.replaceTrack(stream.getVideoTracks()[0])
-// 		else {
-// 			sender.replaceTrack(stream.getVideoTracks()[0])
-// 		}
-// 	} else {
-// 		logger.info('\tRemoving track')
-// 		pc.removeTrack(sender)
-// 		return
-// 	}
-// }
 
 export default {
 	close,
-	connect,
+	initiatePeerConnection,
 	send,
 	replaceTrack,
 }

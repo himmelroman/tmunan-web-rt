@@ -21,7 +21,6 @@
 	color: var(--deep-5);
 	background-color: var(--deep-2);
 
-	// font-family: "Roboto Mono", monospace;
 	font-family: "Open Sans", sans-serif;
 	font-optical-sizing: auto;
 	font-weight: 350;
@@ -38,24 +37,19 @@
 		gap: 15px;
 		border-bottom: $border;
 
-		// .section {
-		// 	display: flex;
-		// 	align-items: center;
-		// 	height: 50px;
-		// 	min-width: 422px;
-		// 	box-sizing: border-box;
-		// }
-
 		.sep {
 			font-size: 14px;
 			color: var(--deep-4);
-			// margin-right: -5px;
-			// margin-left: -5px;
 		}
 
 		button:has(svg),
 		[data-check] {
-			background-color: transparent;
+			width: 32px;
+			height: 32px;
+		}
+
+		[data-reset] {
+			font-size: 20px;
 		}
 
 		.right {
@@ -92,16 +86,11 @@
 		letter-spacing: 1px;
 	}
 
-	button:has(svg):hover {
-		background-color: transparent;
-		color: #f88;
+	button:hover {
+		filter: brightness(1.2);
 	}
 
 	[data-check] {
-		// &:hover {
-		// 	filter: brightness(1.5) saturate(1.5);
-		// }
-
 		&[data-checked] {
 			color: #7c7;
 		}
@@ -144,12 +133,6 @@
 	&.connected {
 		.led[data-connected] {
 			background-color: #5f5;
-		}
-
-		&.active {
-			.led[data-active] {
-				background-color: #5f5;
-			}
 		}
 	}
 
@@ -219,31 +202,36 @@
 	gap: 20px;
 }
 
-// .leds {
-// 	flex: 1;
-// 	display: flex;
-// 	flex-direction: row;
-// 	align-items: center;
-// 	gap: 20px;
-// 	padding: 0 5px;
-// }
+.leds {
+	position: absolute;
+	left: 4px;
+	top: 4px;
+
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: 3px;
+}
 
 .led {
-	position: absolute;
-	top: 4px;
-	left: 4px;
-	width: 4px;
-	height: 4px;
-	border-radius: 4px;
-	background-color: #f88;
+	width: 3px;
+	height: 3px;
+	border-radius: 50%;
+
+	background-color: #f55;
+
+	&[data-state="connecting"] {
+		background-color: #ee0;
+	}
+	&[data-state="connected"] {
+		background-color: #4e4;
+	}
 }
 
 .col {
 	display: flex;
 	flex-direction: column;
 	gap: 10px;
-	// flex-shrink: 0;
-	// flex-grow: 1;
 
 	label {
 		white-space: nowrap;
@@ -308,15 +296,6 @@
 	&[data-active] {
 		pointer-events: none;
 		color: #f88;
-
-		// 	&::before {
-		// 		position: absolute;
-		// 		left: -4px;
-		// 		top: 0.5px;
-		// 		font-size: 22px;
-		// 		content: "•";
-		// 		color: #f88;
-		// 	}
 	}
 
 	&[data-current] {
@@ -324,15 +303,9 @@
 	}
 
 	&:hover {
-		// text-decoration: underline;
 		color: var(--deep-6);
-
 		background-color: var(--deep-21);
 	}
-
-	// &[data-self] {
-	// 	color: #88f;
-	// }
 
 	.active {
 		color: #f88;

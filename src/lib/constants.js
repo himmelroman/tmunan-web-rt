@@ -31,6 +31,8 @@ export const WIDTH = parseInt(QUERY.width || import.meta.env.VITE_WIDTH || 512)
 
 export const HEIGHT = parseInt(QUERY.height || import.meta.env.VITE_HEIGHT || 512)
 
+export const ABLY_TOKEN = import.meta.env.VITE_ABLY_TOKEN
+
 export const CODES = {
 	NON_ACTIVE_PUBLISH: 'non_active_publish',
 }
@@ -115,3 +117,46 @@ export const FILTERS_SCHEMA = {
 }
 
 export const FILTER_LIST = Object.keys(FILTERS_SCHEMA).map(k => ({ name: k, ...FILTERS_SCHEMA[k] }))
+
+export const SCTP_CAUSE_CODES = [
+	'No SCTP error',
+	'Invalid stream identifier',
+	'Missing mandatory parameter',
+	'Stale cookie error',
+	'Sender is out of resource (i.e., memory)',
+	'Unable to resolve address',
+	'Unrecognized SCTP chunk type received',
+	'Invalid mandatory parameter',
+	'Unrecognized parameters',
+	'No user data (SCTP DATA chunk has no data)',
+	'Cookie received while shutting down',
+	'Restart of an association with new addresses',
+	'User-initiated abort',
+	'Protocol violation',
+]
+
+export const CONNECTION_STATES = {
+	NEW: 'new',
+	INITIALIZED: 'initialized',
+	CONNECTING: 'connecting',
+	CONNECTED: 'connected',
+	DISCONNECTED: 'disconnected',
+	SUSPENDED: 'suspended',
+	CLOSING: 'closing',
+	CLOSED: 'closed',
+	FAILED: 'failed',
+}
+
+export const STATE_COLORS = {
+	[CONNECTION_STATES.NEW]: 'gray',
+	[CONNECTION_STATES.INITIALIZED]: 'gray',
+	[CONNECTION_STATES.CONNECTING]: 'yellow',
+	[CONNECTION_STATES.CONNECTED]: 'green',
+	[CONNECTION_STATES.DISCONNECTED]: 'red',
+	[CONNECTION_STATES.SUSPENDED]: 'red',
+	[CONNECTION_STATES.CLOSING]: 'orange',
+	[CONNECTION_STATES.CLOSED]: 'red',
+	[CONNECTION_STATES.FAILED]: 'red',
+}
+
+export const CAMERAS = {}

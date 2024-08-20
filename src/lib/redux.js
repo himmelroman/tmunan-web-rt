@@ -1,14 +1,15 @@
-import { createSlice, configureStore, createSelector, current } from '@reduxjs/toolkit'
+import { createSlice, configureStore, createSelector } from '@reduxjs/toolkit'
 import merge from '@bundled-es-modules/deepmerge'
 import logger from './logger'
-import { WIDTH, HEIGHT, NAME, IS_CONTROL, OFFLINE } from './constants'
+import { WIDTH, HEIGHT, NAME, IS_CONTROL, OFFLINE, CONNECTION_STATES } from './constants'
 
 // export const CAMERA_PROPS = ['brightness', 'colorTemperature', 'contrast', 'exposureTime', 'exposureCompensation', 'exposureMode', 'focusDistance', 'focusMode', 'frameRate', 'saturation', 'sharpness']
 
 export const initialState = {
 	// env
 	cameras: [],
-	connected: false,
+	rtc_state: 'disconnected',
+	ably_state: 'disconnected',
 	presence: {
 		active_connection_name: null,
 		connections: [],
@@ -20,6 +21,7 @@ export const initialState = {
 	show_output: !OFFLINE,
 	// exp
 	camera: null,
+	camera_settings: null,
 	// parameters
 	parameters: {
 		diffusion: {
@@ -90,12 +92,18 @@ export const appSlice = createSlice({
 				s.camera = s.cameras[0]
 			}
 		},
-		setConnected: (s, { payload }) => {
-			if (!payload) {
-				s.connected = false
-				return
-			}
-			s.connected = true
+		// setConnected: (s, { payload }) => {
+		// 	if (!payload) {
+		// 		s.connected = false
+		// 		return
+		// 	}
+		// 	s.connected = true
+		// },
+		setRTCState: (s, { payload }) => {
+			s.rtc_state = payload
+		},
+		setAblyState: (s, { payload }) => {
+			s.ably_state = payload
 		},
 		setPresence: (s, { payload }) => {
 			s.presence = payload
@@ -130,11 +138,7 @@ export const appSlice = createSlice({
 			Object.assign(s.parameters.client.transform, payload)
 		},
 		setParameters: (s, { payload }) => {
-			console.log('setParameters', payload)
 			s.parameters = merge(s.parameters, payload)
-			// Object.assign(s.parameters.diffusion, payload.diffusion)
-			// Object.assign(s.parameters.client, payload.client)
-			// Object.assign(s.parameters.client, payload.client)
 		},
 		// cues
 		saveCue: (s, { payload }) => {
@@ -232,6 +236,8 @@ export const appSlice = createSlice({
 })
 
 export const {
+	setAblyState,
+	setRTCState,
 	setShowCueList,
 	setShowPanel,
 	saveCue,
@@ -242,7 +248,7 @@ export const {
 	removeCueAt,
 	renameCue,
 	setCameras,
-	setConnected,
+	// setConnected,
 	setCueIndex,
 	setLocalProp,
 	setParameters,
@@ -271,7 +277,7 @@ export const selectShowSource = s => s.app.show_source
 
 export const selectCamera = s => s.app.camera
 
-export const selectConnected = s => s.app.connected
+export const selectConnected = s => s.app.rtc_state === CONNECTION_STATES.CONNECTED && s.app.ably_state === CONNECTION_STATES.CONNECTED
 
 export const selectParameters = s => s.app.parameters
 
