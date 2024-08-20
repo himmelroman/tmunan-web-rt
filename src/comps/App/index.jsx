@@ -11,14 +11,32 @@ import useDoubleClick from 'use-double-click'
 
 import { HEIGHT, WIDTH } from '~/lib/constants'
 import logger from '~/lib/logger'
-import store, { initialState, selectApp, /* selectIsActive, */ selectFilterString, selectIsRunning, selectTransformString, setCameraSettings, setLocalProp } from '~/lib/redux'
+import store, {
+	initialState,
+	selectApp,
+	/* selectIsActive, */ selectFilterString,
+	selectIsRunning,
+	selectTransformString,
+	setCameraSettings,
+	setLocalProp,
+} from '~/lib/redux'
 import socket from '~/lib/socket'
 import useClasses from '~/lib/useClasses'
 import Panel from '../Panel'
 import styles from './index.module.scss'
 import sleep from '~/lib/sleep'
 
+// gsap
+
 window.gsap = gsap
+
+// const filterObject = {}
+
+// const conformFilter = () => {
+// 	let { filter } = filterObject
+// 	console.log('f', filter)
+// 	ctx.filter = filter
+// }
 
 let v_interval
 
@@ -223,7 +241,12 @@ const App = () => {
 		transformRef.flip_y = clientParams.transform.flip_y
 	}, [transformString, clientParams.transform])
 
-	const cls = useClasses(styles.cont, app.show_panel && styles.show_panel, app.show_source && styles.show_source, app.show_output && styles.show_output)
+	const cls = useClasses(
+		styles.cont,
+		app.show_panel && styles.show_panel,
+		app.show_source && styles.show_source,
+		app.show_output && styles.show_output
+	)
 
 	return (
 		<div className={cls} ref={ref}>

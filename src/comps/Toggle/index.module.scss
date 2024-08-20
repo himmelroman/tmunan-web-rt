@@ -41,7 +41,8 @@
 			background-color: var(--deep-35);
 		}
 		.handle .inner_handle {
-			background-color: var(--deep-6);
+			// background-color: var(--deep-6);
+			filter: brightness(1.2) saturate(1.2);
 		}
 	}
 

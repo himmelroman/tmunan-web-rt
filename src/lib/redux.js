@@ -36,12 +36,12 @@ export const initialState = {
 			fps: 16,
 			filter: {
 				sepia: 0,
-				contrast: 1,
 				brightness: 1,
+				invert: 0,
+				contrast: 1,
 				saturate: 1,
 				'hue-rotate': 0,
 				blur: 0,
-				invert: 0,
 			},
 			transform: {
 				flip_x: false,
@@ -195,8 +195,8 @@ export const appSlice = createSlice({
 					if (Array.isArray(cap)) {
 						s.camera_settings[name] = {
 							options: cap,
-							value: settings[name],
-							intial: settings[name],
+							value: 'continuous',
+							intial: 'continuous',
 						}
 					} else {
 						s.camera_settings[name] = {
@@ -310,7 +310,8 @@ export const selectCamera = s => s.app.camera
 
 export const selectCameraSettings = s => s.app.camera_settings
 
-export const selectConnected = s => s.app.rtc_state === CONNECTION_STATES.CONNECTED && s.app.ably_state === CONNECTION_STATES.CONNECTED
+export const selectConnected = s =>
+	s.app.rtc_state === CONNECTION_STATES.CONNECTED && s.app.ably_state === CONNECTION_STATES.CONNECTED
 
 export const selectParameters = s => s.app.parameters
 
@@ -323,7 +324,14 @@ export const selectIsFrozen = createSelector(selectClientParameters, p => p.free
 export const selectFilter = createSelector(selectClientParameters, p => p.filter)
 
 export const selectFilterString = createSelector(selectFilter, f => {
-	const props = f && Object.entries(f)
+	if (!f) return 'none'
+	f = { ...f }
+	if (f.invert === 1) {
+		if (f['hue-rotate']) f['hue-rotate'] += 180
+		else f['hue-rotate'] = 180
+	}
+
+	const props = Object.entries(f)
 	if (!props?.length) return 'none'
 	return props
 		.map(([k, v]) => {
@@ -371,7 +379,10 @@ export const selectCurrentCue = createSelector(selectCues, selectCueIndex, (cues
 export const selectCueChanged = createSelector(selectCurrentCue, selectParameters, (cue, params) => {
 	if (!cue) return false
 	const { client, diffusion } = params
-	return JSON.stringify(cue.client) !== JSON.stringify(client) || JSON.stringify(cue.diffusion) !== JSON.stringify(diffusion)
+	return (
+		JSON.stringify(cue.client) !== JSON.stringify(client) ||
+		JSON.stringify(cue.diffusion) !== JSON.stringify(diffusion)
+	)
 })
 
 // connection
@@ -382,7 +393,12 @@ export const selectConnections = createSelector(selectPresence, p => p.connectio
 
 export const selectIsActive = createSelector(selectPresence, p => p.active_connection_name === NAME)
 
-export const selectIsRunning = createSelector(selectConnected, selectIsActive, selectIsFrozen, (connected, active, freeze) => connected && active && !freeze)
+export const selectIsRunning = createSelector(
+	selectConnected,
+	selectIsActive,
+	selectIsFrozen,
+	(connected, active, freeze) => connected && active && !freeze
+)
 
 /* Store */
 

@@ -133,8 +133,9 @@ const Panel = () => {
 	}
 
 	const onInvert = value => {
-		dispatch(setFilter({ invert: value ? 1 : 0 }))
-		if (connected) debouncedSend('parameters', { client: { filter: { [name]: value } }, override: true })
+		const invert = value ? 1 : 0
+		dispatch(setFilter({ invert }))
+		if (connected) debouncedSend('parameters', { client: { filter: { invert } }, override: true })
 	}
 
 	// const onBlack = value => {
