@@ -7,8 +7,6 @@
 import ReactDOM from 'react-dom/client'
 // import { PersistGate } from 'redux-persist/integration/react'
 import { Provider } from 'react-redux'
-import * as Ably from 'ably'
-import { AblyProvider, ChannelProvider } from 'ably/react'
 import chalk from 'chalk'
 
 import { IMG_URL, SOCKET_URL, VERSION, NAME, IS_CONTROL, OFFLINE, ABLY_TOKEN } from './lib/constants'
@@ -19,8 +17,6 @@ import App from './comps/App'
 import './styles/index.scss'
 
 window.socket = socket
-
-const ablyClient = new Ably.Realtime({ key: ABLY_TOKEN })
 
 const print = (prop, val) => {
 	logger.info(chalk.gray(prop.padEnd(20)) + chalk.blueBright(val))
@@ -70,11 +66,7 @@ async function main() {
 	const root = ReactDOM.createRoot(document.getElementById('root'))
 	root.render(
 		<Provider store={store}>
-			<AblyProvider client={ablyClient}>
-				<ChannelProvider channelName='tmunan_local'>
-					<App />
-				</ChannelProvider>
-			</AblyProvider>
+			<App />
 		</Provider>
 	)
 }

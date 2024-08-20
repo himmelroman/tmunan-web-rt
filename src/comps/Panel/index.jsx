@@ -8,7 +8,6 @@ import { memo, useEffect, useMemo, useState } from 'react'
 import FocusLock from 'react-focus-lock'
 import { FaFolderOpen } from 'react-icons/fa6'
 import {
-	MdArrowDropDown,
 	MdClose,
 	MdFullscreen,
 	MdFullscreenExit,
@@ -63,18 +62,6 @@ import { camelToFlat } from '~/lib/utils'
 const debouncedSend = debounce(socket.send, 200)
 
 const debouncedText = debounce(socket.send, 500)
-
-const Section = ({ name, children }) => {
-	const [expanded, setExpanded] = useState(false)
-	return (
-		<div className={styles.section} data-expanded={expanded || null}>
-			<div className={styles.section_header} onClick={() => setExpanded(!expanded)}>
-				{name}
-			</div>
-			{children}
-		</div>
-	)
-}
 
 const Panel = () => {
 	const dispatch = useDispatch()
