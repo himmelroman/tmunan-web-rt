@@ -1,5 +1,5 @@
 import chalk from 'chalk'
-import { SCTP_CAUSE_CODES, ABLY_TOKEN, /* BASE_URL, */ NAME, CONNECTION_STATES } from './constants'
+import { SCTP_CAUSE_CODES, ABLY_TOKEN, NAME, CONNECTION_STATES, ABLY_CHANNEL } from './constants'
 import logger from './logger'
 import store, { setAblyState, setParameters, setPresence, setRTCState } from './redux'
 import * as Ably from 'ably'
@@ -16,6 +16,8 @@ let retries = 0
 
 // Ably
 
+logger.info(`Connecting to Ably at ${ABLY_CHANNEL}...`)
+
 const ably = new Ably.Realtime({
 	key: ABLY_TOKEN,
 	recover: (last, cb) => {
@@ -23,7 +25,7 @@ const ably = new Ably.Realtime({
 		cb(true)
 	},
 })
-const channel = ably.channels.get('tmunan_local')
+const channel = ably.channels.get(ABLY_CHANNEL)
 
 channel.subscribe('answer', answer => {
 	answer = JSON.parse(answer.data)

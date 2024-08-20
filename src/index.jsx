@@ -9,7 +9,7 @@ import ReactDOM from 'react-dom/client'
 import { Provider } from 'react-redux'
 import chalk from 'chalk'
 
-import { IMG_URL, SOCKET_URL, VERSION, NAME, IS_CONTROL, OFFLINE, ABLY_TOKEN } from './lib/constants'
+import { IMG_URL, SOCKET_URL, VERSION, NAME, IS_CONTROL, OFFLINE } from './lib/constants'
 import logger from './lib/logger'
 import socket from './lib/socket'
 import store, { /* persistor, */ setCameras } from '~/lib/redux'
