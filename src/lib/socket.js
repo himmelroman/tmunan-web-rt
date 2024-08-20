@@ -28,12 +28,6 @@ const ably = new Ably.Realtime({
 
 const channel = ably.channels.get(ABLY_CHANNEL)
 
-channel.subscribe('answer', answer => {
-	answer = JSON.parse(answer.data)
-	logger.info(chalk.greenBright('Answer received'), answer)
-	pc.setRemoteDescription(answer)
-})
-
 ably.connection.on(change => {
 	store.dispatch(setAblyState(change.current))
 	if (change.current === CONNECTION_STATES.CONNECTED) {
@@ -44,23 +38,32 @@ ably.connection.on(change => {
 	}
 })
 
-// const publishOffer = () => {
-// 	logger.info('Publishing offer...')
-// 	const offer = pc.localDescription
+channel.subscribe('answer', answer => {
+	answer = JSON.parse(answer.data)
+	logger.info(chalk.greenBright('Answer received'), answer)
 
-// 	channel.publish(
-// 		'offer',
-// 		JSON.stringify({
-// 			name: NAME,
-// 			output: true,
-// 			type: offer.type,
-// 			sdp: offer.sdp,
-// 		})
-// 	)
-// }
+	pc.setRemoteDescription(answer)
+})
+
+// eslint-disable-next-line no-unused-vars
+const publishOffer = () => {
+	logger.info('Publishing offer...')
+	const offer = pc.localDescription
+
+	channel.publish(
+		'offer',
+		JSON.stringify({
+			name: NAME,
+			output: true,
+			type: offer.type,
+			sdp: offer.sdp,
+		})
+	)
+}
 
 // WebRTC
 
+// eslint-disable-next-line no-unused-vars
 const postOffer = () => {
 	logger.info('Publishing offer...')
 	const offer = pc.localDescription
@@ -144,7 +147,7 @@ export const initiatePeerConnection = async () => {
 						}
 					})
 			)
-			.then(postOffer)
+			.then(publishOffer)
 			.catch(e => {
 				logger.error('Failed to create offer', e)
 			})
