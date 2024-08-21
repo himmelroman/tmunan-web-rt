@@ -9,7 +9,7 @@ import ReactDOM from 'react-dom/client'
 import { Provider } from 'react-redux'
 import chalk from 'chalk'
 
-import { IMG_URL, SOCKET_URL, VERSION, NAME, IS_CONTROL, OFFLINE } from './lib/constants'
+import { VERSION, NAME, IS_CONTROL, OFFLINE, ABLY_CHANNEL, BASE_URL } from './lib/constants'
 import logger from './lib/logger'
 import socket from './lib/socket'
 import store, { /* persistor, */ setCameras } from '~/lib/redux'
@@ -55,13 +55,12 @@ async function main() {
 
 	logger.info(chalk.greenBright('START'))
 	print('Version', VERSION)
-	print('Websocket URL', SOCKET_URL)
-	print('Image URL', IMG_URL)
+	// print('Websocket URL', SOCKET_URL)
+	print('Server URL', BASE_URL)
 	print('Name', NAME)
+	print('Channel', ABLY_CHANNEL)
 
 	await getCameras()
-
-	if (!OFFLINE) socket.initiatePeerConnection()
 
 	const root = ReactDOM.createRoot(document.getElementById('root'))
 	root.render(

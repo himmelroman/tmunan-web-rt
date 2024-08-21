@@ -21,11 +21,11 @@ export const NAME = QUERY.name || import.meta.env.VITE_NAME
 
 export const FPS = QUERY.fps || 30
 
-export const SOCKET_URL = `${PROTOCOL === 'https' ? 'wss' : 'ws'}://${HOST}${PORT ? ':' + PORT : ''}/api/ws?name=${NAME}`
+// export const SOCKET_URL = `${PROTOCOL === 'https' ? 'wss' : 'ws'}://${HOST}${PORT ? ':' + PORT : ''}/api/ws?name=${NAME}`
+
+// export const IMG_URL = `${BASE_URL}/stream`
 
 export const BASE_URL = `${PROTOCOL}://${HOST}${PORT ? ':' + PORT : ''}/api`
-
-export const IMG_URL = `${BASE_URL}/stream`
 
 export const WIDTH = parseInt(QUERY.width || import.meta.env.VITE_WIDTH || 512)
 

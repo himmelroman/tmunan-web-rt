@@ -16,12 +16,10 @@ let retries = 0
 
 // Ably
 
-logger.info(`Connecting to Ably at ${ABLY_CHANNEL}...`)
-
 const ably = new Ably.Realtime({
 	key: ABLY_TOKEN,
 	recover: (last, cb) => {
-		console.log('last', last)
+		// console.log('last', last)
 		cb(true)
 	},
 })
@@ -39,7 +37,7 @@ ably.connection.on(change => {
 })
 
 channel.subscribe('answer', answer => {
-	answer = JSON.parse(JSON.parse(answer.data))
+	answer = JSON.parse(answer.data)
 	logger.info(chalk.greenBright('Answer received'), answer)
 
 	pc.setRemoteDescription(answer)
@@ -216,7 +214,7 @@ const createDataChannel = () => {
 				break
 			}
 			case 'parameters': {
-				payload.diffusion = JSON.parse(payload.diffusion)
+				// payload.diffusion = JSON.parse(payload.diffusion)
 				dispatch(setParameters(payload))
 				break
 			}
