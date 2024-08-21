@@ -147,7 +147,7 @@ export const initiatePeerConnection = async () => {
 						}
 					})
 			)
-			.then(publishOffer)
+			.then(postOffer)
 			.catch(e => {
 				logger.error('Failed to create offer', e)
 			})

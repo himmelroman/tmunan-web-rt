@@ -354,7 +354,8 @@
 	overflow-y: scroll;
 
 	background-color: var(--deep-1);
-	flex: 1;
+	flex-grow: 1;
+	flex-shrink: 0;
 }
 
 .connection {
