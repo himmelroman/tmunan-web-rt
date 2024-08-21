@@ -39,7 +39,7 @@ ably.connection.on(change => {
 })
 
 channel.subscribe('answer', answer => {
-	answer = JSON.parse(answer.data)
+	answer = JSON.parse(JSON.parse(answer.data))
 	logger.info(chalk.greenBright('Answer received'), answer)
 
 	pc.setRemoteDescription(answer)
@@ -65,7 +65,7 @@ const publishOffer = () => {
 
 // eslint-disable-next-line no-unused-vars
 const postOffer = () => {
-	logger.info('Publishing offer...')
+	logger.info('Posting offer...')
 	const offer = pc.localDescription
 	const query = `${BASE_URL}/offer?name=${NAME}&output=true`
 	logger.debug('Sending offer to', query)
@@ -147,7 +147,7 @@ export const initiatePeerConnection = async () => {
 						}
 					})
 			)
-			.then(postOffer)
+			.then(publishOffer)
 			.catch(e => {
 				logger.error('Failed to create offer', e)
 			})
@@ -216,7 +216,7 @@ const createDataChannel = () => {
 				break
 			}
 			case 'parameters': {
-				// payload.diffusion = JSON.parse(payload.diffusion)
+				payload.diffusion = JSON.parse(payload.diffusion)
 				dispatch(setParameters(payload))
 				break
 			}

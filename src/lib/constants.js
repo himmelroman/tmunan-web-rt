@@ -33,7 +33,7 @@ export const HEIGHT = parseInt(QUERY.height || import.meta.env.VITE_HEIGHT || 51
 
 export const ABLY_TOKEN = import.meta.env.VITE_ABLY_TOKEN
 
-export const ABLY_CHANNEL = import.meta.env.VITE_ABLY_CHANNEL
+export const ABLY_CHANNEL = QUERY.channel || import.meta.env.VITE_ABLY_CHANNEL || 'tmunan_dev'
 
 export const CODES = {
 	NON_ACTIVE_PUBLISH: 'non_active_publish',
