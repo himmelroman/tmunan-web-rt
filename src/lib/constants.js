@@ -137,6 +137,15 @@ export const SCTP_CAUSE_CODES = [
 	'Protocol violation',
 ]
 
+export const SIGNALING_STATES = {
+	STABLE: 'stable',
+	HAVE_LOCAL_OFFER: 'have-local-offer',
+	HAVE_REMOTE_OFFER: 'have-remote-offer',
+	HAVE_LOCAL_PRANSWER: 'have-local-pranswer',
+	HAVE_REMOTE_PRANSWER: 'have-remote-pranswer',
+	CLOSED: 'closed',
+}
+
 export const CONNECTION_STATES = {
 	NEW: 'new',
 	INITIALIZED: 'initialized',

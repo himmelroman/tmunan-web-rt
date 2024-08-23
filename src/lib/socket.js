@@ -1,5 +1,5 @@
 import chalk from 'chalk'
-import { SCTP_CAUSE_CODES, ABLY_TOKEN, NAME, BASE_URL, CONNECTION_STATES, ABLY_CHANNEL } from './constants'
+import { SCTP_CAUSE_CODES, ABLY_TOKEN, NAME, CONNECTION_STATES, ABLY_CHANNEL } from './constants'
 import logger from './logger'
 import store, { setAblyState, setParameters, setPresence, setRTCState } from './redux'
 import * as Ably from 'ably'
@@ -38,8 +38,8 @@ ably.connection.on(change => {
 
 channel.subscribe('answer', answer => {
 	answer = JSON.parse(answer.data)
+	if (answer.name !== NAME) return
 	logger.info(chalk.greenBright('Answer received'), answer)
-
 	pc.setRemoteDescription(answer)
 })
 
@@ -62,33 +62,33 @@ const publishOffer = () => {
 // WebRTC
 
 // eslint-disable-next-line no-unused-vars
-const postOffer = () => {
-	logger.info('Posting offer...')
-	const offer = pc.localDescription
-	const query = `${BASE_URL}/offer?name=${NAME}&output=true`
-	logger.debug('Sending offer to', query)
+// const postOffer = () => {
+// 	logger.info('Posting offer...')
+// 	const offer = pc.localDescription
+// 	const query = `${BASE_URL}/offer?name=${NAME}&output=true`
+// 	logger.debug('Sending offer to', query)
 
-	fetch(query, {
-		body: JSON.stringify({
-			type: offer.type,
-			sdp: offer.sdp,
-			name: NAME,
-		}),
-		headers: {
-			'Content-Type': 'application/json',
-		},
-		method: 'POST',
-	})
-		.then(res => res.json())
-		.then(answer => {
-			logger.info(`${chalk.greenBright('Answer received')} setting remote description`, answer)
-			pc.setRemoteDescription(answer)
-		})
-		.catch(e => {
-			logger.error('Failed to connect', e)
-			reconnect()
-		})
-}
+// 	fetch(query, {
+// 		body: JSON.stringify({
+// 			type: offer.type,
+// 			sdp: offer.sdp,
+// 			name: NAME,
+// 		}),
+// 		headers: {
+// 			'Content-Type': 'application/json',
+// 		},
+// 		method: 'POST',
+// 	})
+// 		.then(res => res.json())
+// 		.then(answer => {
+// 			logger.info(`${chalk.greenBright('Answer received')} setting remote description`, answer)
+// 			pc.setRemoteDescription(answer)
+// 		})
+// 		.catch(e => {
+// 			logger.error('Failed to connect', e)
+// 			reconnect()
+// 		})
+// }
 
 export const initiatePeerConnection = async () => {
 	logger.info(`Initiating peer connection...`)

@@ -29,6 +29,7 @@ import sleep from '~/lib/sleep'
 // gsap
 
 window.gsap = gsap
+gsap.ticker.fps = 10
 
 // const filterObject = {}
 
@@ -95,7 +96,7 @@ const onKeyDown = e => {
 	}
 
 	if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
-		if (e.code === 'Enter') e.target.blur()
+		if (e.code === 'Enter' && !e.target.dataset.noblur) e.target.blur()
 		return
 	}
 

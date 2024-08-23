@@ -49,19 +49,9 @@ import Toggle from '../Toggle'
 import styles from './index.module.scss'
 import { camelToFlat } from '~/lib/utils'
 
-// function debounce(func, timeout = 500) {
-// 	let timer
-// 	return (...args) => {
-// 		clearTimeout(timer)
-// 		timer = setTimeout(() => {
-// 			func.apply(this, args)
-// 		}, timeout)
-// 	}
-// }
-
 const debouncedSend = debounce(socket.send, 200)
 
-const debouncedText = debounce(socket.send, 500)
+const debouncedText = debounce(socket.send, 300)
 
 const Panel = () => {
 	const dispatch = useDispatch()
@@ -87,9 +77,11 @@ const Panel = () => {
 	const { connections, active_connection_name } = presence
 
 	const [camExpanded, setCameExpanded] = useState(false)
+	const [currentPrompt, setCurrentPrompt] = useState(diffusion.prompt)
+
+	const promptChanged = useMemo(() => currentPrompt !== diffusion.prompt, [currentPrompt, diffusion.prompt])
 
 	const onCameraSettingChange = (value, name) => {
-		console.log('set camera setting', name, value)
 		dispatch(setCameraSetting([name, value]))
 		window.camera_track.applyConstraints({ [name]: value })
 	}
@@ -111,10 +103,11 @@ const Panel = () => {
 		if (connected) debouncedSend('parameters', { diffusion: { [name]: value }, override: true })
 	}
 
-	const onText = e => {
+	const onPrompt = e => {
 		const { name, value } = e.target
-		dispatch(setDiffusionParameter([name, value]))
-		if (connected) debouncedText('parameters', { diffusion: { [name]: value }, override: true })
+		// dispatch(setDiffusionParameter([name, value]))
+		setCurrentPrompt(value)
+		// if (connected) debouncedText('parameters', { diffusion: { [name]: value }, override: true })
 	}
 
 	const onClientParameter = (value, name) => {
@@ -435,14 +428,28 @@ const Panel = () => {
 								initial={initialState.parameters.fps}
 							/>
 						</div>
-						<div className={`${styles.row} ${styles.prompt}`} data-1>
-							<div className={styles.field}>
+						<div className={`${styles.row} ${styles.prompt_row}`} data-1>
+							<div className={styles.field} data-prompt data-changed={promptChanged || null}>
 								{/* <label>Prompt</label> */}
 								<textarea
 									name='prompt'
-									value={diffusion.prompt}
+									value={currentPrompt}
+									data-noblur
 									placeholder='Prompt'
-									onChange={onText}
+									onChange={onPrompt}
+									onKeyDown={e => {
+										if (e.key === 'Enter') {
+											e.preventDefault()
+											dispatch(setDiffusionParameter(['prompt', currentPrompt]))
+											if (connected)
+												debouncedText('parameters', {
+													diffusion: { prompt: currentPrompt },
+													override: true,
+												})
+										} else if (e.key === 'Escape') {
+											setCurrentPrompt(diffusion.prompt)
+										}
+									}}
 								/>
 								{/* <textarea name='negative_prompt' value={diffusion.negative_prompt} placeholder='Negative prompt' onChange={onText} /> */}
 							</div>

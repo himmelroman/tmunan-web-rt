@@ -327,19 +327,21 @@
 	}
 }
 
-.prompt {
-	.col {
-		gap: 20px;
-	}
-
+.prompt_row {
 	textarea {
 		height: 100%;
 		max-height: 120px;
 	}
 
-	[name="negative_prompt"] {
-		color: #f88;
+	[data-changed] {
+		textarea {
+			color: #f97;
+		}
 	}
+
+	// [name="negative_prompt"] {
+	// 	color: #f88;
+	// }
 }
 
 .heading {
