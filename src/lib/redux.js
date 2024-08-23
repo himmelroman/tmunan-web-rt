@@ -48,7 +48,7 @@ export const initialState = {
 				flip_y: false,
 			},
 			freeze: false,
-			transition_duration: 5,
+			transition_duration: 0,
 		},
 	},
 	// cues
@@ -61,6 +61,9 @@ if (localState) {
 	console.log('LS restore', localState)
 	initialState.cue_index = localState.cue_index
 	initialState.cues = localState.cues
+	if (localState.filter) {
+		initialState.parameters.client.filter = localState.filter
+	}
 	const cue = localState.cues[localState.cue_index]
 	if (cue) {
 		const assigned = { ...cue }
@@ -75,6 +78,7 @@ const saveLocal = s => {
 		JSON.stringify({
 			cues: s.cues,
 			cue_index: s.cue_index,
+			filter: s.parameters.client.filter,
 		})
 	)
 }

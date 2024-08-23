@@ -81,6 +81,10 @@ const Panel = () => {
 
 	const promptChanged = useMemo(() => currentPrompt !== diffusion.prompt, [currentPrompt, diffusion.prompt])
 
+	useEffect(() => {
+		setCurrentPrompt(diffusion.prompt)
+	}, [diffusion.prompt])
+
 	const onCameraSettingChange = (value, name) => {
 		dispatch(setCameraSetting([name, value]))
 		window.camera_track.applyConstraints({ [name]: value })
