@@ -440,9 +440,9 @@ const Panel = () => {
 									onKeyDown={e => {
 										if (e.key === 'Enter') {
 											e.preventDefault()
-											dispatch(setDiffusionParameter(['prompt', currentPrompt]))
+											// dispatch(setDiffusionParameter(['prompt', currentPrompt]))
 											if (connected)
-												debouncedText('parameters', {
+												socket.send('parameters', {
 													diffusion: { prompt: currentPrompt },
 													override: true,
 												})
