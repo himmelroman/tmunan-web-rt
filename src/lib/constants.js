@@ -9,6 +9,10 @@ export const QUERY = Object.fromEntries(url.searchParams.entries())
 
 export const IS_CONTROL = 'control' in QUERY
 
+export const IS_MOBILE = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+
+export const MOBILE_CONTROL = IS_MOBILE && IS_CONTROL
+
 export const OFFLINE = 'offline' in QUERY
 
 export const PROTOCOL = QUERY.protocol || import.meta.env.VITE_PROTOCOL || 'https'
@@ -34,8 +38,6 @@ export const HEIGHT = parseInt(QUERY.height || import.meta.env.VITE_HEIGHT || 51
 export const ABLY_TOKEN = import.meta.env.VITE_ABLY_TOKEN
 
 export const ABLY_CHANNEL = QUERY.channel || import.meta.env.VITE_ABLY_CHANNEL || 'tmunan_dev'
-
-export const IS_MOBILE = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
 
 export const CODES = {
 	NON_ACTIVE_PUBLISH: 'non_active_publish',

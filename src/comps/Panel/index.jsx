@@ -20,7 +20,7 @@ import {
 } from 'react-icons/md'
 import { useDispatch, useSelector } from 'react-redux'
 
-import { CAMERA_PROPS, FILTER_LIST, IS_CONTROL, IS_MOBILE, NAME, VERSION } from '~/lib/constants'
+import { CAMERA_PROPS, FILTER_LIST, IS_CONTROL, IS_MOBILE, MOBILE_CONTROL, NAME, VERSION } from '~/lib/constants'
 import logger from '~/lib/logger'
 import {
 	initialState,
@@ -203,8 +203,6 @@ const Panel = () => {
 		}
 	}, [camExpanded])
 
-	const cls = useClasses(styles.cont, connected && styles.connected)
-
 	const filterDivs = FILTER_LIST.map(f => (
 		<Range
 			key={f.name}
@@ -307,6 +305,13 @@ const Panel = () => {
 		}
 	}
 
+	const cls = useClasses(
+		styles.cont,
+		connected && styles.connected,
+		show_cuelist && styles.show_cuelist,
+		IS_CONTROL && styles.control
+	)
+
 	return (
 		<FocusLock className={styles.lock}>
 			<div className={cls} onKeyDown={onKeyDown} tabIndex={0}>
@@ -323,54 +328,47 @@ const Panel = () => {
 					>
 						<MdRefresh />
 					</button>
+
 					<Check name='show_source' value={show_source} onChange={onLocalChange}>
 						<MdInput />
 					</Check>
 					<Check name='show_output' value={show_output} onChange={onLocalChange}>
 						<MdOutput />
 					</Check>
-					{!IS_MOBILE ||
-						(!IS_CONTROL && (
-							<button
-								className={styles.fullscreen}
-								onClick={() => {
-									document.fullscreenElement
-										? document.exitFullscreen()
-										: document.querySelector('body').requestFullscreen()
-								}}
-							>
-								{document.fullscreenElement ? <MdFullscreenExit /> : <MdFullscreen />}
-							</button>
-						))}
+					<button
+						name='fullscreen'
+						className={styles.fullscreen}
+						onClick={() => {
+							document.fullscreenElement
+								? document.exitFullscreen()
+								: document.querySelector('body').requestFullscreen()
+						}}
+					>
+						{document.fullscreenElement ? <MdFullscreenExit /> : <MdFullscreen />}
+					</button>
 					<button name='reset' onClick={onReset}>
 						{/* <MdLayersClear /> */}
-						<span className='material-symbols-outlined' data-reset>
-							reset_image
-						</span>
+						<span className='material-symbols-outlined'>reset_image</span>
 					</button>
 					<div className={styles.sep}>/</div>
-					<button onClick={() => dispatch(setShowCueList(show_cuelist ? false : true))}>
+					<button name='show_cuelist' onClick={() => dispatch(setShowCueList(show_cuelist ? false : true))}>
 						<MdReorder />
 						{/* <MdListAlt /> */}
 					</button>
-					{show_cuelist && (
-						<>
-							<button name='open' onClick={onOpen}>
-								<FaFolderOpen />
-							</button>
-							<button name='save' onClick={onSave}>
-								<MdSave />
-							</button>
-						</>
-					)}
+					<button name='open' onClick={onOpen}>
+						<FaFolderOpen />
+					</button>
+					<button name='save' onClick={onSave}>
+						<MdSave />
+					</button>
 					<div className={styles.right}>
-						<button onClick={() => dispatch(setShowPanel(false))}>
+						<button name='close' onClick={() => dispatch(setShowPanel(false))}>
 							<MdClose />
 						</button>
 					</div>
 				</div>
 				<main>
-					<div className={styles.column}>
+					<div className={styles.column} data-page='1'>
 						<div id='camera-field' className={styles.camera_field} data-expanded={camExpanded || null}>
 							<div className={styles.header}>
 								<Select

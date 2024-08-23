@@ -50,10 +50,6 @@
 			height: 32px;
 		}
 
-		[data-reset] {
-			font-size: 20px;
-		}
-
 		.right {
 			position: absolute;
 			right: 0;
@@ -85,6 +81,12 @@
 	[data-check] {
 		&[data-checked] {
 			color: #7c7;
+		}
+	}
+
+	[name="reset"] {
+		span {
+			font-size: 20px;
 		}
 	}
 
@@ -148,6 +150,25 @@
 		opacity: 0.8;
 		// overflow-y: scroll;
 		min-width: unset;
+
+		&.show_cuelist {
+			.column[data-page="1"] {
+				display: none;
+			}
+		}
+	}
+
+	&.control {
+		@media (max-width: 600px) {
+			[name="reload"],
+			[name="fullscreen"],
+			[name="close"] {
+				display: none;
+			}
+			[name="show_cuelist"] {
+				order: 0;
+			}
+		}
 	}
 }
 
@@ -191,6 +212,7 @@
 }
 
 .sep {
+	order: 50;
 	border-bottom: $border;
 }
 
