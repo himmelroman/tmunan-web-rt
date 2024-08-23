@@ -20,7 +20,7 @@ import {
 } from 'react-icons/md'
 import { useDispatch, useSelector } from 'react-redux'
 
-import { CAMERA_PROPS, FILTER_LIST, IS_CONTROL, IS_MOBILE, MOBILE_CONTROL, NAME, VERSION } from '~/lib/constants'
+import { CAMERA_PROPS, FILTER_LIST, IS_CONTROL, NAME, VERSION } from '~/lib/constants'
 import logger from '~/lib/logger'
 import {
 	initialState,
@@ -101,15 +101,12 @@ const Panel = () => {
 
 	const onDiffusionParameter = (value, name) => {
 		dispatch(setDiffusionParameter([name, value]))
-		// socket.send('parameters', { [name]: Number(value), override: true })
 		if (connected) debouncedSend('parameters', { diffusion: { [name]: value }, override: true })
 	}
 
 	const onPrompt = e => {
 		const { _, value } = e.target
-		// dispatch(setDiffusionParameter([name, value]))
 		setCurrentPrompt(value)
-		// if (connected) debouncedText('parameters', { diffusion: { [name]: value }, override: true })
 	}
 
 	const onClientParameter = (value, name) => {

@@ -95,10 +95,12 @@
 	}
 
 	[name="open"] {
+		display: none;
 		font-size: 16px;
 	}
 
 	[name="save"] {
+		display: none;
 		font-size: 18px;
 	}
 
@@ -127,6 +129,13 @@
 	&.connected {
 		.led[data-connected] {
 			background-color: #5f5;
+		}
+	}
+
+	&.show_cuelist {
+		[name="open"],
+		[name="save"] {
+			display: block;
 		}
 	}
 
