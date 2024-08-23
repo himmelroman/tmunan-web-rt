@@ -104,10 +104,10 @@ const onKeyDown = e => {
 		case 'KeyQ':
 			store.dispatch(setLocalProp(['show_panel', !s.show_panel]))
 			break
-		case 'KeyV':
+		case 'Digit9':
 			store.dispatch(setLocalProp(['show_source', !s.show_source]))
 			break
-		case 'KeyC':
+		case 'Digit0':
 			store.dispatch(setLocalProp(['show_output', !s.show_output]))
 			break
 		case 'KeyB':

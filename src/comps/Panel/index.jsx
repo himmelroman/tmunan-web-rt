@@ -20,7 +20,7 @@ import {
 } from 'react-icons/md'
 import { useDispatch, useSelector } from 'react-redux'
 
-import { CAMERA_PROPS, FILTER_LIST, NAME, VERSION } from '~/lib/constants'
+import { CAMERA_PROPS, FILTER_LIST, IS_CONTROL, IS_MOBILE, NAME, VERSION } from '~/lib/constants'
 import logger from '~/lib/logger'
 import {
 	initialState,
@@ -49,9 +49,7 @@ import Toggle from '../Toggle'
 import styles from './index.module.scss'
 import { camelToFlat } from '~/lib/utils'
 
-const debouncedSend = debounce(socket.send, 200)
-
-const debouncedText = debounce(socket.send, 300)
+const debouncedSend = debounce(socket.send, 100)
 
 const Panel = () => {
 	const dispatch = useDispatch()
@@ -108,7 +106,7 @@ const Panel = () => {
 	}
 
 	const onPrompt = e => {
-		const { name, value } = e.target
+		const { _, value } = e.target
 		// dispatch(setDiffusionParameter([name, value]))
 		setCurrentPrompt(value)
 		// if (connected) debouncedText('parameters', { diffusion: { [name]: value }, override: true })
@@ -131,8 +129,8 @@ const Panel = () => {
 
 	const onInvert = value => {
 		const invert = value ? 1 : 0
-		dispatch(setFilter({ invert }))
-		if (connected) debouncedSend('parameters', { client: { filter: { invert } }, override: true })
+		// dispatch(setFilter({ invert }))
+		if (connected) socket.send('parameters', { client: { filter: { invert } }, override: true })
 	}
 
 	// const onBlack = value => {
@@ -301,6 +299,9 @@ const Panel = () => {
 				e.preventDefault()
 				dispatch(setShowCueList(show_cuelist ? false : true))
 				break
+			case 'KeyI':
+				onInvert(filter.invert ? 0 : 1)
+				break
 			default:
 				break
 		}
@@ -328,16 +329,19 @@ const Panel = () => {
 					<Check name='show_output' value={show_output} onChange={onLocalChange}>
 						<MdOutput />
 					</Check>
-					<button
-						className={styles.fullscreen}
-						onClick={() => {
-							document.fullscreenElement
-								? document.exitFullscreen()
-								: document.querySelector('body').requestFullscreen()
-						}}
-					>
-						{document.fullscreenElement ? <MdFullscreenExit /> : <MdFullscreen />}
-					</button>
+					{!IS_MOBILE ||
+						(!IS_CONTROL && (
+							<button
+								className={styles.fullscreen}
+								onClick={() => {
+									document.fullscreenElement
+										? document.exitFullscreen()
+										: document.querySelector('body').requestFullscreen()
+								}}
+							>
+								{document.fullscreenElement ? <MdFullscreenExit /> : <MdFullscreen />}
+							</button>
+						))}
 					<button name='reset' onClick={onReset}>
 						{/* <MdLayersClear /> */}
 						<span className='material-symbols-outlined' data-reset>
