@@ -30,7 +30,9 @@ const CueList = () => {
 	const onAddSave = () => {
 		// blur input
 		document.getElementById('cue_name_input').blur()
-		dispatch(saveCue({ name: inputValue || `Cue ${cues.length + 1}`, index: existingCue ? index + 1 : cues.length }))
+		dispatch(
+			saveCue({ name: inputValue || `Cue ${cues.length + 1}`, index: existingCue ? index + 1 : cues.length })
+		)
 	}
 
 	const onListClick = e => {
@@ -41,7 +43,7 @@ const CueList = () => {
 			const index = cues.findIndex(a => a.name === e.target.dataset.name)
 			if (index === -1) return
 			const cue = cues[index]
-			socket.send('parameters', { ...cue.parameters, override: true })
+			socket.send('parameters', { ...cue, override: true })
 			dispatch(loadCue({ cue, index }))
 		}
 	}
@@ -75,13 +77,25 @@ const CueList = () => {
 						e.key === 'Enter' && onAddSave()
 					}}
 				/>
-				<button onClick={onAddSave} disabled={existingCue && !changed} className={existingCue ? styles.save : styles.add}>
+				<button
+					onClick={onAddSave}
+					disabled={existingCue && !changed}
+					className={existingCue ? styles.save : styles.add}
+				>
 					{existingCue ? <MdSave /> : <MdAdd />}
 				</button>
 			</div>
 			<div className={styles.list} onClick={onListClick}>
 				{cues.map((f, i) => (
-					<div name={f.name} key={f.name} data-index={i} data-name={f.name} className={styles.item} data-current={i === index || undefined} tabIndex={0}>
+					<div
+						name={f.name}
+						key={f.name}
+						data-index={i}
+						data-name={f.name}
+						className={styles.item}
+						data-current={i === index || undefined}
+						tabIndex={0}
+					>
 						<div className={styles.name} data-name={f.name}>
 							{f.name}
 						</div>

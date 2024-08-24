@@ -17,7 +17,7 @@ export const initialState = {
 	show_panel: IS_CONTROL,
 	show_cuelist: false,
 	show_source: false,
-	show_output: !OFFLINE && !IS_CONTROL,
+	show_output: !OFFLINE,
 	// exp
 	camera: null,
 	camera_settings: null,

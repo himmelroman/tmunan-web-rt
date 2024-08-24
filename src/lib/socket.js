@@ -1,8 +1,9 @@
 import chalk from 'chalk'
-import { SCTP_CAUSE_CODES, ABLY_TOKEN, NAME, CONNECTION_STATES, ABLY_CHANNEL } from './constants'
+import { SCTP_CAUSE_CODES, ABLY_TOKEN, NAME, CONNECTION_STATES, ABLY_CHANNEL, MOBILE_CONTROL } from './constants'
 import logger from './logger'
 import store, { setAblyState, setParameters, setPresence, setRTCState } from './redux'
 import * as Ably from 'ably'
+import sleep from './sleep'
 
 const { dispatch, getState } = store
 
@@ -36,10 +37,11 @@ ably.connection.on(change => {
 	}
 })
 
-channel.subscribe('answer', answer => {
+channel.subscribe('answer', async answer => {
 	answer = JSON.parse(answer.data)
 	if (answer.name !== NAME) return
 	logger.info(chalk.greenBright('Answer received'), answer)
+	await sleep(0.3)
 	pc.setRemoteDescription(answer)
 })
 
@@ -52,7 +54,7 @@ const publishOffer = () => {
 		'offer',
 		JSON.stringify({
 			name: NAME,
-			output: true,
+			output: !MOBILE_CONTROL,
 			type: offer.type,
 			sdp: offer.sdp,
 		})

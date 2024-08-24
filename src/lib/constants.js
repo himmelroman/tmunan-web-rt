@@ -35,6 +35,8 @@ export const WIDTH = parseInt(QUERY.width || import.meta.env.VITE_WIDTH || 512)
 
 export const HEIGHT = parseInt(QUERY.height || import.meta.env.VITE_HEIGHT || 512)
 
+export const RATIO = WIDTH / HEIGHT
+
 export const ABLY_TOKEN = import.meta.env.VITE_ABLY_TOKEN
 
 export const ABLY_CHANNEL = QUERY.channel || import.meta.env.VITE_ABLY_CHANNEL || 'tmunan_dev'

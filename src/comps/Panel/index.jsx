@@ -105,6 +105,7 @@ const Panel = () => {
 	}
 
 	const onPrompt = e => {
+		// eslint-disable-next-line no-unused-vars
 		const { _, value } = e.target
 		setCurrentPrompt(value)
 	}
@@ -279,7 +280,10 @@ const Panel = () => {
 				e.preventDefault()
 				const index = cue_index + 1
 				const cue = cues[index]
-				if (cues[index]) dispatch(loadCue({ cue, index }))
+				if (cue) {
+					dispatch(loadCue({ cue, index }))
+					socket.send('parameters', { ...cue, override: true })
+				}
 				break
 			case 'KeyN':
 				e.preventDefault()

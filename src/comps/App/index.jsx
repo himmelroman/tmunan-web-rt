@@ -25,6 +25,7 @@ import useClasses from '~/lib/useClasses'
 import Panel from '../Panel'
 import styles from './index.module.scss'
 import sleep from '~/lib/sleep'
+// import Segmenter from '~/lib/Segmenter'
 
 // gsap
 
@@ -46,11 +47,15 @@ canvas.width = WIDTH
 canvas.height = HEIGHT
 window.canvas = canvas
 
-const ctx = canvas.getContext('2d')
+const ctx = canvas.getContext('2d', {
+	willReadFrequently: true,
+})
 window.ctx = ctx
 
 let camera_busy
 let source_vid
+
+// let segmenter
 
 const transformRef = { ...initialState.parameters.client.transform }
 
@@ -171,6 +176,7 @@ const App = () => {
 
 		const getCamera = async () => {
 			// turn off previous camera
+			// segmenter.running = false
 			if (source_vid.srcObject) {
 				const tracks = source_vid.srcObject.getTracks()
 				tracks.forEach(track => track.stop())
@@ -189,11 +195,17 @@ const App = () => {
 			const stream = await navigator.mediaDevices.getUserMedia({
 				video: {
 					deviceId: app.camera,
-					width: 9999,
+					width: WIDTH,
+					height: HEIGHT,
 				},
 			})
 			camera_busy = false
 			source_vid.srcObject = stream
+
+			source_vid.onloadeddata = () => {
+				logger.info('Camera stream loaded')
+				// segmenter.running = true
+			}
 
 			const track = stream.getVideoTracks()[0]
 			window.camera_track = track
@@ -260,6 +272,11 @@ const App = () => {
 					ref={r => {
 						source_vid = r
 						window.source_vid = r
+						// if (r && !segmenter) {
+						// 	console.log('Creating segmenter...')
+						// 	segmenter = new Segmenter(r, ctx)
+						// 	window.segmenter = segmenter
+						// }
 					}}
 				/>
 				<video
