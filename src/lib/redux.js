@@ -3,8 +3,9 @@ import merge from '@bundled-es-modules/deepmerge'
 // eslint-disable-next-line no-unused-vars
 import logger from './logger'
 import { WIDTH, HEIGHT, NAME, IS_CONTROL, OFFLINE, CONNECTION_STATES, CAMERA_PROPS } from './constants'
+import { copy } from './utils'
 
-export const initialState = {
+export const defaultState = {
 	// env
 	cameras: [],
 	rtc_state: 'disconnected',
@@ -55,6 +56,8 @@ export const initialState = {
 	cues: [],
 	cue_index: -1,
 }
+
+export const initialState = copy(defaultState)
 
 const localState = JSON.parse(localStorage.getItem(`${NAME}-state`))
 if (localState) {
@@ -174,21 +177,19 @@ export const appSlice = createSlice({
 			s.cue_index = -1
 			saveLocal(s)
 		},
-		setCueIndex: (s, { payload }) => {
-			s.cue_index = payload
-		},
 		loadCue: (s, { payload }) => {
+			const index = parseInt(payload)
+			s.cue_index = index
 			// eslint-disable-next-line no-unused-vars
-			const { name, ...parameters } = payload.cue
+			const { name, ...parameters } = s.cues[index]
 			s.parameters = parameters
-			s.cue_index = payload.index
 		},
 		openFile: (s, { payload }) => {
 			s.cues = payload.cues
 			s.cue_index = payload.index
 		},
 		reset: s => {
-			Object.assign(s.parameters, initialState.parameters)
+			Object.assign(s.parameters, defaultState.parameters)
 		},
 		setCameraSettings: (s, { payload }) => {
 			const { capabilities, settings } = payload
@@ -284,7 +285,6 @@ export const {
 	setCameras,
 	setCameraSettings,
 	setCameraSetting,
-	setCueIndex,
 	setLocalProp,
 	setParameters,
 	setClientParameter,
@@ -403,7 +403,6 @@ export const selectIsRunning = createSelector(
 	selectIsFrozen,
 	(connected, active, freeze) => connected && active && !freeze
 )
-
 /* Store */
 
 const store = configureStore({

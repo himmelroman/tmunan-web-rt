@@ -12,7 +12,7 @@ import useDoubleClick from 'use-double-click'
 import { HEIGHT, WIDTH } from '~/lib/constants'
 import logger from '~/lib/logger'
 import store, {
-	initialState,
+	defaultState,
 	selectApp,
 	/* selectIsActive, */ selectFilterString,
 	selectIsRunning,
@@ -57,7 +57,7 @@ let source_vid
 
 // let segmenter
 
-const transformRef = { ...initialState.parameters.client.transform }
+const transformRef = { ...defaultState.parameters.client.transform }
 
 async function drawVideo() {
 	const vwidth = source_vid.videoWidth

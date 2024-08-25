@@ -52,7 +52,7 @@ const Toggle = ({ name, onChange, value, className, disabled, style, ...props })
 
 	const onInnerChange = useCallback(() => {
 		onChange(!value, name)
-	}, [value])
+	}, [value, onChange])
 
 	const onDragStart = clientX => {
 		inputRef.current.focus()
@@ -71,7 +71,7 @@ const Toggle = ({ name, onChange, value, className, disabled, style, ...props })
 			const newPos = Math.min(checkedPos, Math.max(uncheckedPos, mousePos))
 			if (newPos !== posRef.current) setPos(newPos)
 		},
-		[value, checkedPos, uncheckedPos]
+		[value, checkedPos, uncheckedPos, setPos]
 	)
 
 	const onDragStop = useCallback(() => {
@@ -91,7 +91,7 @@ const Toggle = ({ name, onChange, value, className, disabled, style, ...props })
 		}
 
 		setIsDragging(false)
-	}, [value, checkedPos, uncheckedPos, onInnerChange])
+	}, [value, checkedPos, uncheckedPos, onChange, setPos])
 
 	const onMouseMove = e => {
 		e.preventDefault()
@@ -133,13 +133,29 @@ const Toggle = ({ name, onChange, value, className, disabled, style, ...props })
 			e.preventDefault()
 			onChange(!value, name)
 		},
-		[value]
+		[value, onChange]
 	)
 
-	const cls = useClasses(styles.cont, className, disabled && styles.disabled, isDragging && styles.dragging, value && styles.checked)
+	const cls = useClasses(
+		styles.cont,
+		className,
+		disabled && styles.disabled,
+		isDragging && styles.dragging,
+		value && styles.checked
+	)
 
 	return (
-		<div name={name} id={`toggle_${name}`} className={cls} style={style} data-input='boolean' data-toggle data-checked={value || undefined} onClick={onClick} onMouseDown={noop}>
+		<div
+			name={name}
+			id={`toggle_${name}`}
+			className={cls}
+			style={style}
+			data-input='boolean'
+			data-toggle
+			data-checked={value || undefined}
+			onClick={onClick}
+			onMouseDown={noop}
+		>
 			<div className={styles.bg} data-el='bg' ref={bgRef}>
 				<div
 					className={styles.handle}
@@ -153,7 +169,16 @@ const Toggle = ({ name, onChange, value, className, disabled, style, ...props })
 				>
 					<div className={styles.inner_handle} ref={hRef} />
 				</div>
-				<input type='checkbox' role='switch' className={styles.input} checked={value} disabled={disabled} ref={inputRef} onChange={onInnerChange} {...props} />
+				<input
+					type='checkbox'
+					role='switch'
+					className={styles.input}
+					checked={value}
+					disabled={disabled}
+					ref={inputRef}
+					onChange={onInnerChange}
+					{...props}
+				/>
 			</div>
 		</div>
 	)

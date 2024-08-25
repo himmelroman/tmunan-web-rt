@@ -23,8 +23,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { CAMERA_PROPS, FILTER_LIST, IS_CONTROL, NAME, VERSION } from '~/lib/constants'
 import logger from '~/lib/logger'
 import {
-	initialState,
-	loadCue,
+	defaultState,
 	openFile,
 	reset,
 	saveCue,
@@ -48,6 +47,7 @@ import Select from '../Select'
 import Toggle from '../Toggle'
 import styles from './index.module.scss'
 import { camelToFlat } from '~/lib/utils'
+import { loadAndSendCue } from '~/lib/thunks'
 
 const debouncedSend = debounce(socket.send, 100)
 
@@ -179,7 +179,7 @@ const Panel = () => {
 	}
 
 	const onReset = () => {
-		socket.send('parameters', { ...initialState.parameters, override: true })
+		socket.send('parameters', { ...defaultState.parameters, override: true })
 		dispatch(reset())
 	}
 
@@ -278,12 +278,7 @@ const Panel = () => {
 		switch (code) {
 			case 'Enter':
 				e.preventDefault()
-				const index = cue_index + 1
-				const cue = cues[index]
-				if (cue) {
-					dispatch(loadCue({ cue, index }))
-					socket.send('parameters', { ...cue, override: true })
-				}
+				dispatch(loadAndSendCue(cue_index + 1))
 				break
 			case 'KeyN':
 				e.preventDefault()
@@ -348,13 +343,11 @@ const Panel = () => {
 						{document.fullscreenElement ? <MdFullscreenExit /> : <MdFullscreen />}
 					</button>
 					<button name='reset' onClick={onReset}>
-						{/* <MdLayersClear /> */}
 						<span className='material-symbols-outlined'>reset_image</span>
 					</button>
 					<div className={styles.sep}>/</div>
 					<button name='show_cuelist' onClick={() => dispatch(setShowCueList(show_cuelist ? false : true))}>
 						<MdReorder />
-						{/* <MdListAlt /> */}
 					</button>
 					<button name='open' onClick={onOpen}>
 						<FaFolderOpen />
@@ -400,7 +393,7 @@ const Panel = () => {
 								min={1}
 								max={3}
 								step={0.01}
-								initial={initialState.parameters.diffusion.strength}
+								initial={defaultState.parameters.diffusion.strength}
 							/>
 							<Range
 								name='guidance_scale'
@@ -410,7 +403,7 @@ const Panel = () => {
 								min={0}
 								max={1}
 								step={0.01}
-								initial={initialState.parameters.diffusion.guidance_scale}
+								initial={defaultState.parameters.diffusion.guidance_scale}
 							/>
 						</div>
 						<div className={styles.row}>
@@ -422,7 +415,7 @@ const Panel = () => {
 								min={0}
 								max={30}
 								step={1}
-								initial={initialState.parameters.diffusion.seed}
+								initial={defaultState.parameters.diffusion.seed}
 							/>
 							<Range
 								name='fps'
@@ -432,12 +425,11 @@ const Panel = () => {
 								min={1}
 								max={30}
 								step={1}
-								initial={initialState.parameters.fps}
+								initial={defaultState.parameters.fps}
 							/>
 						</div>
 						<div className={`${styles.row} ${styles.prompt_row}`} data-1>
 							<div className={styles.field} data-prompt data-changed={promptChanged || null}>
-								{/* <label>Prompt</label> */}
 								<textarea
 									name='prompt'
 									value={currentPrompt}
@@ -447,7 +439,6 @@ const Panel = () => {
 									onKeyDown={e => {
 										if (e.key === 'Enter') {
 											e.preventDefault()
-											// dispatch(setDiffusionParameter(['prompt', currentPrompt]))
 											if (connected)
 												socket.send('parameters', {
 													diffusion: { prompt: currentPrompt },
@@ -494,7 +485,7 @@ const Panel = () => {
 								min={0}
 								max={10}
 								step={0.1}
-								initial={initialState.parameters.transition_duration}
+								initial={defaultState.parameters.transition_duration}
 							/>
 						</div>
 						<div className={styles.rsep} />

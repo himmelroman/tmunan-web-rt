@@ -6,9 +6,9 @@
 import { memo, useEffect, useMemo, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import styles from './index.module.scss'
-import { saveCue, selectCueIndex, selectCues, loadCue, selectCueChanged, removeCueAt } from '~/lib/redux'
+import { saveCue, selectCueIndex, selectCues, selectCueChanged, removeCueAt } from '~/lib/redux'
 import { MdAdd, MdClose, MdSave } from 'react-icons/md'
-import socket from '~/lib/socket'
+import { loadAndSendCue } from '~/lib/thunks'
 
 const CueList = () => {
 	const dispatch = useDispatch()
@@ -40,21 +40,17 @@ const CueList = () => {
 		if (rem) {
 			dispatch(removeCueAt(rem.dataset.index))
 		} else if (e.target.classList.contains(styles.name)) {
-			const index = cues.findIndex(a => a.name === e.target.dataset.name)
-			if (index === -1) return
-			const cue = cues[index]
-			socket.send('parameters', { ...cue, override: true })
-			dispatch(loadCue({ cue, index }))
+			dispatch(loadAndSendCue(e.target.dataset.index))
 		}
 	}
 
 	const onKeyDown = e => {
 		switch (e.key) {
 			case 'ArrowUp':
-				if (index) dispatch(loadCue(cues[index - 1]?.name))
+				if (index) dispatch(loadAndSendCue(index - 1))
 				break
 			case 'ArrowDown':
-				if (index < cues.length - 1) dispatch(loadCue(cues[index + 1]?.name))
+				if (index < cues.length - 1) dispatch(loadAndSendCue(index + 1))
 				break
 			case 'Delete':
 				if (index !== -1) dispatch(removeCueAt(index))
@@ -96,7 +92,7 @@ const CueList = () => {
 						data-current={i === index || undefined}
 						tabIndex={0}
 					>
-						<div className={styles.name} data-name={f.name}>
+						<div className={styles.name} data-name={f.name} data-index={i}>
 							{f.name}
 						</div>
 						<button data-name={f.name} className={styles.remove} data-index={i}>
