@@ -10,6 +10,13 @@
 	display: flex;
 	flex-direction: column;
 	align-items: stretch;
+
+	&.dragging {
+		cursor: grabbing;
+		.item {
+			pointer-events: none;
+		}
+	}
 }
 
 .header {
@@ -54,25 +61,39 @@
 	overflow: hidden;
 
 	user-select: none;
+	cursor: pointer;
 
-	// &:hover {
-	// 	background-color: var(--deep-3);
-	// }
+	&:hover {
+		.name {
+			color: var(--deep-6);
+		}
+		background-color: var(--deep-21);
+	}
 
 	.name {
 		flex: 1;
-		padding: 12px 15px;
-		cursor: pointer;
-		&:hover {
-			color: var(--deep-6);
-		}
+		// padding: 12px 15px;
+		// &:hover {
+		// 	color: var(--deep-6);
+		// }
+	}
+
+	.handle {
+		cursor: grab;
+		padding: 12px;
+		font-size: 16px;
+		color: var(--deep-3);
 	}
 
 	.remove {
 		color: #669;
 		font-size: 16px;
 		background-color: transparent;
-		padding: 12px 15px;
+		padding: 12px;
+
+		&:hover {
+			color: #f66;
+		}
 	}
 
 	&[data-current] {

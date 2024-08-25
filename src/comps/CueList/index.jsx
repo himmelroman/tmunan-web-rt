@@ -6,14 +6,17 @@
 import { memo, useEffect, useMemo, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import styles from './index.module.scss'
-import { saveCue, selectCueIndex, selectCues, selectCueChanged, removeCueAt } from '~/lib/redux'
-import { MdAdd, MdClose, MdSave } from 'react-icons/md'
+import { saveCue, selectCueIndex, selectCues, selectCueChanged, removeCueAt, sortCues } from '~/lib/redux'
+import { MdAdd, MdClose, MdDragIndicator, MdSave } from 'react-icons/md'
 import { loadAndSendCue } from '~/lib/thunks'
+import useDrag from '~/lib/useDrag'
+import useClasses from '~/lib/useClasses'
 
 const CueList = () => {
 	const dispatch = useDispatch()
 	const cues = useSelector(selectCues)
 	const index = useSelector(selectCueIndex)
+	const changed = useSelector(selectCueChanged)
 
 	const [inputValue, setInputValue] = useState('')
 
@@ -25,7 +28,16 @@ const CueList = () => {
 
 	const existingCue = useMemo(() => cues.find(f => f.name === inputValue), [cues, inputValue])
 
-	const changed = useSelector(selectCueChanged)
+	const onSort = ({ oldIndex, newIndex }) => {
+		dispatch(sortCues({ oldIndex, newIndex }))
+	}
+
+	const { isDragging } = useDrag({
+		items: cues,
+		itemSelector: `.${styles.item}`,
+		handleSelector: `.${styles.handle}`,
+		onChange: onSort,
+	})
 
 	const onAddSave = () => {
 		// blur input
@@ -36,11 +48,16 @@ const CueList = () => {
 	}
 
 	const onListClick = e => {
-		const rem = e.target.closest(`.${styles.remove}`)
-		if (rem) {
-			dispatch(removeCueAt(rem.dataset.index))
-		} else if (e.target.classList.contains(styles.name)) {
-			dispatch(loadAndSendCue(e.target.dataset.index))
+		const item = e.target.closest(`.${styles.item}`)
+		if (!item) return
+		const { index } = item.dataset
+		if (e.target.closest(`.${styles.handle}`)) {
+			return
+		}
+		if (e.target.closest(`.${styles.remove}`)) {
+			dispatch(removeCueAt(index))
+		} else {
+			dispatch(loadAndSendCue(index))
 		}
 	}
 
@@ -60,8 +77,10 @@ const CueList = () => {
 		}
 	}
 
+	const cls = useClasses(styles.cont, isDragging && styles.dragging)
+
 	return (
-		<div className={styles.cont} onKeyDown={onKeyDown} tabIndex={0}>
+		<div className={cls} onKeyDown={onKeyDown} tabIndex={0}>
 			<div className={styles.header}>
 				<input
 					id='cue_name_input'
@@ -85,17 +104,19 @@ const CueList = () => {
 				{cues.map((f, i) => (
 					<div
 						name={f.name}
-						key={f.name}
+						key={`${f.name}-${i}`}
 						data-index={i}
+						style={{ order: i * 2 + 1 }}
 						data-name={f.name}
 						className={styles.item}
 						data-current={i === index || undefined}
 						tabIndex={0}
 					>
-						<div className={styles.name} data-name={f.name} data-index={i}>
-							{f.name}
-						</div>
-						<button data-name={f.name} className={styles.remove} data-index={i}>
+						<button className={styles.handle}>
+							<MdDragIndicator />
+						</button>
+						<div className={styles.name}>{f.name}</div>
+						<button className={styles.remove}>
 							<MdClose />
 						</button>
 					</div>

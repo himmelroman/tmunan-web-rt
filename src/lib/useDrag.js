@@ -1,186 +1,140 @@
-import { useCallback, useEffect, useReducer, useRef } from 'react'
-import { produce } from 'immer'
+import { useEffect, useRef, useState } from 'react'
 
-const initialDragState = {
-	isDragging: false,
-	items: null,
-	dragIndex: null,
-	dropIndex: null,
-	startX: 0,
-	startY: 0,
-	minY: 0,
-	maxY: 0,
-}
-
-const dragReducer = produce((s, a) => {
-	switch (a.type) {
-		case 'DRAG_START':
-			s.isDragging = true
-			Object.assign(s, a)
-			break
-		case 'DRAG_MOVE':
-			s.after = a.after
-			s.dropId = a.dropId
-			break
-		case 'DRAG_END':
-			Object.assign(s, initialDragState)
-			break
-		default:
-			break
-	}
-})
-
-const useDrag = ({ itemSelector, handleSelector, ignoreSelector, onChange }) => {
-	const dragElement = useRef()
-	const dragBorder = useRef()
+const useDrag = ({ items, itemSelector, handleSelector, ignoreSelector, onChange }) => {
 	const listenerRef = useRef({})
+	const oref = useRef({})
+	const itemRefs = useRef([])
 
-	const [state, dispatch] = useReducer(dragReducer, initialDragState)
-
-	const { dragId, dropId, after } = state
-
-	const cancelDrag = () => {
-		document.removeEventListener('mouseup', cancelDrag)
-	}
+	const [isDragging, setIsDragging] = useState(false)
 
 	const onMouseDown = e => {
-		if (state.isDragging) return
-		const target = e.target.closest(handleSelector || itemSelector)
-		if (!target) return
+		if (isDragging) return
+		const handle = e.target.closest(handleSelector || itemSelector)
+		if (!handle) return
+
+		const o = oref.current
+		const item = e.target.closest(itemSelector)
+		o.oldIndex = parseInt(item.dataset.index)
+
+		const { top, left } = item.getBoundingClientRect()
+		o.startY = e.clientY - top + 1
+		o.startX = e.clientX - left
 
 		document.getSelection().empty()
-		const rect = target.getBoundingClientRect()
-		const startX = e.clientX - rect.left
-		const startY = e.clientY - rect.top
 
-		const items = Array.from(document.querySelectorAll(itemSelector)).map(el => ({
-			index: el.dataset.index,
-			rect: el.getBoundingClientRect(),
-			ignore: el.matches(ignoreSelector),
-		}))
-		items.sort((a, b) => a.rect.top - b.rect.top)
+		const rects = Array.from(item.parentElement.querySelectorAll(itemSelector)).map((el, index) => {
+			const { top, left, bottom, right, width, height } = el.getBoundingClientRect()
+			return { el, index, top, left, bottom, right, width, height, ignore: el.matches(ignoreSelector) }
+		})
 
-		const minY = items[0].rect.top - 10
-		const maxY = items[items.length - 1].rect.bottom + 10
+		o.minY = rects[0].top + o.startY
+		o.maxY = rects[rects.length - 1].top + o.startY
 
-		// const el = document.createElement('div')
-		// el.id = 'dragElement'
-		// el.setAttribute(
-		// 	'style',
-		// 	`position: absolute;
-		// 		zIndex: 1000;
-		// 		background-color: #b6f2;
-		// 		border: 1px solid #4001;
-		// 		pointerEvents: none;
-		// 		top: ${rect.top}px;
-		// 		left: ${rect.left - 1}px;
-		// 		width: ${rect.width}px;
-		// 		height: ${rect.height - 1}px;
-		// 		`
-		// )
-		// document.body.appendChild(el)
-		// dragElement.current = el
+		itemRefs.current = rects
 
-		// const border = document.createElement('div')
-		// border.id = 'dragBorder'
-		// border.setAttribute(
-		// 	'style',
-		// 	`position: absolute;
-		// 		top: -200px;
-		// 		left: ${rect.left}px;
-		// 		width: ${rect.width}px;
-		// 		height: 1px;
-		// 		background-color: #2357;
-		// 		pointerEvents: none;`
-		// )
-		// border.innerHTML = `<div style="position: absolute; top: -5px; left: 0; width: 100%; height: 10px; background-color: #2371;"></div>`
-		// document.body.appendChild(border)
-		// dragBorder.current = border
+		// create copy of target item to drag
+		const del = item.cloneNode(true)
+		del.className = `${del.className} dragged`
 
-		document.addEventListener('mouseup', cancelDrag)
-		dispatch({ type: 'DRAG_START', dragId: target.id, items, startX, startY, minY, maxY })
+		del.style.position = 'absolute'
+		del.style.top = item.offsetTop + 'px'
+		del.style.left = item.offsetLeft + 'px'
+		del.style.width = item.offsetWidth + 'px'
+		del.style.height = item.offsetHeight + 'px'
+		del.style.zIndex = 1000
+		del.style.pointerEvents = 'none'
+		del.style.transition = 'none'
+		del.style.boxShadow = '0 0 10px 0 rgba(0, 0, 0, 0.2)'
+		del.style.userSelect = 'none'
+		del.style.cursor = 'grabbing'
+		del.dataset.index = o.oldIndex
+		del.innerHTML = item.innerHTML
+		item.parentElement.appendChild(del)
+
+		o.dragElement = del
+
+		o.original = item
+		o.original_order = item.style.order
+		item.style.visibility = 'hidden'
+
+		setIsDragging(true)
+		onMouseMove(e)
 	}
 
 	const onMouseMove = e => {
-		if (!state.isDragging) return
+		const o = oref.current
+		const y = Math.min(o.maxY, Math.max(o.minY, e.clientY))
 
-		// update dragElement position
-		dragElement.current.style.top = Math.min(state.maxY, Math.max(state.minY, e.clientY - state.startY)) + 'px'
-
-		// find last element who's top is less than dragElement top
-		let dropTarget
-		const rect = dragElement.current.getBoundingClientRect()
-		const len = state.items.length
-		for (let i = 0; i < len; i++) {
-			const item = state.items[i]
-			const { top, bottom } = item.rect
-
-			if (i === len - 1) {
-				if (rect.top > top && rect.top < bottom + 20) {
-					dropTarget = item
-					break
-				}
-			}
-
-			if (top >= rect.top) {
-				if (item.ignore) {
-					continue
-				}
-
-				dropTarget = item
+		const rects = itemRefs.current
+		let i
+		for (i = 0; i < rects.length; i++) {
+			const { bottom, ignore } = rects[i]
+			if (ignore) continue
+			if (bottom > y) {
 				break
 			}
 		}
-		if (!dropTarget) {
-			dropTarget = state.items[state.items.length - 1]
-		}
+		o.newIndex = i
 
-		dispatch({ type: 'DRAG_MOVE', dropId: dropTarget ? dropTarget.id : null, after })
+		o.dragElement.style.top = `${y - o.startY}px`
+		const after = i > o.oldIndex
+		o.original.style.order = i * 2 + (after ? 2 : 0)
 	}
 
-	const onMouseUp = useCallback(() => {
-		dispatch({ type: 'DRAG_END' })
-		if (dragId && dropId && dragId !== dropId) onChange({ dragId, dropId, after })
-	}, [dragId, dropId, after])
+	const onMouseUp = () => {
+		if (!isDragging) return
+		const { oldIndex, newIndex, original, dragElement, original_order } = oref.current
+		setIsDragging(false)
+		dragElement.remove()
+		original.style.visibility = ''
+		original.style.order = original_order
+		delete oref.current.startY
+		delete oref.current.startX
+		delete oref.current.minY
+		delete oref.current.maxY
+		delete oref.current.original_order
+		delete oref.current.original
+		delete oref.current.dragElement
+		delete oref.current.oldIndex
+		delete oref.current.newIndex
+		if (oldIndex !== newIndex) onChange?.({ oldIndex, newIndex })
+	}
 
 	useEffect(() => {
-		document.addEventListener('mousedown', onMouseDown)
-
+		document.addEventListener('pointerdown', onMouseDown)
 		return () => {
-			document.removeEventListener('mousedown', onMouseDown)
+			document.removeEventListener('pointerdown', onMouseDown)
 		}
 	}, [])
 
 	useEffect(() => {
 		const ref = listenerRef.current
-		if (state.isDragging) {
+		if (isDragging) {
 			if (ref.mousemove !== onMouseMove) {
-				if (ref.mousemove) document.removeEventListener('mousemove', ref.mousemove)
-				document.addEventListener('mousemove', onMouseMove)
+				if (ref.mousemove) document.removeEventListener('pointermove', ref.mousemove)
+				document.addEventListener('pointermove', onMouseMove)
 			}
 			if (ref.mouseup !== onMouseUp) {
-				if (ref.mouseup) document.removeEventListener('mouseup', ref.mouseup)
-				document.addEventListener('mouseup', onMouseUp)
+				if (ref.mouseup) document.removeEventListener('pointerup', ref.mouseup)
+				document.addEventListener('pointerup', onMouseUp)
 			}
 			ref.mousemove = onMouseMove
 			ref.mouseup = onMouseUp
 		} else {
-			document.removeEventListener('mousemove', onMouseMove)
-			document.removeEventListener('mouseup', cancelDrag)
-			document.removeEventListener('mouseup', onMouseUp)
+			document.removeEventListener('pointermove', onMouseMove)
+			document.removeEventListener('pointerup', onMouseUp)
 			ref.mousemove = null
 			ref.mouseup = null
 		}
 		return () => {
-			document.removeEventListener('mousemove', onMouseMove)
-			document.removeEventListener('mouseup', cancelDrag)
-			document.removeEventListener('mouseup', onMouseUp)
+			document.removeEventListener('pointermove', onMouseMove)
+			document.removeEventListener('pointerup', onMouseUp)
 			ref.mousemove = null
 			ref.mouseup = null
 		}
-	}, [state.isDragging, onMouseMove, onMouseUp])
+	}, [isDragging])
 
-	return state
+	return { isDragging, items }
 }
 
 export default useDrag

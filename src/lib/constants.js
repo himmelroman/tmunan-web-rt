@@ -45,38 +45,6 @@ export const CODES = {
 	NON_ACTIVE_PUBLISH: 'non_active_publish',
 }
 
-export const PARAMETERS_SCHEMA = {
-	strength: {
-		type: 'range',
-		min: 1,
-		max: 2.9,
-		step: 0.05,
-		default: 1,
-	},
-	guidance_scale: {
-		type: 'range',
-		min: 0,
-		max: 1,
-		step: 0.05,
-		default: 1,
-	},
-	seed: {
-		type: 'range',
-		min: 1,
-		max: 100,
-		step: 1,
-		default: 1,
-	},
-	prompt: {
-		type: 'textarea',
-		default: '',
-	},
-	negative_prompt: {
-		type: 'textarea',
-		default: '',
-	},
-}
-
 export const FILTERS_SCHEMA = {
 	brightness: {
 		type: 'range',

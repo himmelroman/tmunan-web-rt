@@ -184,6 +184,20 @@ export const appSlice = createSlice({
 			const { name, ...parameters } = s.cues[index]
 			s.parameters = parameters
 		},
+		// setCueIndex: (s, { payload }) => {
+		// 	s.cue_index = payload
+		// },
+		sortCues(s, { payload }) {
+			const { oldIndex, newIndex } = payload
+			const current = s.cues[s.cue_index]?.name
+			const [cue] = s.cues.splice(oldIndex, 1)
+			s.cues.splice(newIndex, 0, cue)
+			if (current) {
+				s.cue_index = s.cues.findIndex(f => f.name === current)
+			}
+			saveLocal(s)
+		},
+
 		openFile: (s, { payload }) => {
 			s.cues = payload.cues
 			s.cue_index = payload.index
@@ -277,6 +291,7 @@ export const {
 	setShowPanel,
 	saveCue,
 	loadCue,
+	sortCues,
 	setFilter,
 	setTransform,
 	clearCues,

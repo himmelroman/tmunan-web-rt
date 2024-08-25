@@ -21,6 +21,7 @@ html {
 	--deep-0: hsl(233, 18%, 8%);
 	--deep-1: hsl(236, 20%, 14%);
 	--deep-2: hsl(236, 20%, 16%);
+	--deep-21: hsl(236, 20%, 17%);
 	--deep-25: hsl(236, 20%, 20%);
 	--deep-3: hsl(236, 21%, 26%);
 	--deep-35: hsl(236, 21%, 30%);
@@ -71,7 +72,7 @@ button {
 	padding-block: 0;
 	padding-inline: 0;
 
-	order: 50;
+	// order: 50;
 
 	// defaults
 	padding: 6px;
