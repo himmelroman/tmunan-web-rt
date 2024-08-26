@@ -105,9 +105,6 @@ const onWheel = e => {
 
 		store.dispatch(setDiffusionParameter(['strength', value]))
 		if (connected) debouncedSend('parameters', { diffusion: { strength: value }, override: true })
-
-		// const val = e.deltaY > 0 ? 0.1 : -0.1
-		// store.dispatch(setLocalProp(['parameters', 'client', 'transform', 'scale'], val))
 	}
 }
 

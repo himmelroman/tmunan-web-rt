@@ -35,7 +35,12 @@ module.exports = {
 		'no-extra-semi': 0,
 		'no-mixed-spaces-and-tabs': 0,
 		'no-prototype-builtins': 0,
-		'no-unused-vars': 1,
+		'no-unused-vars': [
+			1,
+			{
+				argsIgnorePattern: '^_',
+			},
+		],
 		'react-hooks/exhaustive-deps': 0,
 		'react/prop-types': 1,
 	},

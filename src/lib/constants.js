@@ -194,8 +194,6 @@ for (const k in PARAMETER_SCHEMA) {
 	if (a.key) RANGE_KEYS[a.key] = a.name
 }
 
-// export const RANGE_KEYS = Object.keys(PARAMETER_SCHEMA)
-
 export const DIFFUSION_RANGES = Object.entries(PARAMETER_SCHEMA)
 	.filter(([_, v]) => v.parameter_type === 'diffusion' && v.type === 'range')
 	.map(([k, v]) => ({ name: k, ...v }))
@@ -219,44 +217,3 @@ export const CAMERA_PROPS = [
 	{ name: 'focusDistance', label: 'Focus', parent: 'focusMode', row: 3 },
 	{ name: 'sharpness', row: 3 },
 ]
-
-// export const RANGE_KEYS = {
-// 	KeyS: 'strength',
-// 	KeyD: 'seed',
-// 	KeyB: 'brightness',
-// 	KeyC: 'contrast',
-// 	KeyH: 'hue-rotate',
-// 	KeyT: 'saturate',
-// 	KeyP: 'sepia',
-// }
-
-// export const RANGE_LOOKUP = {
-// 	strength: {
-// 		path: 'parameters.diffusion.strength',
-
-// 	}
-// 	seed: {
-// 		path: 'parameters.diffusion.seed',
-
-// 	}
-// 	brightness: {
-// 		path: 'parameters.client.filter.brightness',
-
-// 	}
-// 	contrast: {
-// 		path: 'parameters.client.filter.contrast',
-
-// 	}
-// 	'hue-rotate': {
-// 		path: 'parameters.client.filter.hue-rotate',
-
-// 	}
-// 	saturate: {
-// 		path: 'parameters.client.filter.saturate',
-
-// 	}
-// 	sepia: {
-// 		path: 'parameters.client.filter.sepia',
-
-// 	}
-// }

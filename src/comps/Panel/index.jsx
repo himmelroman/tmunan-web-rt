@@ -100,36 +100,29 @@ const onInvert = value => {
 }
 
 const onKeyDown = e => {
+	const { code, ctrlKey } = e
 	const { app } = store.getState()
-	if (app.active_range && (e.code === 'ArrowUp' || e.code === 'ArrowDown')) {
+	const ar = app.active_range
+	if (ar && (code === 'ArrowUp' || code === 'ArrowDown')) {
 		e.preventDefault()
 		e.stopPropagation()
-		const prop = app.active_range
-		const schema = PARAMETER_SCHEMA[prop]
-		const callback = parameterCallbacks[schema.parameter_type]
-		if (!callback) {
-			logger.error('Unknown range type', prop)
-			return
-		}
+		const schema = PARAMETER_SCHEMA[ar]
 		const value = getProperty(app, schema.path)
 		let newValue = value
-
-		if (e.code === 'ArrowUp') {
-			newValue += schema.step
-		} else {
-			newValue -= schema.step
-		}
+		if (code === 'ArrowUp') newValue += schema.step
+		else newValue -= schema.step
 		newValue = Math.round(Math.min(Math.max(newValue, schema.min), schema.max) * 100) / 100
 
-		console.log(prop, value, '>', newValue)
-		callback(newValue, prop)
+		parameterCallbacks[schema.parameter_type](newValue, ar)
 		return
 	}
+	console.log('Panel onKeyDown', code)
 	if (e.target.tagName === 'TEXTAREA' || (e.target.tagName === 'INPUT' && e.target.type === 'text')) return
-	const { code, ctrlKey } = e
 	switch (code) {
-		case 'Enter':
-			e.preventDefault()
+		case 'BracketLeft':
+			store.dispatch(loadAndSendCue(app.cue_index - 1))
+			break
+		case 'BracketRight':
 			store.dispatch(loadAndSendCue(app.cue_index + 1))
 			break
 		case 'KeyN':
