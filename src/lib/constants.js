@@ -25,10 +25,6 @@ export const NAME = QUERY.name || import.meta.env.VITE_NAME
 
 export const FPS = QUERY.fps || 30
 
-// export const SOCKET_URL = `${PROTOCOL === 'https' ? 'wss' : 'ws'}://${HOST}${PORT ? ':' + PORT : ''}/api/ws?name=${NAME}`
-
-// export const IMG_URL = `${BASE_URL}/stream`
-
 export const BASE_URL = `${PROTOCOL}://${HOST}${PORT ? ':' + PORT : ''}/api`
 
 export const WIDTH = parseInt(QUERY.width || import.meta.env.VITE_WIDTH || 512)
@@ -40,59 +36,6 @@ export const RATIO = WIDTH / HEIGHT
 export const ABLY_TOKEN = import.meta.env.VITE_ABLY_TOKEN
 
 export const ABLY_CHANNEL = QUERY.channel || import.meta.env.VITE_ABLY_CHANNEL || 'tmunan_dev'
-
-export const CODES = {
-	NON_ACTIVE_PUBLISH: 'non_active_publish',
-}
-
-export const FILTERS_SCHEMA = {
-	brightness: {
-		type: 'range',
-		min: 0,
-		max: 4,
-		step: 0.1,
-		default: 1,
-	},
-	contrast: {
-		type: 'range',
-		min: 0,
-		max: 5,
-		step: 0.1,
-		default: 1,
-	},
-	'hue-rotate': {
-		type: 'range',
-		min: -180,
-		max: 180,
-		step: 1,
-		default: 0,
-		label: 'hue',
-	},
-	saturate: {
-		type: 'range',
-		min: 0,
-		max: 10,
-		step: 0.1,
-		default: 1,
-		label: 'saturation',
-	},
-	sepia: {
-		type: 'range',
-		min: 0,
-		max: 1,
-		step: 0.1,
-		default: 0,
-	},
-	blur: {
-		type: 'range',
-		min: 0,
-		max: 30,
-		step: 1,
-		default: 0,
-	},
-}
-
-export const FILTER_LIST = Object.keys(FILTERS_SCHEMA).map(k => ({ name: k, ...FILTERS_SCHEMA[k] }))
 
 export const SCTP_CAUSE_CODES = [
 	'No SCTP error',
@@ -132,6 +75,137 @@ export const CONNECTION_STATES = {
 	FAILED: 'failed',
 }
 
+// Schema
+
+export const PARAMETER_SCHEMA = {
+	strength: {
+		parameter_type: 'diffusion',
+		type: 'range',
+		min: 1,
+		max: 2.96,
+		step: 0.1,
+		default: 1,
+		key: 'KeyS',
+	},
+	guidance_scale: {
+		parameter_type: 'diffusion',
+		type: 'range',
+		min: 0,
+		max: 1,
+		step: 0.1,
+		default: 1,
+		key: 'KeyG',
+		label: 'guidance',
+	},
+	seed: {
+		parameter_type: 'diffusion',
+		type: 'range',
+		min: 0,
+		max: 50,
+		step: 1,
+		default: 1,
+		key: 'KeyD',
+	},
+	fps: {
+		parameter_type: 'client',
+		type: 'range',
+		min: 1,
+		max: 30,
+		step: 1,
+		default: 15,
+		label: 'FPS',
+	},
+	invert: {
+		parameter_type: 'filter',
+		type: 'toggle',
+		default: false,
+		key: 'KeyI',
+	},
+	brightness: {
+		parameter_type: 'filter',
+		type: 'range',
+		min: 0,
+		max: 4,
+		step: 0.1,
+		default: 1,
+		key: 'KeyB',
+	},
+	contrast: {
+		parameter_type: 'filter',
+		type: 'range',
+		min: 0,
+		max: 5,
+		step: 0.1,
+		default: 1,
+		key: 'KeyC',
+	},
+	'hue-rotate': {
+		parameter_type: 'filter',
+		type: 'range',
+		min: -180,
+		max: 180,
+		step: 1,
+		default: 0,
+		label: 'hue',
+		key: 'KeyH',
+	},
+	saturate: {
+		parameter_type: 'filter',
+		type: 'range',
+		min: 0,
+		max: 10,
+		step: 0.1,
+		default: 1,
+		label: 'saturation',
+		key: 'KeyT',
+	},
+	sepia: {
+		parameter_type: 'filter',
+		type: 'range',
+		min: 0,
+		max: 1,
+		step: 0.1,
+		default: 0,
+		key: 'KeyP',
+	},
+	blur: {
+		parameter_type: 'filter',
+		type: 'range',
+		min: 0,
+		max: 30,
+		step: 1,
+		default: 0,
+		key: 'KeyU',
+	},
+}
+
+const paths = {
+	diffusion: 'parameters.diffusion',
+	filter: 'parameters.client.filter',
+	client: 'parameters.client',
+}
+
+export const RANGE_KEYS = {}
+
+for (const k in PARAMETER_SCHEMA) {
+	const a = PARAMETER_SCHEMA[k]
+	a.name = k
+	a.path = `${paths[a.parameter_type]}.${k}`
+	if (a.key) RANGE_KEYS[a.key] = a.name
+}
+
+// export const RANGE_KEYS = Object.keys(PARAMETER_SCHEMA)
+
+export const DIFFUSION_RANGES = Object.entries(PARAMETER_SCHEMA)
+	.filter(([_, v]) => v.parameter_type === 'diffusion' && v.type === 'range')
+	.map(([k, v]) => ({ name: k, ...v }))
+
+console.log('diffusion ranges', DIFFUSION_RANGES)
+
+export const FILTER_RANGES = Object.entries(PARAMETER_SCHEMA)
+	.filter(([_, v]) => v.parameter_type === 'filter' && v.type === 'range')
+	.map(([k, v]) => ({ name: k, ...v }))
+
 export const CAMERA_PROPS = [
 	{ name: 'brightness', row: 0 },
 	{ name: 'contrast', row: 0 },
@@ -145,3 +219,44 @@ export const CAMERA_PROPS = [
 	{ name: 'focusDistance', label: 'Focus', parent: 'focusMode', row: 3 },
 	{ name: 'sharpness', row: 3 },
 ]
+
+// export const RANGE_KEYS = {
+// 	KeyS: 'strength',
+// 	KeyD: 'seed',
+// 	KeyB: 'brightness',
+// 	KeyC: 'contrast',
+// 	KeyH: 'hue-rotate',
+// 	KeyT: 'saturate',
+// 	KeyP: 'sepia',
+// }
+
+// export const RANGE_LOOKUP = {
+// 	strength: {
+// 		path: 'parameters.diffusion.strength',
+
+// 	}
+// 	seed: {
+// 		path: 'parameters.diffusion.seed',
+
+// 	}
+// 	brightness: {
+// 		path: 'parameters.client.filter.brightness',
+
+// 	}
+// 	contrast: {
+// 		path: 'parameters.client.filter.contrast',
+
+// 	}
+// 	'hue-rotate': {
+// 		path: 'parameters.client.filter.hue-rotate',
+
+// 	}
+// 	saturate: {
+// 		path: 'parameters.client.filter.saturate',
+
+// 	}
+// 	sepia: {
+// 		path: 'parameters.client.filter.sepia',
+
+// 	}
+// }

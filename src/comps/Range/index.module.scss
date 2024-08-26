@@ -47,6 +47,12 @@
 		opacity: 0.5;
 		pointer-events: none;
 	}
+
+	&[data-active] {
+		label {
+			color: #f66;
+		}
+	}
 }
 
 .row {

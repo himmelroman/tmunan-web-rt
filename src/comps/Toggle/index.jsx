@@ -136,6 +136,11 @@ const Toggle = ({ name, onChange, value, className, disabled, style, ...props })
 		[value, onChange]
 	)
 
+	const captureFocus = e => {
+		e.preventDefault()
+		if (!disabled) inputRef.current.focus()
+	}
+
 	const cls = useClasses(
 		styles.cont,
 		className,
@@ -154,7 +159,7 @@ const Toggle = ({ name, onChange, value, className, disabled, style, ...props })
 			data-toggle
 			data-checked={value || undefined}
 			onClick={onClick}
-			onMouseDown={noop}
+			onMouseDown={captureFocus}
 		>
 			<div className={styles.bg} data-el='bg' ref={bgRef}>
 				<div

@@ -1,8 +1,10 @@
+import * as Ably from 'ably'
 import chalk from 'chalk'
-import { SCTP_CAUSE_CODES, ABLY_TOKEN, NAME, CONNECTION_STATES, ABLY_CHANNEL, MOBILE_CONTROL } from './constants'
+import debounce from 'debounce'
+
+import { ABLY_CHANNEL, ABLY_TOKEN, CONNECTION_STATES, MOBILE_CONTROL, NAME, SCTP_CAUSE_CODES } from './constants'
 import logger from './logger'
 import store, { setAblyState, setParameters, setPresence, setRTCState } from './redux'
-import * as Ably from 'ably'
 import sleep from './sleep'
 
 const { dispatch, getState } = store
@@ -166,6 +168,8 @@ export const send = (type, payload) => {
 	}
 }
 
+export const debouncedSend = debounce(send, 100)
+
 export const replaceTrack = async stream => {
 	logger.info('Replacing track')
 	const sender = pc.getSenders()[0]
@@ -268,5 +272,6 @@ export default {
 	close,
 	initiatePeerConnection,
 	send,
+	debouncedSend,
 	replaceTrack,
 }

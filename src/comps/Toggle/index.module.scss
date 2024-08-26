@@ -46,11 +46,11 @@
 		}
 	}
 
-	// &:focus-within {
-	// 	.bg {
-	// 		background-color: var(--deep-4);
-	// 	}
-	// }
+	&:focus-within {
+		.bg {
+			background-color: var(--deep-4);
+		}
+	}
 }
 
 .bg {

@@ -19,6 +19,7 @@ export const defaultState = {
 	show_cuelist: false,
 	show_source: false,
 	show_output: !OFFLINE,
+	active_range: null,
 	// exp
 	camera: null,
 	camera_settings: null,
@@ -96,13 +97,46 @@ export const appSlice = createSlice({
 				s.camera = s.cameras[0]
 			}
 		},
-		// setConnected: (s, { payload }) => {
-		// 	if (!payload) {
-		// 		s.connected = false
-		// 		return
-		// 	}
-		// 	s.connected = true
-		// },
+		setCameraSettings: (s, { payload }) => {
+			const { capabilities, settings } = payload
+			s.camera_settings = {}
+			CAMERA_PROPS.forEach(({ name, parent }) => {
+				if (name in settings) {
+					const cap = capabilities[name]
+					if (Array.isArray(cap)) {
+						s.camera_settings[name] = {
+							options: cap,
+							value: 'continuous',
+							intial: 'continuous',
+						}
+					} else {
+						s.camera_settings[name] = {
+							min: capabilities[name].min,
+							max: capabilities[name].max,
+							step: capabilities[name].step,
+							value: settings[name],
+							initial: settings[name],
+							parent,
+						}
+						if (parent) {
+							s.camera_settings[name].disabled = settings[parent] !== 'manual'
+						}
+					}
+				}
+			})
+		},
+		setCameraSetting: (s, { payload }) => {
+			const [key, value] = payload
+			if (key in s.camera_settings) {
+				s.camera_settings[key].value = value
+			}
+
+			Object.values(s.camera_settings).forEach(a => {
+				if (a.parent) {
+					a.disabled = s.camera_settings[a.parent].value !== 'manual'
+				}
+			})
+		},
 		setRTCState: (s, { payload }) => {
 			s.rtc_state = payload
 		},
@@ -119,6 +153,10 @@ export const appSlice = createSlice({
 		setShowCueList: (s, { payload }) => {
 			s.show_cuelist = payload
 		},
+		setActiveRange: (s, { payload }) => {
+			s.active_range = payload
+		},
+		// props params
 		setLocalProp: (s, { payload }) => {
 			const [k, v] = payload
 			if ((!k) in s) return
@@ -143,6 +181,9 @@ export const appSlice = createSlice({
 		},
 		setParameters: (s, { payload }) => {
 			s.parameters = merge(s.parameters, payload)
+		},
+		reset: s => {
+			Object.assign(s.parameters, defaultState.parameters)
 		},
 		// cues
 		saveCue: (s, { payload }) => {
@@ -184,9 +225,6 @@ export const appSlice = createSlice({
 			const { name, ...parameters } = s.cues[index]
 			s.parameters = parameters
 		},
-		// setCueIndex: (s, { payload }) => {
-		// 	s.cue_index = payload
-		// },
 		sortCues(s, { payload }) {
 			const { oldIndex, newIndex } = payload
 			const current = s.cues[s.cue_index]?.name
@@ -197,90 +235,10 @@ export const appSlice = createSlice({
 			}
 			saveLocal(s)
 		},
-
 		openFile: (s, { payload }) => {
 			s.cues = payload.cues
 			s.cue_index = payload.index
 		},
-		reset: s => {
-			Object.assign(s.parameters, defaultState.parameters)
-		},
-		setCameraSettings: (s, { payload }) => {
-			const { capabilities, settings } = payload
-			s.camera_settings = {}
-			CAMERA_PROPS.forEach(({ name, parent }) => {
-				if (name in settings) {
-					const cap = capabilities[name]
-					if (Array.isArray(cap)) {
-						s.camera_settings[name] = {
-							options: cap,
-							value: 'continuous',
-							intial: 'continuous',
-						}
-					} else {
-						s.camera_settings[name] = {
-							min: capabilities[name].min,
-							max: capabilities[name].max,
-							step: capabilities[name].step,
-							value: settings[name],
-							initial: settings[name],
-							parent,
-						}
-						if (parent) {
-							s.camera_settings[name].disabled = settings[parent] !== 'manual'
-						}
-					}
-				}
-			})
-		},
-		setCameraSetting: (s, { payload }) => {
-			const [key, value] = payload
-			if (key in s.camera_settings) {
-				s.camera_settings[key].value = value
-			}
-
-			Object.values(s.camera_settings).forEach(a => {
-				if (a.parent) {
-					a.disabled = s.camera_settings[a.parent].value !== 'manual'
-				}
-			})
-		},
-		// reorderCue: (s, { payload }) => {
-		// 	const { dragId, dropId, after } = payload
-		// 	const { criteria } = s.document
-
-		// 	const dragItem = criteria.find(c => c.id === dragId)
-		// 	const dragSiblings = criteria.filter(c => c.chapter === dragChapter)
-		// 	dragSiblings.sort((a, b) => a.order - b.order)
-		// 	const dragOrder = dragItem.order
-
-		// 	const dropItem = criteria.find(c => c.id === dropId)
-
-		// 	let dropOrder = dropItem.order
-		// 	if (after) dropOrder++
-
-		// 	if (dragOrder === dropOrder) {
-		// 		console.log('%cSame order', 'color:orange')
-		// 		return
-		// 	}
-
-		// 	if (dragOrder <= dropOrder) {
-		// 		for (let i = dragOrder + 1; i < dropOrder; i++) {
-		// 			dragSiblings[i].order--
-		// 		}
-		// 		dropOrder--
-		// 	} else {
-		// 		for (let i = dropOrder; i < dragOrder; i++) {
-		// 			dragSiblings[i].order++
-		// 		}
-		// 	}
-		// 	dragItem.order = dropOrder
-		// 	const divs = Array.from(document.querySelectorAll('[data-selectable]'))
-		// 	const dragIndex = divs.findIndex(c => c.id === dragId)
-		// 	let dropIndex = divs.findIndex(c => c.id === dropId)
-		// 	if (dragIndex < dropIndex) dropIndex--
-		// 	if (after) dropIndex++
-		// },
 	},
 })
 
@@ -289,6 +247,7 @@ export const {
 	setRTCState,
 	setShowCueList,
 	setShowPanel,
+	setActiveRange,
 	saveCue,
 	loadCue,
 	sortCues,

@@ -41,6 +41,7 @@
 		"axios": "^1.6.8",
 		"chalk": "^5.3.0",
 		"debounce": "^2.1.0",
+		"dot-prop": "^9.0.0",
 		"downshift": "^9.0.7",
 		"gsap": "^3.12.5",
 		"immer": "^10.1.1",
@@ -54,6 +55,7 @@
 		"react-use": "^17.5.0",
 		"redux": "^5.0.1",
 		"redux-persist": "^6.0.0",
-		"use-double-click": "^1.0.5"
+		"use-double-click": "^1.0.5",
+		"webmidi": "^3.1.11"
 	}
 }

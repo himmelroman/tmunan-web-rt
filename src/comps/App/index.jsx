@@ -9,36 +9,34 @@ import { memo, useEffect, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import useDoubleClick from 'use-double-click'
 
-import { HEIGHT, WIDTH } from '~/lib/constants'
+import { HEIGHT, RANGE_KEYS, WIDTH } from '~/lib/constants'
 import logger from '~/lib/logger'
 import store, {
 	defaultState,
 	selectApp,
-	/* selectIsActive, */ selectFilterString,
+	selectConnected,
+	selectFilterString,
 	selectIsRunning,
+	selectParameters,
 	selectTransformString,
+	setActiveRange,
 	setCameraSettings,
+	setDiffusionParameter,
 	setLocalProp,
 } from '~/lib/redux'
-import socket from '~/lib/socket'
+import socket, { debouncedSend } from '~/lib/socket'
 import useClasses from '~/lib/useClasses'
 import Panel from '../Panel'
 import styles from './index.module.scss'
 import sleep from '~/lib/sleep'
 // import Segmenter from '~/lib/Segmenter'
 
+import '~/lib/midi'
+
 // gsap
 
 window.gsap = gsap
 gsap.ticker.fps = 10
-
-// const filterObject = {}
-
-// const conformFilter = () => {
-// 	let { filter } = filterObject
-// 	console.log('f', filter)
-// 	ctx.filter = filter
-// }
 
 let v_interval
 
@@ -55,9 +53,9 @@ window.ctx = ctx
 let camera_busy
 let source_vid
 
-// let segmenter
-
 const transformRef = { ...defaultState.parameters.client.transform }
+
+window.pressed = {}
 
 async function drawVideo() {
 	const vwidth = source_vid.videoWidth
@@ -92,38 +90,78 @@ export const stopStream = () => {
 }
 window.stopStream = stopStream
 
+const onWheel = e => {
+	if (window.pressed.KeyS) {
+		const s = store.getState()
+		const connected = selectConnected(s)
+		const params = selectParameters(s)
+		e.preventDefault()
+		let value = params.diffusion.strength
+		if (e.deltaY > 0) {
+			value = Math.round((value - 0.1) * 10) / 10
+		} else {
+			value = Math.round((value + 0.1) * 10) / 10
+		}
+
+		store.dispatch(setDiffusionParameter(['strength', value]))
+		if (connected) debouncedSend('parameters', { diffusion: { strength: value }, override: true })
+
+		// const val = e.deltaY > 0 ? 0.1 : -0.1
+		// store.dispatch(setLocalProp(['parameters', 'client', 'transform', 'scale'], val))
+	}
+}
+
 const onKeyDown = e => {
+	if (e.target.tagName === 'TEXTAREA' || (e.target.tagName === 'INPUT' && e.target.type === 'text')) {
+		if (!e.target.dataset.noblur && (e.code === 'Enter' || e.code === 'Escape')) {
+			e.target.blur()
+		}
+		return
+	}
+
 	const s = store.getState().app
 
-	if (e.code === 'Escape') {
-		if (s.show_panel) store.dispatch(setLocalProp('show_panel', false))
-		return
+	if (/Key\w/.test(e.code)) {
+		const param = RANGE_KEYS[e.code]
+		if (s.active_range !== param) {
+			store.dispatch(setActiveRange(param))
+		}
 	}
 
-	if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
-		if (e.code === 'Enter' && !e.target.dataset.noblur) e.target.blur()
-		return
-	}
+	// if (e.code === 'Escape') {
+	// 	if (s.show_panel) store.dispatch(setLocalProp(['show_panel', false]))
+	// 	return
+	// }
 
 	switch (e.code) {
 		case 'KeyQ':
 			store.dispatch(setLocalProp(['show_panel', !s.show_panel]))
 			break
-		case 'Digit9':
+		case 'Digit1':
 			store.dispatch(setLocalProp(['show_source', !s.show_source]))
 			break
-		case 'Digit0':
+		case 'Digit2':
 			store.dispatch(setLocalProp(['show_output', !s.show_output]))
 			break
-		case 'KeyB':
-			store.dispatch(setLocalProp(['freeze', s.freeze ? 0 : 1]))
-			break
 		case 'KeyF':
+			e.preventDefault()
 			document.fullscreenElement ? document.exitFullscreen() : document.querySelector('body').requestFullscreen()
 			break
 		default:
 			break
 	}
+}
+
+const onKeyUp = e => {
+	const s = store.getState().app
+	if (s.active_range && s.active_range === RANGE_KEYS[e.code]) {
+		store.dispatch(setActiveRange(null))
+	}
+}
+
+// eslint-disable-next-line no-unused-vars
+const focusChange = ({ type }) => {
+	console.log(type, document.activeElement)
 }
 
 const App = () => {
@@ -148,11 +186,17 @@ const App = () => {
 	// mnt
 	useEffect(() => {
 		logger.info('App mounted')
-		window.addEventListener('keydown', onKeyDown)
+		window.addEventListener('keydown', onKeyDown, true)
+		window.addEventListener('keyup', onKeyUp, true)
+		// window.addEventListener('wheel', onWheel, { passive: false })
+
+		// window.addEventListener('focusin', focusChange)
 
 		return () => {
 			logger.info('App unmounted')
-			window.removeEventListener('keydown', onKeyDown)
+			window.removeEventListener('keydown', onKeyDown, true)
+			window.removeEventListener('keydown', onKeyUp, true)
+			// window.removeEventListener('wheel', onWheel)
 			clearInterval(v_interval)
 			if (source_vid?.srcObject) {
 				const tracks = source_vid.srcObject.getTracks()

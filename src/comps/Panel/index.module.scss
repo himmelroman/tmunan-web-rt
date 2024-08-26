@@ -50,6 +50,10 @@
 			height: 32px;
 		}
 
+		button {
+			order: 50;
+		}
+
 		.right {
 			position: absolute;
 			right: 0;
@@ -293,12 +297,15 @@
 	.header {
 		display: flex;
 		flex-direction: row;
-		padding: 0 15px;
-		gap: 5px;
+		align-items: center;
+		padding: 0 10px 0 15px;
+		gap: 10px;
 
 		button {
 			opacity: 0.8;
-			padding-right: 0;
+			width: 32px;
+			height: 32px;
+			// padding-right: 0;
 
 			svg {
 				transform: rotate(-90deg);

@@ -139,6 +139,19 @@ textarea {
 	}
 }
 
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+	-webkit-appearance: none;
+	margin: 0;
+}
+
+/* For Firefox */
+input[type="number"] {
+	all: unset;
+	appearance: textfield;
+	-moz-appearance: textfield;
+}
+
 textarea {
 	border-radius: 2px;
 	min-height: calc(4em + 24px);

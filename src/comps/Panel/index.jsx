@@ -3,8 +3,8 @@
  * Panel
  *
  */
-import debounce from 'debounce'
 import { memo, useEffect, useMemo, useState } from 'react'
+import { getProperty } from 'dot-prop'
 import FocusLock from 'react-focus-lock'
 import { FaFolderOpen } from 'react-icons/fa6'
 import {
@@ -20,7 +20,15 @@ import {
 } from 'react-icons/md'
 import { useDispatch, useSelector } from 'react-redux'
 
-import { CAMERA_PROPS, FILTER_LIST, IS_CONTROL, NAME, VERSION } from '~/lib/constants'
+import {
+	CAMERA_PROPS,
+	DIFFUSION_RANGES,
+	FILTER_RANGES,
+	IS_CONTROL,
+	NAME,
+	PARAMETER_SCHEMA,
+	VERSION,
+} from '~/lib/constants'
 import logger from '~/lib/logger'
 import {
 	defaultState,
@@ -40,6 +48,7 @@ import {
 } from '~/lib/redux'
 import socket from '~/lib/socket'
 import useClasses from '~/lib/useClasses'
+import store from '~/lib/redux'
 import Check from '../Check'
 import CueList from '../CueList'
 import Range from '../Range'
@@ -49,7 +58,96 @@ import styles from './index.module.scss'
 import { camelToFlat } from '~/lib/utils'
 import { loadAndSendCue } from '~/lib/thunks'
 
-const debouncedSend = debounce(socket.send, 100)
+const onLocalChange = (value, name) => {
+	store.dispatch(setLocalProp([name, value]))
+}
+
+const onDiffusionParameterChange = (value, name) => {
+	store.dispatch(setDiffusionParameter([name, value]))
+	socket.debouncedSend('parameters', { diffusion: { [name]: value }, override: true })
+}
+
+const onClientParameterChange = (value, name) => {
+	store.dispatch(setClientParameter([name, value]))
+	socket.debouncedSend('parameters', { client: { [name]: value }, override: true })
+}
+
+const onTransformParameterChange = (value, name) => {
+	store.dispatch(setTransform({ [name]: value }))
+	socket.debouncedSend('parameters', { client: { transform: { [name]: value } }, override: true })
+}
+
+const onFilterParameterChange = (value, name) => {
+	store.dispatch(setFilter({ [name]: value }))
+	socket.debouncedSend('parameters', { client: { filter: { [name]: value } }, override: true })
+}
+
+const parameterCallbacks = {
+	diffusion: onDiffusionParameterChange,
+	filter: onFilterParameterChange,
+	client: onClientParameterChange,
+}
+
+const onInvert = value => {
+	console.log('onInvert', value)
+	const s = store.getState()
+	const invert = value ? 1 : 0
+	if (invert === s.app.parameters.client.filter.invert) return
+
+	store.dispatch(setFilter({ invert }))
+	const connected = selectConnected(s)
+	if (connected) socket.send('parameters', { client: { filter: { invert } }, override: true })
+}
+
+const onKeyDown = e => {
+	const { app } = store.getState()
+	if (app.active_range && (e.code === 'ArrowUp' || e.code === 'ArrowDown')) {
+		e.preventDefault()
+		e.stopPropagation()
+		const prop = app.active_range
+		const schema = PARAMETER_SCHEMA[prop]
+		const callback = parameterCallbacks[schema.parameter_type]
+		if (!callback) {
+			logger.error('Unknown range type', prop)
+			return
+		}
+		const value = getProperty(app, schema.path)
+		let newValue = value
+
+		if (e.code === 'ArrowUp') {
+			newValue += schema.step
+		} else {
+			newValue -= schema.step
+		}
+		newValue = Math.round(Math.min(Math.max(newValue, schema.min), schema.max) * 100) / 100
+
+		console.log(prop, value, '>', newValue)
+		callback(newValue, prop)
+		return
+	}
+	if (e.target.tagName === 'TEXTAREA' || (e.target.tagName === 'INPUT' && e.target.type === 'text')) return
+	const { code, ctrlKey } = e
+	switch (code) {
+		case 'Enter':
+			e.preventDefault()
+			store.dispatch(loadAndSendCue(app.cue_index + 1))
+			break
+		case 'KeyN':
+			e.preventDefault()
+			const name_input = document.getElementById('cue_name_input')
+			name_input.focus()
+			if (ctrlKey) {
+				// create new cue
+				store.dispatch(saveCue({ name: name_input.value, index: app.cue_index + 1 }))
+			}
+			break
+		case 'KeyI':
+			onInvert(app.parameters.client.filter.invert ? 0 : 1)
+			break
+		default:
+			break
+	}
+}
 
 const Panel = () => {
 	const dispatch = useDispatch()
@@ -67,6 +165,7 @@ const Panel = () => {
 		cues,
 		presence,
 		show_cuelist,
+		active_range,
 		show_output,
 		show_source,
 	} = app
@@ -95,40 +194,10 @@ const Panel = () => {
 		window.camera_track.applyConstraints({ [name]: value })
 	}
 
-	const onLocalChange = (value, name) => {
-		dispatch(setLocalProp([name, value]))
-	}
-
-	const onDiffusionParameter = (value, name) => {
-		dispatch(setDiffusionParameter([name, value]))
-		if (connected) debouncedSend('parameters', { diffusion: { [name]: value }, override: true })
-	}
-
 	const onPrompt = e => {
 		// eslint-disable-next-line no-unused-vars
 		const { _, value } = e.target
 		setCurrentPrompt(value)
-	}
-
-	const onClientParameter = (value, name) => {
-		dispatch(setClientParameter([name, value]))
-		if (connected) debouncedSend('parameters', { client: { [name]: value }, override: true })
-	}
-
-	const onTransformChange = (value, name) => {
-		dispatch(setTransform({ [name]: value }))
-		if (connected) debouncedSend('parameters', { client: { transform: { [name]: value } }, override: true })
-	}
-
-	const onFilterChange = (value, name) => {
-		dispatch(setFilter({ [name]: value }))
-		if (connected) debouncedSend('parameters', { client: { filter: { [name]: value } }, override: true })
-	}
-
-	const onInvert = value => {
-		const invert = value ? 1 : 0
-		// dispatch(setFilter({ invert }))
-		if (connected) socket.send('parameters', { client: { filter: { invert } }, override: true })
 	}
 
 	// const onBlack = value => {
@@ -185,8 +254,10 @@ const Panel = () => {
 
 	useEffect(() => {
 		window.addEventListener('pointerdown', outsideClick)
+		window.addEventListener('keydown', onKeyDown, true)
 		return () => {
 			window.removeEventListener('pointerdown', outsideClick)
+			window.removeEventListener('keydown', onKeyDown, true)
 		}
 	}, [])
 
@@ -201,17 +272,33 @@ const Panel = () => {
 		}
 	}, [camExpanded])
 
-	const filterDivs = FILTER_LIST.map(f => (
+	const filterDivs = FILTER_RANGES.map(f => (
 		<Range
 			key={f.name}
 			name={f.name}
 			label={f.label}
 			value={f.name in filter ? filter[f.name] : f.default}
-			onChange={onFilterChange}
+			onChange={onFilterParameterChange}
 			min={f.min}
 			max={f.max}
 			step={f.step}
 			initial={f.default}
+			active={active_range === f.name || null}
+		/>
+	))
+
+	const diffusionDivs = DIFFUSION_RANGES.map(f => (
+		<Range
+			key={f.name}
+			name={f.name}
+			label={f.label}
+			value={diffusion[f.name]}
+			onChange={onDiffusionParameterChange}
+			min={f.min}
+			max={f.max}
+			step={f.step}
+			initial={f.default}
+			active={active_range === f.name || null}
 		/>
 	))
 
@@ -236,6 +323,7 @@ const Panel = () => {
 						name={parent}
 						data-active={manual || null}
 						onClick={onCameraAuto}
+						tabIndex={-1}
 					>
 						{manual ? 'M' : 'A'}
 					</button>
@@ -253,7 +341,7 @@ const Panel = () => {
 					max={entry.max}
 					step={entry.step}
 					initial={entry.initial}
-					disabled={entry.disabled}
+					disabled={!camExpanded || entry.disabled}
 				>
 					{auto}
 				</Range>
@@ -269,37 +357,7 @@ const Panel = () => {
 				))}
 			</div>
 		)
-	}, [camera_settings])
-
-	const onKeyDown = e => {
-		// console.log('keydown', e.key)
-		if (e.target.tagName === 'TEXTAREA' || (e.target.tagName === 'INPUT' && e.target.type === 'text')) return
-		const { code, ctrlKey } = e
-		switch (code) {
-			case 'Enter':
-				e.preventDefault()
-				dispatch(loadAndSendCue(cue_index + 1))
-				break
-			case 'KeyN':
-				e.preventDefault()
-				const name_input = document.getElementById('cue_name_input')
-				name_input.focus()
-				if (ctrlKey) {
-					// create new cue
-					dispatch(saveCue({ name: name_input.value, index: cue_index + 1 }))
-				}
-				break
-			case 'KeyC':
-				e.preventDefault()
-				dispatch(setShowCueList(show_cuelist ? false : true))
-				break
-			case 'KeyI':
-				onInvert(filter.invert ? 0 : 1)
-				break
-			default:
-				break
-		}
-	}
+	}, [camera_settings, camExpanded])
 
 	const cls = useClasses(
 		styles.cont,
@@ -310,7 +368,7 @@ const Panel = () => {
 
 	return (
 		<FocusLock className={styles.lock}>
-			<div className={cls} onKeyDown={onKeyDown} tabIndex={0}>
+			<div className={cls} tabIndex={0}>
 				<div className={styles.header}>
 					<div className={styles.leds}>
 						<div className={styles.led} data-state={ably_state} />
@@ -385,47 +443,51 @@ const Panel = () => {
 							</div>
 						</div>
 						<div className={styles.row}>
-							<Range
+							{[diffusionDivs[0], diffusionDivs[1]]}
+							{/* <Range
 								name='strength'
 								label='Strength'
 								value={diffusion.strength}
-								onChange={onDiffusionParameter}
+								onChange={onDiffusionParameterChange}
 								min={1}
 								max={3}
-								step={0.01}
+								step={0.1}
 								initial={defaultState.parameters.diffusion.strength}
+								active={active_range === 'strength' || null}
 							/>
 							<Range
 								name='guidance_scale'
 								label='Guidance'
 								value={diffusion.guidance_scale}
-								onChange={onDiffusionParameter}
+								onChange={onDiffusionParameterChange}
 								min={0}
 								max={1}
-								step={0.01}
+								step={0.1}
 								initial={defaultState.parameters.diffusion.guidance_scale}
-							/>
+							/> */}
 						</div>
 						<div className={styles.row}>
-							<Range
+							{diffusionDivs[2]}
+							{/* <Range
 								name='seed'
 								label='Seed'
 								value={diffusion.seed}
-								onChange={onDiffusionParameter}
+								onChange={onDiffusionParameterChange}
 								min={0}
 								max={30}
 								step={1}
 								initial={defaultState.parameters.diffusion.seed}
-							/>
+								active={active_range === 'seed' || null}
+							/> */}
 							<Range
 								name='fps'
-								label='FPS'
+								label={PARAMETER_SCHEMA.fps.label}
 								value={fps}
-								onChange={onClientParameter}
-								min={1}
-								max={30}
-								step={1}
-								initial={defaultState.parameters.fps}
+								onChange={onClientParameterChange}
+								min={PARAMETER_SCHEMA.fps.min}
+								max={PARAMETER_SCHEMA.fps.max}
+								step={PARAMETER_SCHEMA.fps.step}
+								initial={PARAMETER_SCHEMA.fps.default}
 							/>
 						</div>
 						<div className={`${styles.row} ${styles.prompt_row}`} data-1>
@@ -456,11 +518,11 @@ const Panel = () => {
 						<div className={styles.row} data-4>
 							<div className={styles.field}>
 								<label>Flip X</label>
-								<Toggle name='flip_x' value={transform.flip_x} onChange={onTransformChange} />
+								<Toggle name='flip_x' value={transform.flip_x} onChange={onTransformParameterChange} />
 							</div>
 							<div className={styles.field}>
 								<label>Flip Y</label>
-								<Toggle name='flip_y' value={transform.flip_y} onChange={onTransformChange} />
+								<Toggle name='flip_y' value={transform.flip_y} onChange={onTransformParameterChange} />
 							</div>
 							<div className={styles.field}>
 								<label>Invert</label>
@@ -468,7 +530,7 @@ const Panel = () => {
 							</div>
 							<div className={styles.field}>
 								<label>Stop</label>
-								<Toggle name='freeze' value={freeze} onChange={onClientParameter} />
+								<Toggle name='freeze' value={freeze} onChange={onClientParameterChange} />
 							</div>
 						</div>
 						<div className={styles.rsep} />
@@ -481,10 +543,10 @@ const Panel = () => {
 								name='transition_duration'
 								label='Transition'
 								value={transition_duration}
-								onChange={onClientParameter}
+								onChange={onClientParameterChange}
 								min={0}
 								max={10}
-								step={0.1}
+								step={1}
 								initial={defaultState.parameters.transition_duration}
 							/>
 						</div>
