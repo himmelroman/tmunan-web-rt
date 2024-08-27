@@ -6,8 +6,11 @@ import { WIDTH, HEIGHT, NAME, IS_CONTROL, OFFLINE, CONNECTION_STATES, CAMERA_PRO
 import { copy } from './utils'
 
 export const defaultState = {
-	// env
+	// camera
 	cameras: [],
+	camera: null,
+	camera_settings: null,
+	// connection
 	rtc_state: 'disconnected',
 	ably_state: 'disconnected',
 	presence: {
@@ -20,9 +23,7 @@ export const defaultState = {
 	show_source: false,
 	show_output: !OFFLINE,
 	active_range: null,
-	// exp
-	camera: null,
-	camera_settings: null,
+	mouse_down: false,
 	// parameters
 	parameters: {
 		diffusion: {
@@ -155,7 +156,18 @@ export const appSlice = createSlice({
 			s.show_cuelist = payload
 		},
 		setActiveRange: (s, { payload }) => {
-			s.active_range = payload
+			window.active_range = s.active_range = payload
+			if (!s.mouse_down && !s.active_range && window.pending_params) {
+				s.parameters = merge(s.parameters, window.pending_params)
+				window.pending_params = null
+			}
+		},
+		setMouseDown: (s, { payload }) => {
+			window.mouse_down = s.mouse_down = payload
+			if (!s.mouse_down && !s.active_range && window.pending_params) {
+				s.parameters = merge(s.parameters, window.pending_params)
+				window.pending_params = null
+			}
 		},
 		// props params
 		setLocalProp: (s, { payload }) => {
@@ -249,6 +261,7 @@ export const {
 	setShowCueList,
 	setShowPanel,
 	setActiveRange,
+	setMouseDown,
 	saveCue,
 	loadCue,
 	sortCues,

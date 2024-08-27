@@ -22,7 +22,6 @@ let retries = 0
 const ably = new Ably.Realtime({
 	key: ABLY_TOKEN,
 	recover: (last, cb) => {
-		// console.log('last', last)
 		cb(true)
 	},
 })
@@ -184,8 +183,6 @@ export const replaceTrack = async stream => {
 
 const reconnect = () => {
 	clearTimeout(rcTimeout)
-	// dispatch(setConnected(false))
-
 	let RECONNECT_INTERVAL = parseInt(Math.min(Math.max(2, Math.pow(retries, 1.5)), 60))
 	if (retries === 5) RECONNECT_INTERVAL += 15
 	else if (retries === 20) RECONNECT_INTERVAL += 30
@@ -200,7 +197,6 @@ const createDataChannel = () => {
 
 	dc.onopen = () => {
 		logger.info(chalk.greenBright('Data channel opened'))
-		// dispatch(setConnected(true))
 		retries = 0
 		const { parameters } = getState().app.presence
 		send('parameters', { ...parameters, override: false })
@@ -210,18 +206,17 @@ const createDataChannel = () => {
 		const { type, payload } = JSON.parse(e.data)
 		logger.info('Data channel message', { type, payload })
 		switch (type) {
-			// case 'connected': {
-			// 	const { parameters } = getState().app.presence
-			// 	send('parameters', { ...parameters, override: false })
-			// 	break
-			// }
 			case 'presence': {
 				dispatch(setPresence(payload))
 				break
 			}
 			case 'parameters': {
-				// payload.diffusion = JSON.parse(payload.diffusion)
-				dispatch(setParameters(payload))
+				if (window.mouse_down || window.active_range) {
+					window.pending_params = payload
+				} else {
+					logger.info('Setting parameters')
+					dispatch(setParameters(payload))
+				}
 				break
 			}
 			case 'error': {

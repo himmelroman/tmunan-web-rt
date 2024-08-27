@@ -3,8 +3,8 @@
  * Panel
  *
  */
-import { memo, useEffect, useMemo, useState } from 'react'
 import { getProperty } from 'dot-prop'
+import { memo, useEffect, useMemo, useState } from 'react'
 import FocusLock from 'react-focus-lock'
 import { FaFolderOpen } from 'react-icons/fa6'
 import {
@@ -30,7 +30,7 @@ import {
 	VERSION,
 } from '~/lib/constants'
 import logger from '~/lib/logger'
-import {
+import store, {
 	defaultState,
 	openFile,
 	reset,
@@ -46,16 +46,15 @@ import {
 	setTransform,
 } from '~/lib/redux'
 import socket from '~/lib/socket'
+import { loadAndSendCue } from '~/lib/thunks'
 import useClasses from '~/lib/useClasses'
-import store from '~/lib/redux'
+import { camelToFlat } from '~/lib/utils'
 import Check from '../Check'
 import CueList from '../CueList'
 import Range from '../Range'
 import Select from '../Select'
 import Toggle from '../Toggle'
 import styles from './index.module.scss'
-import { camelToFlat } from '~/lib/utils'
-import { loadAndSendCue } from '~/lib/thunks'
 
 const onLocalChange = (value, name) => {
 	store.dispatch(setLocalProp([name, value]))
@@ -449,11 +448,7 @@ const Panel = () => {
 									options={cameras}
 									value={camera}
 									onChange={onLocalChange}
-								>
-									{/* <Check className={styles.capture_button} value={capturing}>
-										<MdRadioButtonChecked />
-									</Check> */}
-								</Select>
+								/>
 								{camera_settings && (
 									<button
 										className={styles.camera_settings_button}
