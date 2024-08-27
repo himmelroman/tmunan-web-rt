@@ -138,7 +138,7 @@ const onKeyDown = e => {
 	if (ctrlKey) {
 		if (e.code.includes('Digit')) {
 			e.preventDefault()
-			const digit = parseInt(e.code.match(/\d+/)) - 1
+			const digit = parseInt(e.code.match(/\d+/))
 			if (digit >= app.cameras.length) return
 			store.dispatch(setLocalProp(['camera', app.cameras[digit]]))
 		}
