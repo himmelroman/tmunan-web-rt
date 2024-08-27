@@ -41,6 +41,7 @@ import store, {
 	setDiffusionParameter,
 	setFilter,
 	setLocalProp,
+	setMouseDown,
 	setShowCueList,
 	setShowPanel,
 	setTransform,
@@ -168,6 +169,14 @@ const onKeyDown = e => {
 		default:
 			break
 	}
+}
+
+const onMouseDown = () => {
+	store.dispatch(setMouseDown(true))
+}
+
+const onMouseUp = () => {
+	store.dispatch(setMouseDown(false))
 }
 
 const Panel = () => {
@@ -383,7 +392,7 @@ const Panel = () => {
 
 	return (
 		<FocusLock className={styles.lock}>
-			<div className={cls}>
+			<div className={cls} onMouseDown={onMouseDown} onMouseUp={onMouseUp}>
 				<div className={styles.top_header}>
 					<div className={styles.leds}>
 						<div className={styles.led} data-state={ably_state} />
