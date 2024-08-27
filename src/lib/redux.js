@@ -62,7 +62,7 @@ export const initialState = copy(defaultState)
 
 const localState = JSON.parse(localStorage.getItem(`${NAME}-state`))
 if (localState) {
-	console.log('LS restore', localState)
+	logger.info('Restoring state from local storage', localState)
 	initialState.cue_index = localState.cue_index
 	initialState.cues = localState.cues
 	if (localState.filter) {
@@ -93,6 +93,7 @@ export const appSlice = createSlice({
 	reducers: {
 		setCameras: (s, { payload }) => {
 			s.cameras = payload
+			s.cameras.push('none')
 			if (!s.camera || !payload.includes(s.camera)) {
 				s.camera = s.cameras[0]
 			}

@@ -9,22 +9,19 @@ import { memo, useEffect, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import useDoubleClick from 'use-double-click'
 
-import { HEIGHT, RANGE_KEYS, WIDTH } from '~/lib/constants'
+import { HEIGHT, IS_CONTROL, RANGE_KEYS, WIDTH } from '~/lib/constants'
 import logger from '~/lib/logger'
 import store, {
 	defaultState,
 	selectApp,
-	selectConnected,
 	selectFilterString,
 	selectIsRunning,
-	selectParameters,
 	selectTransformString,
 	setActiveRange,
 	setCameraSettings,
-	setDiffusionParameter,
 	setLocalProp,
 } from '~/lib/redux'
-import socket, { debouncedSend } from '~/lib/socket'
+import socket from '~/lib/socket'
 import useClasses from '~/lib/useClasses'
 import Panel from '../Panel'
 import styles from './index.module.scss'
@@ -90,24 +87,6 @@ export const stopStream = () => {
 }
 window.stopStream = stopStream
 
-const onWheel = e => {
-	if (window.pressed.KeyS) {
-		const s = store.getState()
-		const connected = selectConnected(s)
-		const params = selectParameters(s)
-		e.preventDefault()
-		let value = params.diffusion.strength
-		if (e.deltaY > 0) {
-			value = Math.round((value - 0.1) * 10) / 10
-		} else {
-			value = Math.round((value + 0.1) * 10) / 10
-		}
-
-		store.dispatch(setDiffusionParameter(['strength', value]))
-		if (connected) debouncedSend('parameters', { diffusion: { strength: value }, override: true })
-	}
-}
-
 const onKeyDown = e => {
 	if (e.target.tagName === 'TEXTAREA' || (e.target.tagName === 'INPUT' && e.target.type === 'text')) {
 		if (!e.target.dataset.noblur && (e.code === 'Enter' || e.code === 'Escape')) {
@@ -116,29 +95,28 @@ const onKeyDown = e => {
 		return
 	}
 
-	const s = store.getState().app
+	const { app } = store.getState()
 
 	if (/Key\w/.test(e.code)) {
 		const param = RANGE_KEYS[e.code]
-		if (s.active_range !== param) {
+		if (app.active_range !== param) {
 			store.dispatch(setActiveRange(param))
 		}
 	}
 
-	// if (e.code === 'Escape') {
-	// 	if (s.show_panel) store.dispatch(setLocalProp(['show_panel', false]))
-	// 	return
-	// }
+	if (e.ctrlKey) {
+		return
+	}
 
 	switch (e.code) {
 		case 'KeyQ':
-			store.dispatch(setLocalProp(['show_panel', !s.show_panel]))
+			if (!IS_CONTROL) store.dispatch(setLocalProp(['show_panel', !app.show_panel]))
 			break
 		case 'Digit1':
-			store.dispatch(setLocalProp(['show_source', !s.show_source]))
+			store.dispatch(setLocalProp(['show_source', !app.show_source]))
 			break
 		case 'Digit2':
-			store.dispatch(setLocalProp(['show_output', !s.show_output]))
+			store.dispatch(setLocalProp(['show_output', !app.show_output]))
 			break
 		case 'KeyF':
 			e.preventDefault()
@@ -226,12 +204,15 @@ const App = () => {
 				await sleep(0.6)
 			}
 
-			logger.info(`Getting camera stream...`)
-
 			if (camera_busy) {
 				logger.warn('Camera busy')
 				return
 			}
+
+			if (!app.camera || app.camera === 'none') return
+
+			logger.info(`Getting camera stream...`)
+
 			camera_busy = true
 			const stream = await navigator.mediaDevices.getUserMedia({
 				video: {

@@ -13,7 +13,17 @@ import styles from './index.module.scss'
 const noToString = item => item
 
 const Select = forwardRef((props, eref) => {
-	const { name, className, options = [], value, onChange, itemToString = noToString, buttonPrefix = '', disabled } = props
+	const {
+		name,
+		className,
+		options = [],
+		value,
+		onChange,
+		itemToString = noToString,
+		buttonPrefix = '',
+		disabled,
+		children,
+	} = props
 
 	const itemToValue = props.itemToValue || itemToString
 
@@ -36,13 +46,14 @@ const Select = forwardRef((props, eref) => {
 
 	// Downshift hook
 
-	const { isOpen, openMenu, closeMenu, getToggleButtonProps, getMenuProps, highlightedIndex, getItemProps } = useSelect({
-		items: options,
-		itemToString,
-		onSelectedItemChange,
-		selectedItem: options?.length ? options[currentIndex] : '',
-		id: name,
-	})
+	const { isOpen, openMenu, closeMenu, getToggleButtonProps, getMenuProps, highlightedIndex, getItemProps } =
+		useSelect({
+			items: options,
+			itemToString,
+			onSelectedItemChange,
+			selectedItem: options?.length ? options[currentIndex] : '',
+			id: name,
+		})
 
 	useEffect(() => {
 		if (eref) {
@@ -59,7 +70,13 @@ const Select = forwardRef((props, eref) => {
 	const cls = useClasses(styles.cont, className, (disabled || options.length < 2) && styles.disabled)
 
 	return (
-		<div id={name ? `${name}-select` : undefined} name={name} className={cls} tabIndex={disabled ? -1 : null} data-select>
+		<div
+			id={name ? `${name}-select` : undefined}
+			name={name}
+			className={cls}
+			tabIndex={disabled ? -1 : null}
+			data-select
+		>
 			<div {...getMenuProps()} className={`${styles.menu} ${isOpen && styles.is_open}`} data-menu>
 				{options.map((item, index) => {
 					const itemValue = itemToValue(item)
@@ -83,6 +100,7 @@ const Select = forwardRef((props, eref) => {
 				{buttonPrefix}
 				{innerString}
 			</div>
+			{children}
 		</div>
 	)
 })
@@ -99,6 +117,7 @@ Select.propTypes = {
 	value: PropTypes.oneOfType([PropTypes.string, PropTypes.number, PropTypes.object]),
 	buttonPrefix: PropTypes.string,
 	disabled: PropTypes.bool,
+	children: PropTypes.node,
 }
 
 export default Select

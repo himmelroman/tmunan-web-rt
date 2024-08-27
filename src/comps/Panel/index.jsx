@@ -34,7 +34,6 @@ import {
 	defaultState,
 	openFile,
 	reset,
-	saveCue,
 	selectApp,
 	selectConnected,
 	setCameraSetting,
@@ -89,7 +88,6 @@ const parameterCallbacks = {
 }
 
 const onInvert = value => {
-	console.log('onInvert', value)
 	const s = store.getState()
 	const invert = value ? 1 : 0
 	if (invert === s.app.parameters.client.filter.invert) return
@@ -99,25 +97,54 @@ const onInvert = value => {
 	if (connected) socket.send('parameters', { client: { filter: { invert } }, override: true })
 }
 
+const incrementRange = (app, inc) => {
+	const ar = app.active_range
+	const schema = PARAMETER_SCHEMA[ar]
+	const value = getProperty(app, schema.path)
+	const step = schema.natural_step || schema.step
+
+	let newValue = value
+	if (inc) newValue += step
+	else newValue -= step
+
+	newValue = Math.round(Math.min(Math.max(newValue, schema.min), schema.max) * 100) / 100
+	parameterCallbacks[schema.parameter_type](newValue, ar)
+}
+
+const onWheel = e => {
+	if (e.ctrlKey) {
+		e.preventDefault()
+		return
+	}
+	const { app } = store.getState()
+	if (app.active_range) {
+		e.preventDefault()
+		incrementRange(app, e.deltaY < 0)
+	}
+}
+
 const onKeyDown = e => {
 	const { code, ctrlKey } = e
 	const { app } = store.getState()
-	const ar = app.active_range
-	if (ar && (code === 'ArrowUp' || code === 'ArrowDown')) {
+	if (app.active_range && (code === 'ArrowUp' || code === 'ArrowDown')) {
 		e.preventDefault()
 		e.stopPropagation()
-		const schema = PARAMETER_SCHEMA[ar]
-		const value = getProperty(app, schema.path)
-		let newValue = value
-		if (code === 'ArrowUp') newValue += schema.step
-		else newValue -= schema.step
-		newValue = Math.round(Math.min(Math.max(newValue, schema.min), schema.max) * 100) / 100
-
-		parameterCallbacks[schema.parameter_type](newValue, ar)
+		incrementRange(app, code === 'ArrowUp')
 		return
 	}
-	console.log('Panel onKeyDown', code)
+
 	if (e.target.tagName === 'TEXTAREA' || (e.target.tagName === 'INPUT' && e.target.type === 'text')) return
+
+	if (ctrlKey) {
+		if (e.code.includes('Digit')) {
+			e.preventDefault()
+			const digit = parseInt(e.code.match(/\d+/)) - 1
+			if (digit >= app.cameras.length) return
+			store.dispatch(setLocalProp(['camera', app.cameras[digit]]))
+		}
+		return
+	}
+
 	switch (code) {
 		case 'BracketLeft':
 			store.dispatch(loadAndSendCue(app.cue_index - 1))
@@ -129,13 +156,15 @@ const onKeyDown = e => {
 			e.preventDefault()
 			const name_input = document.getElementById('cue_name_input')
 			name_input.focus()
-			if (ctrlKey) {
-				// create new cue
-				store.dispatch(saveCue({ name: name_input.value, index: app.cue_index + 1 }))
-			}
 			break
 		case 'KeyI':
 			onInvert(app.parameters.client.filter.invert ? 0 : 1)
+			break
+		case 'KeyX':
+			onTransformParameterChange(app.parameters.client.transform.flip_x ? 0 : 1, 'flip_x')
+			break
+		case 'KeyY':
+			onTransformParameterChange(app.parameters.client.transform.flip_y ? 0 : 1, 'flip_y')
 			break
 		default:
 			break
@@ -188,18 +217,9 @@ const Panel = () => {
 	}
 
 	const onPrompt = e => {
-		// eslint-disable-next-line no-unused-vars
 		const { _, value } = e.target
 		setCurrentPrompt(value)
 	}
-
-	// const onBlack = value => {
-	// 	if (value) {
-	// 		window.ctx.fillRect(0, 0, WIDTH, HEIGHT)
-	// 		window.stopStream()
-	// 	}
-	// 	dispatch(setLocalProp(['freeze', value]))
-	// }
 
 	const outsideClick = e => {
 		if (e.target.closest(`.${styles.cont}`)) return
@@ -246,11 +266,13 @@ const Panel = () => {
 	}
 
 	useEffect(() => {
-		window.addEventListener('pointerdown', outsideClick)
+		if (!IS_CONTROL) window.addEventListener('pointerdown', outsideClick)
 		window.addEventListener('keydown', onKeyDown, true)
+		window.addEventListener('wheel', onWheel, { passive: false })
 		return () => {
-			window.removeEventListener('pointerdown', outsideClick)
+			if (!IS_CONTROL) window.removeEventListener('pointerdown', outsideClick)
 			window.removeEventListener('keydown', onKeyDown, true)
+			window.removeEventListener('wheel', onWheel)
 		}
 	}, [])
 
@@ -275,6 +297,7 @@ const Panel = () => {
 			min={f.min}
 			max={f.max}
 			step={f.step}
+			natural_step={f.natural_step}
 			initial={f.default}
 			active={active_range === f.name || null}
 		/>
@@ -361,8 +384,8 @@ const Panel = () => {
 
 	return (
 		<FocusLock className={styles.lock}>
-			<div className={cls} tabIndex={0}>
-				<div className={styles.header}>
+			<div className={cls}>
+				<div className={styles.top_header}>
 					<div className={styles.leds}>
 						<div className={styles.led} data-state={ably_state} />
 						<div className={styles.led} data-state={rtc_state} />
@@ -406,27 +429,36 @@ const Panel = () => {
 					<button name='save' onClick={onSave}>
 						<MdSave />
 					</button>
-					<div className={styles.right}>
-						<button name='close' onClick={() => dispatch(setShowPanel(false))}>
-							<MdClose />
-						</button>
-					</div>
+					{!IS_CONTROL && (
+						<div className={styles.right}>
+							<button name='close' onClick={() => dispatch(setShowPanel(false))}>
+								<MdClose />
+							</button>
+						</div>
+					)}
 				</div>
 				<main>
 					<div className={styles.column} data-page='1'>
 						<div id='camera-field' className={styles.camera_field} data-expanded={camExpanded || null}>
 							<div className={styles.header}>
 								<Select
-									className={styles.select}
+									className={styles.camera_select}
 									name='camera'
 									itemToString={a => window.cmap[a]}
 									itemToValue={a => a}
 									options={cameras}
 									value={camera}
 									onChange={onLocalChange}
-								/>
+								>
+									{/* <Check className={styles.capture_button} value={capturing}>
+										<MdRadioButtonChecked />
+									</Check> */}
+								</Select>
 								{camera_settings && (
-									<button onClick={() => setCameExpanded(!camExpanded)}>
+									<button
+										className={styles.camera_settings_button}
+										onClick={() => setCameExpanded(!camExpanded)}
+									>
 										<MdTune />
 									</button>
 								)}
@@ -435,43 +467,9 @@ const Panel = () => {
 								{cameraSettingsDiv}
 							</div>
 						</div>
-						<div className={styles.row}>
-							{[diffusionDivs[0], diffusionDivs[1]]}
-							{/* <Range
-								name='strength'
-								label='Strength'
-								value={diffusion.strength}
-								onChange={onDiffusionParameterChange}
-								min={1}
-								max={3}
-								step={0.1}
-								initial={defaultState.parameters.diffusion.strength}
-								active={active_range === 'strength' || null}
-							/>
-							<Range
-								name='guidance_scale'
-								label='Guidance'
-								value={diffusion.guidance_scale}
-								onChange={onDiffusionParameterChange}
-								min={0}
-								max={1}
-								step={0.1}
-								initial={defaultState.parameters.diffusion.guidance_scale}
-							/> */}
-						</div>
+						<div className={styles.row}>{[diffusionDivs[0], diffusionDivs[1]]}</div>
 						<div className={styles.row}>
 							{diffusionDivs[2]}
-							{/* <Range
-								name='seed'
-								label='Seed'
-								value={diffusion.seed}
-								onChange={onDiffusionParameterChange}
-								min={0}
-								max={30}
-								step={1}
-								initial={defaultState.parameters.diffusion.seed}
-								active={active_range === 'seed' || null}
-							/> */}
 							<Range
 								name='fps'
 								label={PARAMETER_SCHEMA.fps.label}

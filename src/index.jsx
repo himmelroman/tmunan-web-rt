@@ -9,7 +9,7 @@ import ReactDOM from 'react-dom/client'
 import { Provider } from 'react-redux'
 import chalk from 'chalk'
 
-import { VERSION, NAME, IS_CONTROL, OFFLINE, ABLY_CHANNEL, BASE_URL } from './lib/constants'
+import { VERSION, NAME, IS_CONTROL, ABLY_CHANNEL, BASE_URL } from './lib/constants'
 import logger from './lib/logger'
 import socket from './lib/socket'
 import store, { /* persistor, */ setCameras } from '~/lib/redux'
@@ -23,7 +23,7 @@ const print = (prop, val) => {
 }
 
 export async function getCameras() {
-	window.cmap = {}
+	window.cmap = { none: 'None' }
 	try {
 		logger.info('Getting cameras...')
 		const devices = await navigator.mediaDevices.enumerateDevices()

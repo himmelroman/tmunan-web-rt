@@ -110,13 +110,12 @@ const CueList = () => {
 						data-name={f.name}
 						className={styles.item}
 						data-current={i === index || undefined}
-						tabIndex={0}
 					>
-						<button className={styles.handle}>
+						<button className={styles.handle} tabIndex={-1}>
 							<MdDragIndicator />
 						</button>
 						<div className={styles.name}>{f.name}</div>
-						<button className={styles.remove}>
+						<button className={styles.remove} tabIndex={-1}>
 							<MdClose />
 						</button>
 					</div>

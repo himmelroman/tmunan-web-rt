@@ -18,12 +18,15 @@ const Range = ({
 	max = 100,
 	initial = 0,
 	step = 1,
+	natural_step,
 	disabled,
 	children,
 	active,
 }) => {
 	const labelRef = useRef()
 	const numRef = useRef()
+
+	if (!natural_step) natural_step = step
 
 	useDoubleClick({
 		onDoubleClick: e => {
@@ -38,10 +41,6 @@ const Range = ({
 		onChange?.(isNaN(val) ? initial : val, name)
 	}
 
-	const onTextInput = e => {
-		console.log('input', e.target.value)
-	}
-
 	const onTextChange = e => {
 		let val = e.target.value
 		if (val.endsWith('.')) return
@@ -53,10 +52,7 @@ const Range = ({
 			else val = Math.min(Math.max(val, min), max)
 		}
 
-		if (val !== value) {
-			console.log('change', value, '>', val)
-			onChange?.(val, name)
-		}
+		if (val !== value) onChange?.(val, name)
 	}
 
 	const onKeyDown = e => {
@@ -66,18 +62,17 @@ const Range = ({
 			e.target.tagName === 'INPUT' &&
 			!/(\.|Tab|\d|Enter|Escape|Backspace|Delete|ArrowLeft|ArrowRight)/.test(key)
 		) {
-			// console.log('preventing', key)
 			e.preventDefault()
 		}
 		let val = value
 		if (key === 'ArrowUp') {
 			val = Math.min(
-				Math.max(Math.round((value + step * (ctrlKey ? 10 : altKey ? 0.1 : 1)) * 100) / 100, min),
+				Math.max(Math.round((value + natural_step * (ctrlKey ? 10 : altKey ? 0.1 : 1)) * 100) / 100, min),
 				max
 			)
 		} else if (key === 'ArrowDown') {
 			val = Math.min(
-				Math.max(Math.round((value - step * (ctrlKey ? 10 : altKey ? 0.1 : 1)) * 100) / 100, min),
+				Math.max(Math.round((value - natural_step * (ctrlKey ? 10 : altKey ? 0.1 : 1)) * 100) / 100, min),
 				max
 			)
 		}
@@ -99,14 +94,6 @@ const Range = ({
 			className={styles.cont}
 			onKeyDown={onKeyDown}
 			onMouseDown={captureFocus}
-			// onMouseUp={() => {
-			// 	!disabled &&
-			// 		setTimeout(() => {
-			// 			numRef.current.focus()
-			// 			// select all text
-			// 			numRef.current.setSelectionRange(0, numRef.current.value.length)
-			// 		}, 0)
-			// }}
 			disabled={disabled}
 			data-range
 		>
@@ -119,7 +106,7 @@ const Range = ({
 					type='number'
 					className={styles.text}
 					value={value}
-					onInput={onTextInput}
+					step={natural_step}
 					onChange={onTextChange}
 					ref={numRef}
 					tabIndex={disabled ? -1 : 0}
@@ -149,6 +136,7 @@ Range.propTypes = {
 	min: PropTypes.number,
 	max: PropTypes.number,
 	step: PropTypes.number,
+	natural_step: PropTypes.number,
 	initial: PropTypes.number,
 	disabled: PropTypes.bool,
 	children: PropTypes.node,

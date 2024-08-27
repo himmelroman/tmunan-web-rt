@@ -39,6 +39,7 @@ module.exports = {
 			1,
 			{
 				argsIgnorePattern: '^_',
+				varsIgnorePattern: '^_',
 			},
 		],
 		'react-hooks/exhaustive-deps': 0,

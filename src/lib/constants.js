@@ -145,6 +145,7 @@ export const PARAMETER_SCHEMA = {
 		min: -180,
 		max: 180,
 		step: 1,
+		natural_step: 10,
 		default: 0,
 		label: 'hue',
 		key: 'KeyH',
@@ -197,8 +198,6 @@ for (const k in PARAMETER_SCHEMA) {
 export const DIFFUSION_RANGES = Object.entries(PARAMETER_SCHEMA)
 	.filter(([_, v]) => v.parameter_type === 'diffusion' && v.type === 'range')
 	.map(([k, v]) => ({ name: k, ...v }))
-
-console.log('diffusion ranges', DIFFUSION_RANGES)
 
 export const FILTER_RANGES = Object.entries(PARAMETER_SCHEMA)
 	.filter(([_, v]) => v.parameter_type === 'filter' && v.type === 'range')
