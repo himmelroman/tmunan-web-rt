@@ -214,7 +214,6 @@ const createDataChannel = () => {
 				if (window.mouse_down || window.active_range) {
 					window.pending_params = payload
 				} else {
-					logger.info('Setting parameters')
 					dispatch(setParameters(payload))
 				}
 				break

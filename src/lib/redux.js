@@ -385,11 +385,14 @@ export const selectConnections = createSelector(selectPresence, p => p.connectio
 
 export const selectIsActive = createSelector(selectPresence, p => p.active_connection_name === NAME)
 
+export const selectIsCapturing = createSelector(selectCamera, c => c !== 'none')
+
 export const selectIsRunning = createSelector(
 	selectConnected,
+	selectIsCapturing,
 	selectIsActive,
 	selectIsFrozen,
-	(connected, active, freeze) => connected && active && !freeze
+	(connected, capturing, active, frozen) => connected && capturing && active && !frozen
 )
 /* Store */
 

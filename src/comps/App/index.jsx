@@ -35,7 +35,7 @@ import '~/lib/midi'
 window.gsap = gsap
 gsap.ticker.fps = 10
 
-let v_interval
+let draw_interval
 
 const canvas = document.createElement('canvas')
 canvas.width = WIDTH
@@ -77,15 +77,15 @@ async function drawVideo() {
 	ctx.drawImage(source_vid, x, y, width, height, 0, 0, WIDTH, HEIGHT)
 }
 
-export const stopStream = () => {
-	if (window.stream) {
+export const stopOutputStream = () => {
+	if (window.output_stream) {
 		logger.info('Stopping outgoing stream')
-		const tracks = window.stream.getTracks()
+		const tracks = window.output_stream.getTracks()
 		tracks.forEach(track => track.stop())
-		window.stream = null
+		window.output_stream = null
 	}
 }
-window.stopStream = stopStream
+window.stopStream = stopOutputStream
 
 const onKeyDown = e => {
 	if (e.target.tagName === 'TEXTAREA' || (e.target.tagName === 'INPUT' && e.target.type === 'text')) {
@@ -172,16 +172,16 @@ const App = () => {
 			window.removeEventListener('keydown', onKeyDown, true)
 			window.removeEventListener('keydown', onKeyUp, true)
 			// window.removeEventListener('wheel', onWheel)
-			clearInterval(v_interval)
+			clearInterval(draw_interval)
 			if (source_vid?.srcObject) {
 				const tracks = source_vid.srcObject.getTracks()
 				tracks.forEach(track => track.stop())
 				source_vid.srcObject = null
 			}
-			if (window.stream) {
-				const tracks = window.stream.getTracks()
+			if (window.output_stream) {
+				const tracks = window.output_stream.getTracks()
 				tracks.forEach(track => track.stop())
-				window.stream = null
+				window.output_stream = null
 			}
 		}
 	}, [])
@@ -244,14 +244,14 @@ const App = () => {
 
 	useEffect(() => {
 		logger.info(`isRunning > ${isRunning ? chalk.greenBright('True') : chalk.redBright('False')}`)
-		clearInterval(v_interval)
-		stopStream()
+		clearInterval(draw_interval)
+		stopOutputStream()
 
 		if (isRunning) {
 			logger.info('Starting stream')
-			v_interval = setInterval(drawVideo, 1000 / clientParams.fps)
-			window.stream = canvas.captureStream(clientParams.fps)
-			socket.replaceTrack(window.stream)
+			draw_interval = setInterval(drawVideo, 1000 / clientParams.fps)
+			window.output_stream = canvas.captureStream(clientParams.fps)
+			socket.replaceTrack(window.output_stream)
 		}
 	}, [isRunning, clientParams.fps])
 
@@ -265,6 +265,7 @@ const App = () => {
 	useEffect(() => {
 		source_vid.style.transform = transformString
 		if (transformRef.flip_x !== clientParams.transform.flip_x) {
+			console.log(chalk.yellow('Flipping X'), transformRef.flip_x, '>', clientParams.transform.flip_x)
 			ctx.translate(WIDTH, 0)
 			ctx.scale(-1, 1)
 		}
