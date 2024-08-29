@@ -2,7 +2,15 @@ import * as Ably from 'ably'
 import chalk from 'chalk'
 import debounce from 'debounce'
 
-import { ABLY_CHANNEL, ABLY_TOKEN, CONNECTION_STATES, MOBILE_CONTROL, NAME, SCTP_CAUSE_CODES } from './constants'
+import {
+	ABLY_CHANNEL,
+	ABLY_TOKEN,
+	CONNECTION_STATES,
+	MOBILE_CONTROL,
+	NAME,
+	OFFLINE,
+	SCTP_CAUSE_CODES,
+} from './constants'
 import logger from './logger'
 import store, { setAblyState, setParameters, setPresence, setRTCState } from './redux'
 import sleep from './sleep'
@@ -28,23 +36,25 @@ const ably = new Ably.Realtime({
 
 const channel = ably.channels.get(ABLY_CHANNEL)
 
-ably.connection.on(change => {
-	store.dispatch(setAblyState(change.current))
-	if (change.current === CONNECTION_STATES.CONNECTED) {
-		logger.info(chalk.greenBright('Ably connected'))
-		if (!pc) initiatePeerConnection()
-	} else if (change.current === CONNECTION_STATES.DISCONNECTED) {
-		logger.info(chalk.redBright('Ably disconnected'))
-	}
-})
+if (!OFFLINE) {
+	ably.connection.on(change => {
+		store.dispatch(setAblyState(change.current))
+		if (change.current === CONNECTION_STATES.CONNECTED) {
+			logger.info(chalk.greenBright('Ably connected'))
+			if (!pc) initiatePeerConnection()
+		} else if (change.current === CONNECTION_STATES.DISCONNECTED) {
+			logger.info(chalk.redBright('Ably disconnected'))
+		}
+	})
 
-channel.subscribe('answer', async answer => {
-	answer = JSON.parse(answer.data)
-	if (answer.name !== NAME) return
-	logger.info(chalk.greenBright('Answer received'), answer)
-	await sleep(0.3)
-	pc.setRemoteDescription(answer)
-})
+	channel.subscribe('answer', async answer => {
+		answer = JSON.parse(answer.data)
+		if (answer.name !== NAME) return
+		logger.info(chalk.greenBright('Answer received'), answer)
+		await sleep(0.3)
+		pc.setRemoteDescription(answer)
+	})
+}
 
 // eslint-disable-next-line no-unused-vars
 const publishOffer = () => {

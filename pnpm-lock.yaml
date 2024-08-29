@@ -74,9 +74,6 @@ importers:
       redux-persist:
         specifier: ^6.0.0
         version: 6.0.0(react@18.2.0)(redux@5.0.1)
-      use-double-click:
-        specifier: ^1.0.5
-        version: 1.0.5(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
       webmidi:
         specifier: ^3.1.11
         version: 3.1.11
@@ -2081,13 +2078,6 @@ packages:
     peerDependenciesMeta:
       '@types/react':
         optional: true
-
-  use-double-click@1.0.5:
-    resolution: {integrity: sha512-71LUca6NtzpzHYlcfM/dOdmwvmvpMbzeIVQpN87w+DctpLiMCXtZpsN8FNWPgHpPBtNhvucPUHIDh5al8D8C7w==}
-    engines: {node: '>=8', npm: '>=5'}
-    peerDependencies:
-      react: '>=16.8'
-      react-dom: '>=16.8'
 
   use-sidecar@1.1.2:
     resolution: {integrity: sha512-epTbsLuzZ7lPClpz2TyryBfztm7m+28DlEv2ZCQ3MDr5ssiwyOwGH/e5F9CkfWjJ1t4clvI58yF822/GUkjjhw==}
@@ -4309,11 +4299,6 @@ snapshots:
       tslib: 2.6.2
     optionalDependencies:
       '@types/react': 18.2.79
-
-  use-double-click@1.0.5(react-dom@18.2.0(react@18.2.0))(react@18.2.0):
-    dependencies:
-      react: 18.2.0
-      react-dom: 18.2.0(react@18.2.0)
 
   use-sidecar@1.1.2(@types/react@18.2.79)(react@18.2.0):
     dependencies:

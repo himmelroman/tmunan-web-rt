@@ -12,9 +12,10 @@ import {
 	MdFullscreen,
 	MdFullscreenExit,
 	MdInput,
+	MdOutlineStorage,
 	MdOutput,
+	MdPhotoCamera,
 	MdRefresh,
-	MdReorder,
 	MdSave,
 	MdTune,
 } from 'react-icons/md'
@@ -34,6 +35,7 @@ import store, {
 	defaultState,
 	openFile,
 	reset,
+	saveCue,
 	selectApp,
 	selectConnected,
 	setCameraSetting,
@@ -133,15 +135,24 @@ const onKeyDown = e => {
 		return
 	}
 
-	if (e.target.tagName === 'TEXTAREA' || (e.target.tagName === 'INPUT' && e.target.type === 'text')) return
-
 	if (ctrlKey) {
 		if (e.code.includes('Digit')) {
 			e.preventDefault()
 			const digit = parseInt(e.code.match(/\d+/))
 			if (digit >= app.cameras.length) return
 			store.dispatch(setLocalProp(['camera', app.cameras[digit]]))
+			return
 		}
+
+		switch (code) {
+			case 'Enter':
+				e.preventDefault()
+				store.dispatch(saveCue(!e.shiftKey))
+				break
+			default:
+				break
+		}
+
 		return
 	}
 
@@ -152,6 +163,13 @@ const onKeyDown = e => {
 		case 'BracketRight':
 			store.dispatch(loadAndSendCue(app.cue_index + 1))
 			break
+		default:
+			break
+	}
+
+	if (e.target.tagName === 'TEXTAREA' || (e.target.tagName === 'INPUT' && e.target.type === 'text')) return
+
+	switch (code) {
 		case 'KeyN':
 			e.preventDefault()
 			const name_input = document.getElementById('cue_name_input')
@@ -178,6 +196,12 @@ const onMouseDown = () => {
 const onMouseUp = () => {
 	store.dispatch(setMouseDown(false))
 }
+
+const onContext = e => {
+	e.preventDefault()
+}
+
+// Component
 
 const Panel = () => {
 	const dispatch = useDispatch()
@@ -240,7 +264,7 @@ const Panel = () => {
 		socket.send('set_active_name', { name })
 	}
 
-	const onOpen = () => {
+	const onOpenCuelist = () => {
 		const input = document.createElement('input')
 		input.type = 'file'
 		input.accept = '.json'
@@ -257,7 +281,7 @@ const Panel = () => {
 		input.click()
 	}
 
-	const onSave = () => {
+	const onSaveCuelist = () => {
 		const data = JSON.stringify({ cues, cue_index })
 		const blob = new Blob([data], { type: 'application/json' })
 		const url = URL.createObjectURL(blob)
@@ -300,7 +324,7 @@ const Panel = () => {
 			key={f.name}
 			name={f.name}
 			label={f.label}
-			value={f.name in filter ? filter[f.name] : f.default}
+			value={filter[f.name]}
 			onChange={onFilterParameterChange}
 			min={f.min}
 			max={f.max}
@@ -321,6 +345,7 @@ const Panel = () => {
 			min={f.min}
 			max={f.max}
 			step={f.step}
+			natural_step={f.natural_step}
 			initial={f.default}
 			active={active_range === f.name || null}
 		/>
@@ -392,21 +417,20 @@ const Panel = () => {
 
 	return (
 		<FocusLock className={styles.lock}>
-			<div className={cls} onMouseDown={onMouseDown} onMouseUp={onMouseUp}>
+			<div className={cls} onMouseDown={onMouseDown} onMouseUp={onMouseUp} onContextMenu={onContext}>
 				<div className={styles.top_header}>
 					<div className={styles.leds}>
 						<div className={styles.led} data-state={ably_state} />
 						<div className={styles.led} data-state={rtc_state} />
 					</div>
-					<button
+					{/* <button
 						name='reload'
 						onDoubleClick={() => {
 							window.location.reload()
 						}}
 					>
 						<MdRefresh />
-					</button>
-
+					</button> */}
 					<Check name='show_source' value={show_source} onChange={onLocalChange}>
 						<MdInput />
 					</Check>
@@ -429,12 +453,15 @@ const Panel = () => {
 					</button>
 					<div className={styles.sep}>/</div>
 					<button name='show_cuelist' onClick={() => dispatch(setShowCueList(show_cuelist ? false : true))}>
-						<MdReorder />
+						{/* <MdReorder /> */}
+						{/* <MdStorage /> */}
+						<MdOutlineStorage />
+						{/* <span className='material-symbols-outlined'>storage</span> */}
 					</button>
-					<button name='open' onClick={onOpen}>
+					<button name='open' onClick={onOpenCuelist}>
 						<FaFolderOpen />
 					</button>
-					<button name='save' onClick={onSave}>
+					<button name='save' onClick={onSaveCuelist}>
 						<MdSave />
 					</button>
 					{!IS_CONTROL && (
@@ -457,15 +484,16 @@ const Panel = () => {
 									options={cameras}
 									value={camera}
 									onChange={onLocalChange}
-								/>
-								{camera_settings && (
-									<button
-										className={styles.camera_settings_button}
-										onClick={() => setCameExpanded(!camExpanded)}
-									>
-										<MdTune />
-									</button>
-								)}
+								>
+									<MdPhotoCamera className={styles.camera_icon} />
+								</Select>
+								<button
+									className={styles.camera_settings_button}
+									data-active={camera_settings || null}
+									onClick={() => setCameExpanded(!camExpanded)}
+								>
+									<MdTune />
+								</button>
 							</div>
 							<div id='camera-wrap' className={styles.wrap}>
 								{cameraSettingsDiv}
@@ -494,15 +522,16 @@ const Panel = () => {
 									placeholder='Prompt'
 									onChange={onPrompt}
 									onKeyDown={e => {
-										if (e.key === 'Enter') {
+										if ('[]'.includes(e.key)) {
 											e.preventDefault()
-											if (connected)
-												socket.send('parameters', {
-													diffusion: { prompt: currentPrompt },
-													override: true,
-												})
+											return
+										}
+										if (e.key === 'Enter' && promptChanged) {
+											e.preventDefault()
+											onDiffusionParameterChange(currentPrompt, 'prompt')
 										} else if (e.key === 'Escape') {
-											setCurrentPrompt(diffusion.prompt)
+											if (promptChanged) setCurrentPrompt(diffusion.prompt)
+											else e.target.blur()
 										}
 									}}
 								/>

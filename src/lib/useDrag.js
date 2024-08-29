@@ -1,19 +1,21 @@
 import { useEffect, useRef, useState } from 'react'
 
-const useDrag = ({ items, itemSelector, handleSelector, ignoreSelector, onChange }) => {
-	const listenerRef = useRef({})
+const useDrag = ({ selectedItems, itemSelector, handleSelector, ignoreSelector, delay, onChange }) => {
 	const oref = useRef({})
 	const itemRefs = useRef([])
 
 	const [isDragging, setIsDragging] = useState(false)
 
-	const onMouseDown = e => {
-		if (isDragging) return
-		const handle = e.target.closest(handleSelector || itemSelector)
-		if (!handle) return
-
+	const startDrag = (e, item) => {
 		const o = oref.current
-		const item = e.target.closest(itemSelector)
+		o.isDragging = true
+		const parent = item.parentElement
+
+		if (selectedItems?.length) {
+			if (!selectedItems.includes(item.name)) return
+			item = parent.querySelector(`[data-name="${selectedItems[0]}"]`)
+		}
+
 		o.oldIndex = parseInt(item.dataset.index)
 
 		const { top, left } = item.getBoundingClientRect()
@@ -22,7 +24,9 @@ const useDrag = ({ items, itemSelector, handleSelector, ignoreSelector, onChange
 
 		document.getSelection().empty()
 
-		const rects = Array.from(item.parentElement.querySelectorAll(itemSelector)).map((el, index) => {
+		const siblings = Array.from(parent.querySelectorAll(itemSelector))
+
+		const rects = siblings.map((el, index) => {
 			const { top, left, bottom, right, width, height } = el.getBoundingClientRect()
 			return { el, index, top, left, bottom, right, width, height, ignore: el.matches(ignoreSelector) }
 		})
@@ -32,26 +36,27 @@ const useDrag = ({ items, itemSelector, handleSelector, ignoreSelector, onChange
 
 		itemRefs.current = rects
 
-		// create copy of target item to drag
-		const del = item.cloneNode(true)
-		del.className = `${del.className} dragged`
+		let dragElement
 
-		del.style.position = 'absolute'
-		del.style.top = item.offsetTop + 'px'
-		del.style.left = item.offsetLeft + 'px'
-		del.style.width = item.offsetWidth + 'px'
-		del.style.height = item.offsetHeight + 'px'
-		del.style.zIndex = 1000
-		del.style.pointerEvents = 'none'
-		del.style.transition = 'none'
-		del.style.boxShadow = '0 0 10px 0 rgba(0, 0, 0, 0.2)'
-		del.style.userSelect = 'none'
-		del.style.cursor = 'grabbing'
-		del.dataset.index = o.oldIndex
-		del.innerHTML = item.innerHTML
-		item.parentElement.appendChild(del)
-
-		o.dragElement = del
+		dragElement = item.cloneNode(true)
+		dragElement.className = `${dragElement.className} dragged`
+		Object.assign(dragElement.style, {
+			position: 'absolute',
+			top: `${top}px`,
+			left: `${left}px`,
+			width: `${item.offsetWidth}px`,
+			height: `${item.offsetHeight}px`,
+			zIndex: 1000,
+			pointerEvents: 'none',
+			transition: 'none',
+			boxShadow: '0 0 10px 0 #0002',
+			userSelect: 'none',
+			cursor: 'grabbing',
+		})
+		dragElement.dataset.index = o.oldIndex
+		dragElement.innerHTML = item.innerHTML
+		parent.appendChild(dragElement)
+		o.dragElement = dragElement
 
 		o.original = item
 		o.original_order = item.style.order
@@ -61,8 +66,31 @@ const useDrag = ({ items, itemSelector, handleSelector, ignoreSelector, onChange
 		onMouseMove(e)
 	}
 
+	const onMouseDown = e => {
+		clearTimeout(oref.current.timeout)
+		if (isDragging) return
+		if (ignoreSelector && e.target.closest(ignoreSelector)) return
+		if (handleSelector && !e.target.closest(handleSelector)) return
+		const item = e.target.closest(itemSelector)
+		if (!item) return
+
+		document.addEventListener('pointerup', onMouseUp)
+		document.addEventListener('pointermove', onMouseMove)
+
+		if (delay) {
+			oref.current.timeout = setTimeout(() => {
+				startDrag(e, item)
+			}, delay)
+		} else {
+			startDrag(e, item)
+		}
+	}
+
 	const onMouseMove = e => {
 		const o = oref.current
+		clearTimeout(o.timeout)
+		if (!o.isDragging) return
+
 		const y = Math.min(o.maxY, Math.max(o.minY, e.clientY))
 
 		const rects = itemRefs.current
@@ -82,59 +110,29 @@ const useDrag = ({ items, itemSelector, handleSelector, ignoreSelector, onChange
 	}
 
 	const onMouseUp = () => {
-		if (!isDragging) return
+		document.removeEventListener('pointerup', onMouseUp)
+		document.removeEventListener('pointermove', onMouseMove)
+		clearTimeout(oref.current.timeout)
+		if (!oref.current.isDragging) return
 		const { oldIndex, newIndex, original, dragElement, original_order } = oref.current
 		setIsDragging(false)
 		dragElement.remove()
 		original.style.visibility = ''
-		original.style.order = original_order
-		delete oref.current.startY
-		delete oref.current.startX
-		delete oref.current.minY
-		delete oref.current.maxY
-		delete oref.current.original_order
-		delete oref.current.original
-		delete oref.current.dragElement
-		delete oref.current.oldIndex
-		delete oref.current.newIndex
+		oref.current = {}
 		if (oldIndex !== newIndex) onChange?.({ oldIndex, newIndex })
+		else original.style.order = original_order
 	}
 
 	useEffect(() => {
 		document.addEventListener('pointerdown', onMouseDown)
 		return () => {
+			document.removeEventListener('pointerup', onMouseUp)
 			document.removeEventListener('pointerdown', onMouseDown)
+			document.removeEventListener('pointermove', onMouseMove)
 		}
 	}, [])
 
-	useEffect(() => {
-		const ref = listenerRef.current
-		if (isDragging) {
-			if (ref.mousemove !== onMouseMove) {
-				if (ref.mousemove) document.removeEventListener('pointermove', ref.mousemove)
-				document.addEventListener('pointermove', onMouseMove)
-			}
-			if (ref.mouseup !== onMouseUp) {
-				if (ref.mouseup) document.removeEventListener('pointerup', ref.mouseup)
-				document.addEventListener('pointerup', onMouseUp)
-			}
-			ref.mousemove = onMouseMove
-			ref.mouseup = onMouseUp
-		} else {
-			document.removeEventListener('pointermove', onMouseMove)
-			document.removeEventListener('pointerup', onMouseUp)
-			ref.mousemove = null
-			ref.mouseup = null
-		}
-		return () => {
-			document.removeEventListener('pointermove', onMouseMove)
-			document.removeEventListener('pointerup', onMouseUp)
-			ref.mousemove = null
-			ref.mouseup = null
-		}
-	}, [isDragging])
-
-	return { isDragging, items }
+	return { isDragging }
 }
 
 export default useDrag

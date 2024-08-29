@@ -106,6 +106,16 @@ export const PARAMETER_SCHEMA = {
 		default: 1,
 		key: 'KeyD',
 	},
+	prompt: {
+		parameter_type: 'diffusion',
+		type: 'text',
+		default: '',
+	},
+	negative_prompt: {
+		parameter_type: 'diffusion',
+		type: 'text',
+		default: '',
+	},
 	fps: {
 		parameter_type: 'client',
 		type: 'range',

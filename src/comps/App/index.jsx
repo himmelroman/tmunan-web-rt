@@ -7,10 +7,10 @@ import chalk from 'chalk'
 import gsap from 'gsap'
 import { memo, useEffect, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import useDoubleClick from 'use-double-click'
 
 import { HEIGHT, IS_CONTROL, RANGE_KEYS, WIDTH } from '~/lib/constants'
 import logger from '~/lib/logger'
+import '~/lib/midi'
 import store, {
 	defaultState,
 	selectApp,
@@ -21,14 +21,11 @@ import store, {
 	setCameraSettings,
 	setLocalProp,
 } from '~/lib/redux'
+import sleep from '~/lib/sleep'
 import socket from '~/lib/socket'
 import useClasses from '~/lib/useClasses'
 import Panel from '../Panel'
 import styles from './index.module.scss'
-import sleep from '~/lib/sleep'
-// import Segmenter from '~/lib/Segmenter'
-
-import '~/lib/midi'
 
 // gsap
 
@@ -103,8 +100,20 @@ const onKeyDown = e => {
 			store.dispatch(setActiveRange(param))
 		}
 	}
+}
+
+const onKeyUp = e => {
+	const { app } = store.getState()
+
+	if (app.active_range && app.active_range === RANGE_KEYS[e.code]) {
+		store.dispatch(setActiveRange(null))
+	}
 
 	if (e.ctrlKey) {
+		return
+	}
+
+	if (e.target.tagName === 'TEXTAREA' || (e.target.tagName === 'INPUT' && e.target.type === 'text')) {
 		return
 	}
 
@@ -127,13 +136,6 @@ const onKeyDown = e => {
 	}
 }
 
-const onKeyUp = e => {
-	const s = store.getState().app
-	if (s.active_range && s.active_range === RANGE_KEYS[e.code]) {
-		store.dispatch(setActiveRange(null))
-	}
-}
-
 // eslint-disable-next-line no-unused-vars
 const focusChange = ({ type }) => {
 	console.log(type, document.activeElement)
@@ -150,20 +152,11 @@ const App = () => {
 	const filterString = useSelector(selectFilterString)
 	const transformString = useSelector(selectTransformString)
 
-	useDoubleClick({
-		onDoubleClick: () => {
-			if (!app.show_panel) dispatch(setLocalProp(['show_panel', true]))
-		},
-		ref,
-		latency: 180,
-	})
-
 	// mnt
 	useEffect(() => {
 		logger.info('App mounted')
 		window.addEventListener('keydown', onKeyDown, true)
 		window.addEventListener('keyup', onKeyUp, true)
-		// window.addEventListener('wheel', onWheel, { passive: false })
 
 		// window.addEventListener('focusin', focusChange)
 
@@ -171,7 +164,6 @@ const App = () => {
 			logger.info('App unmounted')
 			window.removeEventListener('keydown', onKeyDown, true)
 			window.removeEventListener('keydown', onKeyUp, true)
-			// window.removeEventListener('wheel', onWheel)
 			clearInterval(draw_interval)
 			if (source_vid?.srcObject) {
 				const tracks = source_vid.srcObject.getTracks()
@@ -195,13 +187,13 @@ const App = () => {
 
 		const getCamera = async () => {
 			// turn off previous camera
-			// segmenter.running = false
+			let pause = false
 			if (source_vid.srcObject) {
 				const tracks = source_vid.srcObject.getTracks()
 				tracks.forEach(track => track.stop())
 				source_vid.srcObject = null
 				// fix for mobile devices
-				await sleep(0.6)
+				pause = true
 			}
 
 			if (camera_busy) {
@@ -209,7 +201,14 @@ const App = () => {
 				return
 			}
 
-			if (!app.camera || app.camera === 'none') return
+			if (!app.camera || app.camera === 'none') {
+				dispatch(setCameraSettings())
+				return
+			}
+
+			if (pause) {
+				await sleep(0.6)
+			}
 
 			logger.info(`Getting camera stream...`)
 
@@ -217,8 +216,7 @@ const App = () => {
 			const stream = await navigator.mediaDevices.getUserMedia({
 				video: {
 					deviceId: app.camera,
-					width: WIDTH,
-					height: HEIGHT,
+					width: 9999,
 				},
 			})
 			camera_busy = false
@@ -226,7 +224,6 @@ const App = () => {
 
 			source_vid.onloadeddata = () => {
 				logger.info('Camera stream loaded')
-				// segmenter.running = true
 			}
 
 			const track = stream.getVideoTracks()[0]
@@ -277,6 +274,10 @@ const App = () => {
 		transformRef.flip_y = clientParams.transform.flip_y
 	}, [transformString, clientParams.transform])
 
+	const onDoubleClick = () => {
+		if (!app.show_panel) dispatch(setLocalProp(['show_panel', true]))
+	}
+
 	const cls = useClasses(
 		styles.cont,
 		app.show_panel && styles.show_panel,
@@ -285,7 +286,7 @@ const App = () => {
 	)
 
 	return (
-		<div className={cls} ref={ref}>
+		<div className={cls} ref={ref} onDoubleClick={onDoubleClick}>
 			{app.show_panel && <Panel />}
 			<div className={styles.view}>
 				<video
@@ -295,11 +296,6 @@ const App = () => {
 					ref={r => {
 						source_vid = r
 						window.source_vid = r
-						// if (r && !segmenter) {
-						// 	console.log('Creating segmenter...')
-						// 	segmenter = new Segmenter(r, ctx)
-						// 	window.segmenter = segmenter
-						// }
 					}}
 				/>
 				<video

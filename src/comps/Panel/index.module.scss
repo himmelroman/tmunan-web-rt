@@ -45,19 +45,33 @@
 		filter: brightness(1.2);
 	}
 
+	[name="reload"] {
+		font-size: 19px;
+	}
+
+	[name="fullscreen"] {
+		padding: 0;
+		font-size: 24px;
+	}
+
 	[name="reset"] {
 		span {
 			font-size: 20px;
 		}
 	}
 
-	[name="reload"] {
-		font-size: 19px;
+	[name="show_cuelist"] {
+		span {
+			font-size: 20px;
+		}
 	}
 
 	[name="open"] {
 		display: none;
 		font-size: 16px;
+		svg {
+			margin-top: 2px;
+		}
 	}
 
 	[name="save"] {
@@ -65,18 +79,18 @@
 		font-size: 18px;
 	}
 
-	[name="freeze"] {
-		--checked: #f66;
-	}
-
 	[data-select] {
 		--line-width: 100%;
 		--line-height: 40px;
 		--background-color: var(--deep-3);
 		--focus-color: var(--deep-35);
-		--color: var(--deep-5);
+		--color: var(--deep-45);
 		--selected-bg: var(--deep-35);
 		--border: none;
+
+		&:focus {
+			color: var(--deep-5);
+		}
 
 		font-size: inherit;
 		--align: left;
@@ -85,6 +99,10 @@
 		[data-button] {
 			padding: 0 10px;
 		}
+	}
+
+	[name="freeze"] {
+		--checked: #f66;
 	}
 
 	&.connected {
@@ -184,6 +202,18 @@
 
 .camera_select {
 	position: relative;
+
+	.camera_icon {
+		position: absolute;
+		top: 50%;
+		transform: translateY(-50%);
+		right: 10px;
+		font-size: 20px;
+		color: var(--deep-4);
+		pointer-events: none;
+		z-index: 100;
+		opacity: 0.6;
+	}
 }
 
 .capture_button {
@@ -209,7 +239,7 @@
 	flex-direction: column;
 	align-items: stretch;
 	&:not(:last-child) {
-		border-right: $border_2;
+		border-right: $border_3;
 	}
 	overflow-y: scroll;
 }
@@ -336,11 +366,23 @@
 }
 
 .camera_settings_button {
-	opacity: 0.8;
+	margin-right: -36px;
+	opacity: 0;
+	pointer-events: none;
+	visibility: hidden;
 
 	svg {
 		transform: rotate(-90deg);
-		transition: transform 0.2s;
+		transition: transform 0.3s;
+	}
+
+	transition: all 0.3s;
+
+	&[data-active] {
+		margin-right: 0;
+		opacity: 0.8;
+		pointer-events: all;
+		visibility: visible;
 	}
 }
 
@@ -439,6 +481,7 @@
 	font-size: 10px;
 	bottom: 10px;
 	right: 10px;
+	opacity: 0.2;
 }
 
 // Phone

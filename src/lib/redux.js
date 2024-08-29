@@ -1,8 +1,19 @@
-import { createSlice, configureStore, createSelector } from '@reduxjs/toolkit'
 import merge from '@bundled-es-modules/deepmerge'
+import { configureStore, createSelector, createSlice } from '@reduxjs/toolkit'
+
 // eslint-disable-next-line no-unused-vars
+import {
+	CAMERA_PROPS,
+	CONNECTION_STATES,
+	HEIGHT,
+	IS_CONTROL,
+	IS_MOBILE,
+	NAME,
+	OFFLINE,
+	PARAMETER_SCHEMA,
+	WIDTH,
+} from './constants'
 import logger from './logger'
-import { WIDTH, HEIGHT, NAME, IS_CONTROL, OFFLINE, CONNECTION_STATES, CAMERA_PROPS } from './constants'
 import { copy } from './utils'
 
 export const defaultState = {
@@ -19,7 +30,7 @@ export const defaultState = {
 	},
 	// ui
 	show_panel: IS_CONTROL,
-	show_cuelist: false,
+	show_cuelist: IS_CONTROL && !IS_MOBILE,
 	show_source: false,
 	show_output: !OFFLINE,
 	active_range: null,
@@ -27,24 +38,24 @@ export const defaultState = {
 	// parameters
 	parameters: {
 		diffusion: {
-			strength: 1,
-			guidance_scale: 1,
-			seed: 1,
-			prompt: '',
-			negative_prompt: '',
+			strength: PARAMETER_SCHEMA.strength.default,
+			guidance_scale: PARAMETER_SCHEMA.guidance_scale.default,
+			seed: PARAMETER_SCHEMA.seed.default,
+			prompt: PARAMETER_SCHEMA.prompt.default,
+			negative_prompt: PARAMETER_SCHEMA.negative_prompt.default,
 			width: WIDTH,
 			height: HEIGHT,
 		},
 		client: {
-			fps: 16,
+			fps: PARAMETER_SCHEMA.fps.default,
 			filter: {
-				sepia: 0,
-				invert: 0,
-				brightness: 1,
-				contrast: 1,
-				saturate: 1,
-				'hue-rotate': 0,
-				blur: 0,
+				sepia: PARAMETER_SCHEMA.sepia.default,
+				invert: PARAMETER_SCHEMA.invert.default,
+				brightness: PARAMETER_SCHEMA.brightness.default,
+				contrast: PARAMETER_SCHEMA.contrast.default,
+				saturate: PARAMETER_SCHEMA.saturate.default,
+				'hue-rotate': PARAMETER_SCHEMA['hue-rotate'].default,
+				blur: PARAMETER_SCHEMA.blur.default,
 			},
 			transform: {
 				flip_x: false,
@@ -57,6 +68,8 @@ export const defaultState = {
 	// cues
 	cues: [],
 	cue_index: -1,
+	cue_input_value: '',
+	selected_cues: [],
 }
 
 export const initialState = copy(defaultState)
@@ -100,10 +113,16 @@ export const appSlice = createSlice({
 			}
 		},
 		setCameraSettings: (s, { payload }) => {
+			if (!payload) {
+				s.camera_settings = null
+				return
+			}
 			const { capabilities, settings } = payload
+			let found = false
 			s.camera_settings = {}
 			CAMERA_PROPS.forEach(({ name, parent }) => {
 				if (name in settings) {
+					found = true
 					const cap = capabilities[name]
 					if (Array.isArray(cap)) {
 						s.camera_settings[name] = {
@@ -126,6 +145,9 @@ export const appSlice = createSlice({
 					}
 				}
 			})
+			if (!found) {
+				s.camera_settings = null
+			}
 		},
 		setCameraSetting: (s, { payload }) => {
 			const [key, value] = payload
@@ -199,16 +221,73 @@ export const appSlice = createSlice({
 			Object.assign(s.parameters, defaultState.parameters)
 		},
 		// cues
-		saveCue: (s, { payload }) => {
-			const { name, index } = payload
-
-			let cue = s.cues.find(f => f.name === name)
-			if (!cue) {
-				s.cues.splice(index, 0, { name, ...s.parameters })
-				s.cue_index = index
-			} else {
-				Object.assign(cue, s.parameters)
+		setSelectedCues: (s, { payload }) => {
+			s.selected_cues = payload
+		},
+		setCueInputValue: (s, { payload }) => {
+			s.cue_input_value = payload.replace(/[^a-zA-Z0-9\- \s]/g, '')
+		},
+		saveCue: (s, { payload: overwrite }) => {
+			let cue
+			// save to selected cue
+			if (overwrite) {
+				cue = s.cues[s.cue_index]
+				if (cue) {
+					Object.assign(cue, s.parameters)
+				}
+				return
 			}
+
+			// save new cue
+			let name = s.cue_input_value.trim()
+			if (!name) {
+				// generate name
+				const last_cue = s.cues[s.cue_index || s.cues.length - 1]
+				if (last_cue) {
+					const match = last_cue.name.match(/(\d+)$/)
+					if (match) {
+						name = last_cue.name.replace(match[1], parseInt(match[1]) + 1)
+					} else {
+						name = `Cue ${s.cues.length}`
+					}
+				} else {
+					// first cue
+					name = 'Cue 1'
+				}
+			}
+
+			// ensure unique name
+			while (s.cues.some(f => f.name === name)) {
+				const match = name.match(/(\d+)$/)
+				if (match) {
+					name = name.replace(match[1], parseInt(match[1]) + 1)
+				} else {
+					name += ' 1'
+				}
+			}
+
+			cue = { name, ...s.parameters }
+			if (s.cue_index === -1) {
+				s.cues.push(cue)
+				// s.cue_index = s.cues.length - 1
+			} else {
+				s.cue_index++
+				s.cues.splice(s.cue_index, 0, cue)
+			}
+
+			// s.cues.push({ name, ...s.parameters })
+			// s.cue_index = s.cues.length - 1
+
+			s.cue_input_value = ''
+
+			// let cue = name ? s.cues.find(f => f.name === name) : s.cues[s.cue_index]
+			// if (!cue) {
+			// 	if (index === undefined) return
+			// 	s.cues.splice(index, 0, )
+			// 	s.cue_index = index
+			// } else {
+			// 	Object.assign(cue, s.parameters)
+			// }
 			saveLocal(s)
 		},
 		renameCue: (s, { payload }) => {
@@ -219,11 +298,23 @@ export const appSlice = createSlice({
 			}
 			saveLocal(s)
 		},
-		removeCueAt: (s, { payload }) => {
-			s.cues.splice(payload, 1)
-			if (s.cue_index <= payload) {
+		removeCues: (s, { payload }) => {
+			if (!Array.isArray(payload)) {
+				payload = [payload]
+			}
+			const indices = payload.map(f => s.cues.findIndex(c => c.name === f))
+			if (indices.includes(s.cue_index)) {
 				s.cue_index = -1
 			}
+			for (let i = indices.length - 1; i >= 0; i--) {
+				s.cues.splice(indices[i], 1)
+			}
+			// payload.forEach(f => {
+			// 	const index = s.cues.findIndex(c => c.name === f)
+			// 	if (index !== -1) {
+			// 		s.cues.splice(index, 1)
+			// 	}
+			// })
 			saveLocal(s)
 		},
 		clearCues: s => {
@@ -234,6 +325,7 @@ export const appSlice = createSlice({
 		loadCue: (s, { payload }) => {
 			const index = parseInt(payload)
 			s.cue_index = index
+			s.selected_cues = [index]
 			// eslint-disable-next-line no-unused-vars
 			const { name, ...parameters } = s.cues[index]
 			s.parameters = parameters
@@ -256,30 +348,32 @@ export const appSlice = createSlice({
 })
 
 export const {
+	clearCues,
+	loadCue,
+	openFile,
+	removeCues,
+	renameCue,
+	setSelectedCues,
+	reset,
+	saveCue,
 	setAblyState,
+	setActiveRange,
+	setCameras,
+	setCameraSetting,
+	setCameraSettings,
+	setClientParameter,
+	setCueInputValue,
+	setDiffusionParameter,
+	setFilter,
+	setLocalProp,
+	setMouseDown,
+	setParameters,
+	setPresence,
 	setRTCState,
 	setShowCueList,
 	setShowPanel,
-	setActiveRange,
-	setMouseDown,
-	saveCue,
-	loadCue,
-	sortCues,
-	setFilter,
 	setTransform,
-	clearCues,
-	removeCueAt,
-	renameCue,
-	setCameras,
-	setCameraSettings,
-	setCameraSetting,
-	setLocalProp,
-	setParameters,
-	setClientParameter,
-	setDiffusionParameter,
-	setPresence,
-	openFile,
-	reset,
+	sortCues,
 } = appSlice.actions
 
 /* Selectors */
@@ -362,7 +456,11 @@ export const selectTransformString = createSelector(selectTransform, t => {
 
 // cues
 
+export const selectCueInputValue = s => s.app.cue_input_value
+
 export const selectCues = s => s.app.cues
+
+export const selectSelectedCues = s => s.app.selected_cues
 
 export const selectCueIndex = s => s.app.cue_index
 
@@ -394,23 +492,14 @@ export const selectIsRunning = createSelector(
 	selectIsFrozen,
 	(connected, capturing, active, frozen) => connected && capturing && active && !frozen
 )
+
 /* Store */
 
 const store = configureStore({
 	reducer: {
 		app: appSlice.reducer,
-		// app: persistReducer(
-		// 	{
-		// 		key: 'rubin',
-		// 		storage,
-		// 		whitelist: ['camera', 'fps', 'flipped'],
-		// 	},
-		// 	appSlice.reducer
-		// ),
 	},
 	middleware: d => d({ serializableCheck: false }),
 })
-
-// export const persistor = persistStore(store)
 
 export default store

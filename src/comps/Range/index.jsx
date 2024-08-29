@@ -6,13 +6,12 @@
 import PropTypes from 'prop-types'
 
 import styles from './index.module.scss'
-import useDoubleClick from 'use-double-click'
-import { useRef } from 'react'
+import { useMemo, useRef } from 'react'
 
 const Range = ({
 	name,
 	label,
-	value,
+	value: outerValue,
 	onChange,
 	min = 0,
 	max = 100,
@@ -28,12 +27,9 @@ const Range = ({
 
 	if (!natural_step) natural_step = step
 
-	useDoubleClick({
-		onDoubleClick: e => {
-			e.preventDefault()
-			onChange?.(initial, name)
-		},
-		ref: labelRef,
+	const value = useMemo(() => {
+		if (outerValue || outerValue === 0) return outerValue
+		return initial
 	})
 
 	const onRangeChange = e => {
@@ -53,6 +49,11 @@ const Range = ({
 		}
 
 		if (val !== value) onChange?.(val, name)
+	}
+
+	const onDoubleClick = e => {
+		e.preventDefault()
+		onChange?.(initial, name)
 	}
 
 	const onKeyDown = e => {
@@ -98,7 +99,7 @@ const Range = ({
 			data-range
 		>
 			<div className={styles.row}>
-				<label ref={labelRef} htmlFor={name}>
+				<label ref={labelRef} htmlFor={name} onDoubleClick={onDoubleClick}>
 					{label || name}
 				</label>
 				<input

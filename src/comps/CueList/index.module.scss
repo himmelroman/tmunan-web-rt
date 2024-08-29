@@ -11,26 +11,48 @@
 	flex-direction: column;
 	align-items: stretch;
 
+	background-color: var(--deep-15);
+
 	&.dragging {
 		cursor: grabbing;
 		.item {
 			pointer-events: none;
 		}
 	}
+
+	overflow: hidden;
 }
 
 .header {
 	display: flex;
 	padding: 15px;
-	padding-right: 10px;
+	// padding-right: 10px;
 	gap: 10px;
 	border-bottom: $border;
+	background-color: var(--deep-2);
 
-	input {
+	.cue_input {
+		position: relative;
+
 		padding: 0 10px;
 		height: 40px;
 		line-height: 40px;
 		flex: 1;
+
+		color: var(--deep-45);
+		background-color: var(--deep-3);
+	}
+
+	.add {
+		position: absolute;
+		right: 5px;
+		top: 50%;
+		transform: translateY(-50%);
+		color: var(--deep-4);
+	}
+
+	input {
+		width: 100%;
 	}
 
 	button {
@@ -38,69 +60,135 @@
 	}
 }
 
-.save {
-	color: #f66;
+.footer {
+	flex-shrink: 0;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	height: 50px;
+
+	background-color: var(--deep-15);
+	border-top: $border_2;
 }
 
 .list {
-	flex: 1;
 	display: flex;
 	align-items: stretch;
 	flex-direction: column;
 	overflow-y: scroll;
+	max-height: 100%;
+	margin-bottom: -1px;
 }
 
 .item {
+	flex-shrink: 0;
 	display: flex;
 	align-items: center;
-	// justify-content: space-between;
+	justify-content: space-between;
+	// gap: 10px;
 
 	background-color: var(--deep-2);
+	color: var(--deep-42);
+
 	border-bottom: $border-2;
 	white-space: pre;
 	overflow: hidden;
 
 	user-select: none;
-	cursor: pointer;
 
-	&:hover {
-		.name {
-			color: var(--deep-6);
+	button {
+		font-size: 16px;
+		width: 45px;
+		height: 45px;
+		color: var(--deep-3);
+		padding: 0;
+
+		&:focus-visible {
+			background-color: transparent;
 		}
-		background-color: var(--deep-21);
-	}
-
-	.name {
-		flex: 1;
-		// padding: 12px 15px;
-		// &:hover {
-		// 	color: var(--deep-6);
-		// }
 	}
 
 	.handle {
-		cursor: grab;
-		padding: 12px;
+		width: 32px;
 		font-size: 16px;
-		color: var(--deep-3);
+		cursor: grab;
+		&:hover {
+			color: var(--deep-4);
+		}
+	}
+
+	.name {
+		margin-left: 12px;
+		flex-shrink: 0;
+	}
+
+	input {
+		color: #f66;
+		flex-shrink: 0;
+		// width: calc(100% - 8px);
+		// padding: 10px 8px;
+		// margin-left: -8px;
+		// border-radius: 2px;
+		background-color: transparent;
+		padding: 0;
+		letter-spacing: 0.92px;
+		width: 300px;
+	}
+
+	.play {
+		font-size: 24px;
+		svg {
+			transition: all 0.2s;
+		}
+		&:hover {
+			color: #7c76;
+		}
 	}
 
 	.remove {
 		color: #669;
-		font-size: 16px;
 		background-color: transparent;
-		padding: 12px;
+		display: none;
 
 		&:hover {
 			color: #f66;
 		}
 	}
 
-	&[data-current] {
+	&:hover {
+		filter: brightness(1.03) saturate(1.1);
+	}
+
+	&[data-selected] {
+		color: var(--deep-42);
 		background-color: var(--deep-25);
+	}
+
+	&[data-current] {
 		.name {
 			color: #7c7;
-			// pointer-events: none;
+		}
+
+		.play {
+			color: #6c6d;
+			pointer-events: none;
+		}
+	}
+}
+
+.changed {
+	.item[data-current] {
+		.play {
+			pointer-events: all;
+			color: #f66;
+			svg {
+				transition: all 0.2s;
+			}
+			&:hover {
+				svg {
+					transform: rotate(180deg);
+				}
+			}
 		}
 	}
 }

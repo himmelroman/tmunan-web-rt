@@ -5,3 +5,16 @@ export const camelToFlat = (camel, title = false) => {
 }
 
 export const copy = obj => JSON.parse(JSON.stringify(obj))
+
+/*
+export const fromPrompt = s => {
+	const { prompt } = s.parameters.diffusion
+	if (!prompt?.length) return false
+	const words = s.parameters.diffusion.prompt.split(' ')
+	let name = words.slice(0, 2).join(' ')
+	if (name.length > 40) {
+		name = words[0]
+	}
+	return name
+}
+*/

@@ -5,7 +5,7 @@
  */
 import PropTypes from 'prop-types'
 import { useSelect } from 'downshift'
-import { useCallback, useEffect, useMemo, forwardRef } from 'react'
+import { useCallback, useEffect, useMemo, useRef, forwardRef } from 'react'
 
 import useClasses from '~/lib/useClasses'
 import styles from './index.module.scss'
@@ -24,6 +24,8 @@ const Select = forwardRef((props, eref) => {
 		disabled,
 		children,
 	} = props
+
+	const buttonRef = useRef(null)
 
 	const itemToValue = props.itemToValue || itemToString
 
@@ -67,6 +69,14 @@ const Select = forwardRef((props, eref) => {
 		}
 	}, [eref, openMenu, closeMenu, isOpen])
 
+	useEffect(() => {
+		if (!isOpen) {
+			if (buttonRef.current) {
+				buttonRef.current.blur()
+			}
+		}
+	}, [isOpen])
+
 	const cls = useClasses(styles.cont, className, (disabled || options.length < 2) && styles.disabled)
 
 	return (
@@ -96,7 +106,7 @@ const Select = forwardRef((props, eref) => {
 					)
 				})}
 			</div>
-			<div className={styles.open_button} {...getToggleButtonProps()} data-button>
+			<div className={styles.open_button} {...getToggleButtonProps({ ref: buttonRef })} data-button>
 				{buttonPrefix}
 				{innerString}
 			</div>
