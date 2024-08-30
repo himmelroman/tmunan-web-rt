@@ -270,25 +270,15 @@ export const appSlice = createSlice({
 			cue = { name, ...s.parameters }
 			if (s.cue_index === -1) {
 				s.cues.push(cue)
-				// s.cue_index = s.cues.length - 1
+				s.cue_index = s.cues.length - 1
 			} else {
 				s.cue_index++
 				s.cues.splice(s.cue_index, 0, cue)
 			}
 
-			// s.cues.push({ name, ...s.parameters })
-			// s.cue_index = s.cues.length - 1
+			s.selected_cues = [name]
 
 			s.cue_input_value = ''
-
-			// let cue = name ? s.cues.find(f => f.name === name) : s.cues[s.cue_index]
-			// if (!cue) {
-			// 	if (index === undefined) return
-			// 	s.cues.splice(index, 0, )
-			// 	s.cue_index = index
-			// } else {
-			// 	Object.assign(cue, s.parameters)
-			// }
 			saveLocal(s)
 		},
 		renameCue: (s, { payload }) => {

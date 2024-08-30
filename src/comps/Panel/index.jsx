@@ -143,19 +143,18 @@ const onKeyDown = e => {
 			return
 		}
 
-		switch (code) {
-			case 'Enter':
-				e.preventDefault()
-				store.dispatch(saveCue(!e.shiftKey))
-				break
-			default:
-				break
+		if (code === 'Enter' && !e.shiftKey) {
+			e.preventDefault()
+			store.dispatch(saveCue())
 		}
 
 		return
 	}
 
 	switch (code) {
+		case 'Enter':
+			if (e.shiftKey) store.dispatch(saveCue(true))
+			break
 		case 'BracketLeft':
 			store.dispatch(loadAndSendCue(app.cue_index - 1))
 			break
@@ -452,10 +451,7 @@ const Panel = () => {
 					</button>
 					<div className={styles.sep}>/</div>
 					<button name='show_cuelist' onClick={() => dispatch(setShowCueList(show_cuelist ? false : true))}>
-						{/* <MdReorder /> */}
-						{/* <MdStorage /> */}
 						<MdOutlineStorage />
-						{/* <span className='material-symbols-outlined'>storage</span> */}
 					</button>
 					<button name='open' onClick={onOpenCuelist}>
 						<FaFolderOpen />
@@ -525,9 +521,9 @@ const Panel = () => {
 											e.preventDefault()
 											return
 										}
-										if (e.key === 'Enter' && promptChanged) {
+										if (e.key === 'Enter') {
 											e.preventDefault()
-											onDiffusionParameterChange(currentPrompt, 'prompt')
+											if (promptChanged) onDiffusionParameterChange(currentPrompt, 'prompt')
 										} else if (e.key === 'Escape') {
 											if (promptChanged) setCurrentPrompt(diffusion.prompt)
 											else e.target.blur()
