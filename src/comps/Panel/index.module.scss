@@ -248,7 +248,7 @@
 	display: grid;
 	flex-direction: row;
 	flex-wrap: wrap;
-	padding: 20px 15px 0 15px;
+	padding: 15px 15px 0 15px;
 	gap: 20px;
 
 	&[data-1] {
@@ -267,6 +267,10 @@
 
 	&[data-5] {
 		grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+	}
+
+	&[data-6] {
+		grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr;
 	}
 }
 
@@ -316,7 +320,7 @@
 .field {
 	display: flex;
 	flex-direction: column;
-	gap: 10px;
+	gap: 12px;
 
 	&[data-row] {
 		flex-direction: row;

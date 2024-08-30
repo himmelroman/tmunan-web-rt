@@ -51,6 +51,13 @@
 			background-color: var(--deep-4);
 		}
 	}
+
+	&.disabled {
+		pointer-events: none;
+		.inner_handle {
+			background-color: var(--deep-3);
+		}
+	}
 }
 
 .bg {
