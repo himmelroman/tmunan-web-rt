@@ -19,11 +19,14 @@ import {
 	selectSelectedCues,
 	setSelectedCues,
 	renameCue,
+	setSelection,
 } from '~/lib/redux'
 import { MdAdd, MdClose, MdPlayCircleFilled } from 'react-icons/md'
 import { loadAndSendCue } from '~/lib/thunks'
 import useDrag from '~/lib/useDrag'
 import useClasses from '~/lib/useClasses'
+
+window.selection = { first: -1, last: -1 }
 
 const plainReg = /[^a-zA-Z0-9\- ]/g
 
@@ -98,7 +101,7 @@ const CueList = () => {
 	const cueChanged = useSelector(selectCueChanged)
 	const selectedCues = useSelector(selectSelectedCues)
 	const ref = useRef()
-	const selectionRef = useRef({ first: -1, last: -1 })
+	const inputRef = useRef()
 	const [renaming, setRenaming] = useState(-1)
 
 	const { isDragging } = useDrag({
@@ -106,9 +109,6 @@ const CueList = () => {
 		delay: 230,
 		onChange: ({ oldIndex, newIndex, length }) => {
 			dispatch(sortCues({ oldIndex, newIndex, length }))
-			const sel = selectionRef.current
-			if (sel.first === oldIndex) sel.first = newIndex
-			if (sel.last === oldIndex) sel.last = newIndex
 		},
 		selectedNames: selectedCues,
 	})
@@ -116,6 +116,10 @@ const CueList = () => {
 	const addNewCue = () => {
 		document.getElementById('cue_name_input').blur()
 		dispatch(saveCue())
+		ref.current.focus()
+		// setTimeout(() => {
+
+		// }
 	}
 
 	const onListDown = e => {
@@ -138,12 +142,12 @@ const CueList = () => {
 
 		// select
 		if (!e.shiftKey) {
-			const { first, last } = selectionRef.current
+			const { first, last } = window.selection
 			const min = Math.min(first, last)
 			const max = Math.max(first, last)
 			if (index < min || index > max) {
-				selectionRef.current.first = index
-				selectionRef.current.last = index
+				// window.selection.first = index
+				// window.selection.last = index
 				dispatch(setSelectedCues([cues[index].name]))
 			}
 		}
@@ -154,7 +158,7 @@ const CueList = () => {
 		if (!item || e.target.closest(`.${styles.remove}`)) return
 		const index = parseInt(item.dataset.index)
 
-		const sel = selectionRef.current
+		const sel = window.selection
 		let { first, last } = sel
 		if (!e.shiftKey || first === -1) first = index
 		last = index
@@ -183,46 +187,56 @@ const CueList = () => {
 		setRenaming(index)
 	}
 
-	const applySelection = () => {
-		const { first, last } = selectionRef.current
-		const min = Math.min(first, last)
-		const max = Math.max(first, last)
-		dispatch(setSelectedCues(cues.slice(min, max + 1).map(f => f.name)))
-	}
-
 	const onKeyDown = e => {
-		if (e.target.tagName === 'INPUT') return
-		const sel = selectionRef.current
-		const { key, shiftKey } = e
-		switch (key) {
-			case 'ArrowUp':
-				if (sel.first === -1) return
-				if (shiftKey) {
-					if (sel.last > 0) {
-						e.preventDefault()
-						sel.last--
-						applySelection()
-					}
-				} else if (sel.first > 0) {
+		const sel = window.selection
+		const { key, ctrlKey, shiftKey } = e
+		const IS_INPUT = e.target.tagName === 'INPUT'
+
+		if (key === 'ArrowUp') {
+			if (IS_INPUT) return
+			if (sel.first === -1) return
+			if (shiftKey) {
+				if (sel.last > 0) {
 					e.preventDefault()
-					sel.first--
-					sel.last = sel.first
-					applySelection()
+					dispatch(setSelection([sel.first, sel.last - 1]))
 				}
-				break
-			case 'ArrowDown':
-				if (sel.first === -1) return
-				if (shiftKey) {
-					if (sel.last < cues.length - 1) {
-						e.preventDefault()
-						sel.last++
-						applySelection()
-					}
-				} else if (sel.first < cues.length - 1) {
+			} else if (sel.first > 0) {
+				e.preventDefault()
+				dispatch(setSelection(sel.first - 1))
+			} else if (sel.first === 0) {
+				e.preventDefault()
+				dispatch(setSelection())
+				inputRef.current.focus()
+			}
+		}
+		if (key === 'ArrowDown') {
+			if (IS_INPUT) {
+				ref.current.focus()
+			}
+			if (sel.first === -1) {
+				dispatch(setSelection(0))
+			} else if (shiftKey) {
+				if (sel.last < cues.length - 1) {
 					e.preventDefault()
-					sel.first++
-					sel.last = sel.first
-					applySelection()
+					dispatch(setSelection(sel.first, sel.last + 1))
+				}
+			} else if (sel.first < cues.length - 1) {
+				e.preventDefault()
+				dispatch(setSelection(sel.first + 1))
+			}
+		}
+
+		if (IS_INPUT) return
+
+		switch (key) {
+			case 'Enter':
+				if (
+					!ctrlKey &&
+					!shiftKey &&
+					window.selection.first !== -1 &&
+					window.selection.first !== currentCueIndex
+				) {
+					dispatch(loadAndSendCue(window.selection.first))
 				}
 				break
 			case 'Delete':
@@ -242,8 +256,8 @@ const CueList = () => {
 
 	const onDeselect = e => {
 		if (!e.target.closest(`.${styles.item}`)) {
-			selectionRef.current.first = -1
-			selectionRef.current.last = -1
+			window.selection.first = -1
+			window.selection.last = -1
 			dispatch(setSelectedCues([]))
 		}
 	}
@@ -271,6 +285,7 @@ const CueList = () => {
 				<div className={styles.cue_input}>
 					<input
 						id='cue_name_input'
+						ref={inputRef}
 						placeholder='Add cue name'
 						onChange={e => dispatch(setCueInputValue(e.target.value))}
 						value={inputValue}

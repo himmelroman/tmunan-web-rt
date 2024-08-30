@@ -565,7 +565,8 @@ const Panel = () => {
 								onChange={onClientParameterChange}
 								min={0}
 								max={10}
-								step={1}
+								natural_step={1}
+								step={0.1}
 								initial={defaultState.parameters.transition_duration}
 							/>
 						</div>

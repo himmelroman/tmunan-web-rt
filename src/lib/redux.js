@@ -220,9 +220,44 @@ export const appSlice = createSlice({
 		reset: s => {
 			Object.assign(s.parameters, defaultState.parameters)
 		},
+		setSelection: (s, { payload }) => {
+			const sel = window.selection
+			if (payload === undefined) {
+				sel.first = -1
+				sel.last = -1
+				s.selected_cues = []
+				return
+			}
+
+			let first
+			let last
+			if (typeof payload === 'number') {
+				first = payload
+				last = payload
+			} else {
+				first = payload[0]
+				last = payload[1]
+			}
+
+			sel.first = first
+			sel.last = last
+
+			const min = Math.min(first, last)
+			const max = Math.max(first, last)
+
+			s.selected_cues = s.cues.slice(min, max + 1).map(f => f.name)
+		},
 		// cues
 		setSelectedCues: (s, { payload }) => {
 			s.selected_cues = payload
+			const sel = window.selection
+			if (payload.length) {
+				sel.first = s.cues.findIndex(f => f.name === payload[0])
+				sel.last = sel.first
+			} else {
+				sel.first = -1
+				sel.last = -1
+			}
 		},
 		setCueInputValue: (s, { payload }) => {
 			s.cue_input_value = payload.replace(/[^a-zA-Z0-9\- \s]/g, '')
@@ -277,6 +312,8 @@ export const appSlice = createSlice({
 			}
 
 			s.selected_cues = [name]
+			window.selection.first = s.cue_index
+			window.selection.last = s.cue_index
 
 			s.cue_input_value = ''
 			saveLocal(s)
@@ -321,6 +358,8 @@ export const appSlice = createSlice({
 			// eslint-disable-next-line no-unused-vars
 			const { name, ...parameters } = s.cues[index]
 			s.selected_cues = [name]
+			window.selection.first = index
+			window.selection.last = index
 			s.parameters = parameters
 		},
 		sortCues(s, { payload }) {
@@ -344,6 +383,16 @@ export const appSlice = createSlice({
 				s.cue_index = s.cues.findIndex(f => f.name === current)
 			}
 
+			const sel = window.selection
+			sel.first = newIndex
+			sel.last = newIndex + length - 1
+
+			/* 
+			const sel = window.selection
+			if (sel.first === oldIndex) sel.first = newIndex
+			if (sel.last === oldIndex) sel.last = newIndex
+			*/
+
 			saveLocal(s)
 		},
 		openFile: (s, { payload }) => {
@@ -360,6 +409,7 @@ export const {
 	removeCues,
 	renameCue,
 	setSelectedCues,
+	setSelection,
 	reset,
 	saveCue,
 	setAblyState,
