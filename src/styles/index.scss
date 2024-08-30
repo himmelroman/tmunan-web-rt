@@ -33,7 +33,7 @@ html {
 	--deep-5: hsl(229, 24%, 74%);
 	--deep-6: hsl(229, 24%, 85%);
 
-	--accent-0: #7d7; //#abff2e;
+	--accent-0: #6d1; // #abff2e;
 
 	--accent-1: hsl(31, 100%, 67%);
 	--accent-2: hsl(6, 100%, 68%);
@@ -154,6 +154,10 @@ textarea {
 
 	color: var(--deep-45);
 	background-color: var(--deep-3);
+
+	transition:
+		color 0.2s,
+		background-color 0.2s;
 
 	&:focus-visible {
 		color: var(--deep-5);

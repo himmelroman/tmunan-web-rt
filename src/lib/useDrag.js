@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 
-const useDrag = ({ selectedNames, itemSelector, handleSelector, ignoreSelector, delay, onChange }) => {
+const useDrag = ({ selectedNames, itemSelector, handleSelector, ignoreSelector, delay = 0, onChange }) => {
 	const oref = useRef({})
 	const sref = useRef(selectedNames)
 
@@ -10,8 +10,12 @@ const useDrag = ({ selectedNames, itemSelector, handleSelector, ignoreSelector, 
 		sref.current = selectedNames
 	}, [selectedNames])
 
-	const startDrag = (e, item) => {
+	const startDrag = e => {
 		const o = oref.current
+		clearTimeout(o.timeout)
+		o.timeout = null
+
+		let item = e.target.closest(itemSelector)
 
 		const parent = item.parentElement
 		o.dragItems = sref.current?.length
@@ -70,35 +74,36 @@ const useDrag = ({ selectedNames, itemSelector, handleSelector, ignoreSelector, 
 		})
 		parent.appendChild(dragElement)
 		o.dragElement = dragElement
-
 		o.isDragging = true
 		setIsDragging(true)
 		onMouseMove(e)
 	}
 
 	const onMouseDown = e => {
-		clearTimeout(oref.current.timeout)
+		if (oref.current.timeout) clearTimeout(oref.current.timeout)
 		if (isDragging) return
 		if (ignoreSelector && e.target.closest(ignoreSelector)) return
 		if (handleSelector && !e.target.closest(handleSelector)) return
-		const item = e.target.closest(itemSelector)
-		if (!item) return
+		if (!e.target.closest(itemSelector)) return
 
 		document.addEventListener('pointerup', onMouseUp)
 		document.addEventListener('pointermove', onMouseMove)
 
-		if (delay) {
-			oref.current.timeout = setTimeout(() => {
-				startDrag(e, item)
-			}, delay)
-		} else {
-			startDrag(e, item)
-		}
+		// if (delay) {
+		oref.current.timeout = setTimeout(() => {
+			startDrag(e)
+		}, delay)
+		// } else {
+		// 	startDrag(e, item)
+		// }
 	}
 
 	const onMouseMove = e => {
 		const o = oref.current
-		clearTimeout(o.timeout)
+		if (o.timeout) {
+			startDrag(e)
+			return
+		}
 		if (!o.isDragging) return
 
 		const y = Math.min(o.maxY, Math.max(o.minY, e.clientY - o.startY))
@@ -131,6 +136,7 @@ const useDrag = ({ selectedNames, itemSelector, handleSelector, ignoreSelector, 
 		document.removeEventListener('pointerup', onMouseUp)
 		document.removeEventListener('pointermove', onMouseMove)
 		clearTimeout(oref.current.timeout)
+		oref.current.timeout = null
 		if (!oref.current.isDragging) return
 
 		const { oldIndex, newIndex, length, dragItems, dragElement, originalOrder } = oref.current

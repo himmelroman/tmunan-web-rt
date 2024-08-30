@@ -75,6 +75,7 @@ const CueItem = ({ name, index, current, selected }) => {
 					<div>{name}</div>
 				)}
 			</div>
+			<div className={styles.spacer} />
 			<button className={styles.play} tabIndex={-1}>
 				<MdPlayCircleFilled />
 			</button>
@@ -114,7 +115,7 @@ const CueList = () => {
 
 	const { isDragging } = useDrag({
 		itemSelector: `.${styles.item}`,
-		delay: 100,
+		delay: 230,
 		onChange: onSort,
 		selectedNames: selectedCues,
 	})
@@ -181,14 +182,14 @@ const CueList = () => {
 		}
 	}
 
-	const jumpToCue = index => {
-		dispatch(loadAndSendCue(index))
-		const item = document.querySelector(`.${styles.item}[data-index="${index}"]`)
-		if (item) {
-			item.scrollIntoView({ block: 'center', behavior: 'smooth' })
-		}
-		selectionRef.current = { first: index, last: index }
-	}
+	// const jumpToCue = index => {
+	// 	dispatch(loadAndSendCue(index))
+	// 	const item = document.querySelector(`.${styles.item}[data-index="${index}"]`)
+	// 	if (item) {
+	// 		item.scrollIntoView({ block: 'center', behavior: 'smooth' })
+	// 	}
+	// 	selectionRef.current = { first: index, last: index }
+	// }
 
 	const applySelection = () => {
 		const { first, last } = selectionRef.current

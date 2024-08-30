@@ -39,8 +39,22 @@
 		line-height: 40px;
 		flex: 1;
 
+		input {
+			padding: 0;
+			height: 100%;
+		}
+
+		transition:
+			color 0.2s,
+			background-color 0.2s;
+
 		color: var(--deep-45);
 		background-color: var(--deep-3);
+
+		&:focus-within {
+			color: var(--deep-5);
+			background-color: var(--deep-35);
+		}
 	}
 
 	.add {
@@ -84,7 +98,7 @@
 	flex-shrink: 0;
 	display: flex;
 	align-items: center;
-	justify-content: space-between;
+	// justify-content: space-between;
 	// gap: 10px;
 
 	background-color: var(--deep-2);
@@ -174,6 +188,10 @@
 			pointer-events: none;
 		}
 	}
+}
+
+.spacer {
+	flex: 1;
 }
 
 .changed {
