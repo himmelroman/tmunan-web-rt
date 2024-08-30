@@ -131,7 +131,7 @@
 		}
 	}
 
-	.name {
+	.item_name {
 		margin-left: 12px;
 		flex-shrink: 0;
 	}
@@ -179,7 +179,7 @@
 	}
 
 	&[data-current] {
-		.name {
+		.item_name {
 			color: #7c7;
 		}
 

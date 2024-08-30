@@ -27,15 +27,22 @@ import useClasses from '~/lib/useClasses'
 
 const plainReg = /[^a-zA-Z0-9\- ]/g
 
-const CueItem = ({ name, index, current, selected }) => {
-	const dispatch = useDispatch()
+const CueItem = ({ name, index, current, renaming, onRename, selected }) => {
 	const inputRef = useRef()
-	const [editing, setEditing] = useState(false)
 	const [innerValue, setInnerValue] = useState(name)
 
 	useEffect(() => {
 		setInnerValue(name)
 	}, [name])
+
+	useEffect(() => {
+		if (renaming) {
+			setInnerValue(name)
+			setTimeout(() => {
+				inputRef.current?.focus()
+			}, 0)
+		}
+	}, [renaming])
 
 	const onInputChange = e => {
 		const val = e.target.value.substring(0, 36).replace(plainReg, '')
@@ -43,10 +50,7 @@ const CueItem = ({ name, index, current, selected }) => {
 	}
 
 	const onBlur = () => {
-		setEditing(false)
-		if (innerValue !== name) {
-			dispatch(renameCue({ name: innerValue.substring(0, 1).toUpperCase() + innerValue.substring(1), index }))
-		}
+		onRename(innerValue.substring(0, 1).toUpperCase() + innerValue.substring(1), index)
 	}
 
 	return (
@@ -59,17 +63,8 @@ const CueItem = ({ name, index, current, selected }) => {
 			data-current={current || undefined}
 			data-selected={selected || undefined}
 		>
-			<div
-				className={styles.name}
-				onDoubleClick={() => {
-					setInnerValue(name)
-					setEditing(true)
-					setTimeout(() => {
-						inputRef.current?.focus()
-					}, 0)
-				}}
-			>
-				{editing ? (
+			<div className={styles.item_name}>
+				{renaming ? (
 					<input value={innerValue} onChange={onInputChange} onBlur={onBlur} ref={inputRef} />
 				) : (
 					<div>{name}</div>
@@ -91,6 +86,8 @@ CueItem.propTypes = {
 	index: PropTypes.number.isRequired,
 	current: PropTypes.bool,
 	selected: PropTypes.bool,
+	renaming: PropTypes.bool,
+	onRename: PropTypes.func.isRequired,
 }
 
 const CueList = () => {
@@ -98,25 +95,21 @@ const CueList = () => {
 	const cues = useSelector(selectCues)
 	const inputValue = useSelector(selectCueInputValue)
 	const currentCueIndex = useSelector(selectCueIndex)
-	const changed = useSelector(selectCueChanged)
+	const cueChanged = useSelector(selectCueChanged)
 	const selectedCues = useSelector(selectSelectedCues)
+	const ref = useRef()
 	const selectionRef = useRef({ first: -1, last: -1 })
-
-	const onSort = ({ oldIndex, newIndex, length }) => {
-		dispatch(sortCues({ oldIndex, newIndex, length }))
-		const sel = selectionRef.current
-		if (sel.first === oldIndex) {
-			sel.first = newIndex
-		}
-		if (sel.last === oldIndex) {
-			sel.last = newIndex
-		}
-	}
+	const [renaming, setRenaming] = useState(-1)
 
 	const { isDragging } = useDrag({
 		itemSelector: `.${styles.item}`,
 		delay: 230,
-		onChange: onSort,
+		onChange: ({ oldIndex, newIndex, length }) => {
+			dispatch(sortCues({ oldIndex, newIndex, length }))
+			const sel = selectionRef.current
+			if (sel.first === oldIndex) sel.first = newIndex
+			if (sel.last === oldIndex) sel.last = newIndex
+		},
 		selectedNames: selectedCues,
 	})
 
@@ -138,7 +131,7 @@ const CueList = () => {
 		}
 
 		if (e.target.closest(`.${styles.play}`)) {
-			if (index === currentCueIndex && changed) dispatch(saveCue(true))
+			if (index === currentCueIndex && cueChanged) dispatch(saveCue(true))
 			else dispatch(loadAndSendCue(index))
 			return
 		}
@@ -182,14 +175,13 @@ const CueList = () => {
 		}
 	}
 
-	// const jumpToCue = index => {
-	// 	dispatch(loadAndSendCue(index))
-	// 	const item = document.querySelector(`.${styles.item}[data-index="${index}"]`)
-	// 	if (item) {
-	// 		item.scrollIntoView({ block: 'center', behavior: 'smooth' })
-	// 	}
-	// 	selectionRef.current = { first: index, last: index }
-	// }
+	const onListDoubleClick = e => {
+		if (!e.target.closest(`.${styles.item_name}`)) return
+		const item = e.target.closest(`.${styles.item}`)
+		if (!item) return
+		const index = parseInt(item.dataset.index)
+		setRenaming(index)
+	}
 
 	const applySelection = () => {
 		const { first, last } = selectionRef.current
@@ -237,6 +229,12 @@ const CueList = () => {
 			case 'Backspace':
 				if (selectedCues.length) dispatch(removeCues(selectedCues))
 				break
+			case 'F2':
+				if (renaming === -1 && sel.first !== -1) {
+					e.preventDefault()
+					setRenaming(sel.first)
+				}
+				break
 			default:
 				break
 		}
@@ -250,6 +248,14 @@ const CueList = () => {
 		}
 	}
 
+	const onCueRename = (newName, index) => {
+		setRenaming(-1)
+		if (newName !== cues[index].name) {
+			dispatch(renameCue({ name: newName, index }))
+		}
+		ref.current.focus()
+	}
+
 	useEffect(() => {
 		window.addEventListener('mousedown', onDeselect)
 		return () => {
@@ -257,10 +263,10 @@ const CueList = () => {
 		}
 	}, [])
 
-	const cls = useClasses(styles.cont, isDragging && styles.dragging, changed && styles.changed)
+	const cls = useClasses(styles.cont, isDragging && styles.dragging, cueChanged && styles.changed)
 
 	return (
-		<div className={cls} onKeyDown={onKeyDown} tabIndex={0}>
+		<div className={cls} onKeyDown={onKeyDown} tabIndex={0} ref={ref}>
 			<div className={styles.header}>
 				<div className={styles.cue_input}>
 					<input
@@ -272,19 +278,26 @@ const CueList = () => {
 							e.key === 'Enter' && addNewCue()
 						}}
 					/>
-					<button onClick={addNewCue} className={styles.add}>
+					<button onClick={addNewCue} className={styles.add} tabIndex={-1}>
 						<MdAdd />
 					</button>
 				</div>
 			</div>
-			<div className={styles.list} onClick={onListClick} onMouseDown={onListDown}>
+			<div
+				className={styles.list}
+				onClick={onListClick}
+				onMouseDown={onListDown}
+				onDoubleClick={onListDoubleClick}
+			>
 				{cues.map((f, i) => (
 					<CueItem
 						{...f}
 						key={f.name}
 						index={i}
+						renaming={renaming === i}
 						selected={selectedCues.includes(f.name)}
 						current={currentCueIndex === i}
+						onRename={onCueRename}
 					/>
 				))}
 			</div>
