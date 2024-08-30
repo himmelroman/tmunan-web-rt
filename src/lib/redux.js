@@ -321,13 +321,15 @@ export const appSlice = createSlice({
 		renameCue: (s, { payload }) => {
 			let { name, index } = payload
 			const cue = s.cues[index]
-			if (cue) {
-				name = name.trim()
-				if (!name.length || s.cues.some(f => f.name === name)) {
-					return
-				}
-				cue.name = name
+			if (!cue) return
+			name = name.trim()
+			if (!name.length || s.cues.some(f => f.name === name)) {
+				return
 			}
+			cue.name = name
+			s.selected_cues = [name]
+			window.selection.first = index
+			window.selection.last = index
 			saveLocal(s)
 		},
 		removeCues: (s, { payload }) => {
@@ -336,12 +338,26 @@ export const appSlice = createSlice({
 			}
 			const current = s.cues[s.cue_index]?.name
 			const indices = payload.map(f => s.cues.findIndex(c => c.name === f))
+			indices.sort()
 			if (indices.includes(s.cue_index)) {
 				s.cue_index = -1
 			}
 			for (let i = indices.length - 1; i >= 0; i--) {
 				s.cues.splice(indices[i], 1)
 			}
+			const sel = window.selection
+			if (!s.cues.length) {
+				sel.first = -1
+				sel.last = -1
+				s.selected_cues = []
+				s.cue_index = -1
+				return
+			}
+
+			sel.first = Math.max(0, indices[0] - 1)
+			sel.last = sel.first
+			s.selected_cues = [s.cues[sel.first].name]
+
 			if (current) {
 				s.cue_index = s.cues.findIndex(f => f.name === current)
 			}
