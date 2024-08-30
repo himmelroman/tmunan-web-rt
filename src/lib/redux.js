@@ -297,12 +297,16 @@ export const appSlice = createSlice({
 			if (!Array.isArray(payload)) {
 				payload = [payload]
 			}
+			const current = s.cues[s.cue_index]?.name
 			const indices = payload.map(f => s.cues.findIndex(c => c.name === f))
 			if (indices.includes(s.cue_index)) {
 				s.cue_index = -1
 			}
 			for (let i = indices.length - 1; i >= 0; i--) {
 				s.cues.splice(indices[i], 1)
+			}
+			if (current) {
+				s.cue_index = s.cues.findIndex(f => f.name === current)
 			}
 			saveLocal(s)
 		},

@@ -187,21 +187,49 @@ const CueList = () => {
 		if (item) {
 			item.scrollIntoView({ block: 'center', behavior: 'smooth' })
 		}
+		selectionRef.current = { first: index, last: index }
+	}
+
+	const applySelection = () => {
+		const { first, last } = selectionRef.current
+		const min = Math.min(first, last)
+		const max = Math.max(first, last)
+		dispatch(setSelectedCues(cues.slice(min, max + 1).map(f => f.name)))
 	}
 
 	const onKeyDown = e => {
 		if (e.target.tagName === 'INPUT') return
-		switch (e.key) {
+		const sel = selectionRef.current
+		const { key, shiftKey } = e
+		switch (key) {
 			case 'ArrowUp':
-				if (currentCueIndex) {
+				if (sel.first === -1) return
+				if (shiftKey) {
+					if (sel.last > 0) {
+						e.preventDefault()
+						sel.last--
+						applySelection()
+					}
+				} else if (sel.first > 0) {
 					e.preventDefault()
-					jumpToCue(currentCueIndex - 1)
+					sel.first--
+					sel.last = sel.first
+					applySelection()
 				}
 				break
 			case 'ArrowDown':
-				if (currentCueIndex < cues.length - 1) {
+				if (sel.first === -1) return
+				if (shiftKey) {
+					if (sel.last < cues.length - 1) {
+						e.preventDefault()
+						sel.last++
+						applySelection()
+					}
+				} else if (sel.first < cues.length - 1) {
 					e.preventDefault()
-					jumpToCue(currentCueIndex + 1)
+					sel.first++
+					sel.last = sel.first
+					applySelection()
 				}
 				break
 			case 'Delete':
