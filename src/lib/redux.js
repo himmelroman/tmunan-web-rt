@@ -235,6 +235,7 @@ export const appSlice = createSlice({
 				if (cue) {
 					Object.assign(cue, s.parameters)
 				}
+				saveLocal(s)
 				return
 			}
 
@@ -291,9 +292,13 @@ export const appSlice = createSlice({
 			saveLocal(s)
 		},
 		renameCue: (s, { payload }) => {
-			const { name, index } = payload
+			let { name, index } = payload
 			const cue = s.cues[index]
 			if (cue) {
+				name = name.trim()
+				if (!name.length || s.cues.some(f => f.name === name)) {
+					return
+				}
 				cue.name = name
 			}
 			saveLocal(s)
@@ -309,12 +314,6 @@ export const appSlice = createSlice({
 			for (let i = indices.length - 1; i >= 0; i--) {
 				s.cues.splice(indices[i], 1)
 			}
-			// payload.forEach(f => {
-			// 	const index = s.cues.findIndex(c => c.name === f)
-			// 	if (index !== -1) {
-			// 		s.cues.splice(index, 1)
-			// 	}
-			// })
 			saveLocal(s)
 		},
 		clearCues: s => {
@@ -325,19 +324,32 @@ export const appSlice = createSlice({
 		loadCue: (s, { payload }) => {
 			const index = parseInt(payload)
 			s.cue_index = index
-			s.selected_cues = [index]
 			// eslint-disable-next-line no-unused-vars
 			const { name, ...parameters } = s.cues[index]
+			s.selected_cues = [name]
 			s.parameters = parameters
 		},
 		sortCues(s, { payload }) {
-			const { oldIndex, newIndex } = payload
+			const { oldIndex, newIndex, length } = payload
+			const diff = newIndex - oldIndex
+			const newCues = []
 			const current = s.cues[s.cue_index]?.name
-			const [cue] = s.cues.splice(oldIndex, 1)
-			s.cues.splice(newIndex, 0, cue)
+			s.cues.forEach((cue, i) => {
+				let ind
+				if (i < oldIndex) {
+					ind = i >= newIndex ? i + length : i
+				} else if (i < oldIndex + length) {
+					ind = i + diff
+				} else {
+					ind = i < newIndex + length ? i - length : i
+				}
+				newCues[ind] = cue
+			})
+			s.cues = newCues.filter(Boolean)
 			if (current) {
 				s.cue_index = s.cues.findIndex(f => f.name === current)
 			}
+
 			saveLocal(s)
 		},
 		openFile: (s, { payload }) => {

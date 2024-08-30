@@ -1,45 +1,60 @@
 import { useEffect, useRef, useState } from 'react'
 
-const useDrag = ({ selectedItems, itemSelector, handleSelector, ignoreSelector, delay, onChange }) => {
+const useDrag = ({ selectedNames, itemSelector, handleSelector, ignoreSelector, delay, onChange }) => {
 	const oref = useRef({})
-	const itemRefs = useRef([])
+	const sref = useRef(selectedNames)
 
 	const [isDragging, setIsDragging] = useState(false)
 
+	useEffect(() => {
+		sref.current = selectedNames
+	}, [selectedNames])
+
 	const startDrag = (e, item) => {
 		const o = oref.current
-		o.isDragging = true
-		const parent = item.parentElement
 
-		if (selectedItems?.length) {
-			if (!selectedItems.includes(item.name)) return
-			item = parent.querySelector(`[data-name="${selectedItems[0]}"]`)
-		}
+		const parent = item.parentElement
+		o.dragItems = sref.current?.length
+			? sref.current.map(name => parent.querySelector(`[data-name="${name}"]`))
+			: [item]
+		item = o.dragItems[0]
+		o.length = o.dragItems.length
 
 		o.oldIndex = parseInt(item.dataset.index)
+		o.originalOrder = item.style.order
 
 		const { top, left } = item.getBoundingClientRect()
-		o.startY = e.clientY - top + 1
+		o.clientY = e.clientY
+		o.startY = e.clientY - top
 		o.startX = e.clientX - left
 
 		document.getSelection().empty()
 
-		const siblings = Array.from(parent.querySelectorAll(itemSelector))
-
-		const rects = siblings.map((el, index) => {
+		const siblings = Array.from(parent.querySelectorAll(itemSelector)).map((el, index) => {
 			const { top, left, bottom, right, width, height } = el.getBoundingClientRect()
-			return { el, index, top, left, bottom, right, width, height, ignore: el.matches(ignoreSelector) }
+			return { el, name: el.dataset.name, index, top, left, bottom, right, width, height }
+		})
+		window.siblings = siblings
+
+		o.minY = siblings[0].top
+		o.maxY = siblings[siblings.length - o.length].top
+
+		o.siblings = siblings
+		let dragElement
+		let innerHTML = ''
+		o.dragItems.forEach(item => {
+			innerHTML += item.outerHTML
+			item.style.visibility = 'hidden'
 		})
 
-		o.minY = rects[0].top + o.startY
-		o.maxY = rects[rects.length - 1].top + o.startY
+		dragElement = document.createElement('div')
+		dragElement.className = 'dragged'
+		dragElement.style.display = 'flex'
+		dragElement.style.flexDirection = 'column'
+		dragElement.style.alignItems = 'stretch'
+		dragElement.dataset.dragged = true
+		dragElement.innerHTML = innerHTML
 
-		itemRefs.current = rects
-
-		let dragElement
-
-		dragElement = item.cloneNode(true)
-		dragElement.className = `${dragElement.className} dragged`
 		Object.assign(dragElement.style, {
 			position: 'absolute',
 			top: `${top}px`,
@@ -53,15 +68,10 @@ const useDrag = ({ selectedItems, itemSelector, handleSelector, ignoreSelector, 
 			userSelect: 'none',
 			cursor: 'grabbing',
 		})
-		dragElement.dataset.index = o.oldIndex
-		dragElement.innerHTML = item.innerHTML
 		parent.appendChild(dragElement)
 		o.dragElement = dragElement
 
-		o.original = item
-		o.original_order = item.style.order
-		item.style.visibility = 'hidden'
-
+		o.isDragging = true
 		setIsDragging(true)
 		onMouseMove(e)
 	}
@@ -91,22 +101,30 @@ const useDrag = ({ selectedItems, itemSelector, handleSelector, ignoreSelector, 
 		clearTimeout(o.timeout)
 		if (!o.isDragging) return
 
-		const y = Math.min(o.maxY, Math.max(o.minY, e.clientY))
+		const y = Math.min(o.maxY, Math.max(o.minY, e.clientY - o.startY))
+		o.dragElement.style.top = `${y}px`
+		const drag_bottom = y + o.dragElement.offsetHeight
 
-		const rects = itemRefs.current
-		let i
-		for (i = 0; i < rects.length; i++) {
-			const { bottom, ignore } = rects[i]
-			if (ignore) continue
-			if (bottom > y) {
+		let newIndex
+		for (newIndex = 0; newIndex < o.siblings.length; newIndex++) {
+			const { top, height } = o.siblings[newIndex]
+			if (top + height / 2 > drag_bottom) {
+				newIndex -= 1
 				break
 			}
 		}
-		o.newIndex = i
+		o.newIndex = newIndex
+		const diff = newIndex - o.oldIndex
 
-		o.dragElement.style.top = `${y - o.startY}px`
-		const after = i > o.oldIndex
-		o.original.style.order = i * 2 + (after ? 2 : 0)
+		o.siblings.forEach((sibling, i) => {
+			if (i < o.oldIndex) {
+				sibling.el.style.order = i >= newIndex ? i + o.length : i
+			} else if (i < o.oldIndex + o.length) {
+				sibling.el.style.order = i + diff
+			} else {
+				sibling.el.style.order = i < newIndex + o.length ? i - o.length : i
+			}
+		})
 	}
 
 	const onMouseUp = () => {
@@ -114,13 +132,20 @@ const useDrag = ({ selectedItems, itemSelector, handleSelector, ignoreSelector, 
 		document.removeEventListener('pointermove', onMouseMove)
 		clearTimeout(oref.current.timeout)
 		if (!oref.current.isDragging) return
-		const { oldIndex, newIndex, original, dragElement, original_order } = oref.current
+
+		const { oldIndex, newIndex, length, dragItems, dragElement, originalOrder } = oref.current
+		oref.current.isDragging = false
 		setIsDragging(false)
 		dragElement.remove()
-		original.style.visibility = ''
+		dragItems.forEach(item => {
+			item.style.visibility = ''
+		})
 		oref.current = {}
-		if (oldIndex !== newIndex) onChange?.({ oldIndex, newIndex })
-		else original.style.order = original_order
+		if (oldIndex !== newIndex) onChange?.({ oldIndex, newIndex, length })
+		else
+			dragItems.forEach(item => {
+				item.style.order = originalOrder
+			})
 	}
 
 	useEffect(() => {

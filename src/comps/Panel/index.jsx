@@ -15,7 +15,6 @@ import {
 	MdOutlineStorage,
 	MdOutput,
 	MdPhotoCamera,
-	MdRefresh,
 	MdSave,
 	MdTune,
 } from 'react-icons/md'
