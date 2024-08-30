@@ -31,6 +31,7 @@ import {
 } from '~/lib/constants'
 import logger from '~/lib/logger'
 import store, {
+	addCue,
 	defaultState,
 	openFile,
 	reset,
@@ -145,7 +146,7 @@ const onKeyDown = e => {
 
 		if (code === 'Enter' && !e.shiftKey) {
 			e.preventDefault()
-			store.dispatch(saveCue())
+			store.dispatch(addCue())
 		}
 
 		return
@@ -153,7 +154,7 @@ const onKeyDown = e => {
 
 	switch (code) {
 		case 'Enter':
-			if (e.shiftKey) store.dispatch(saveCue(true))
+			if (e.shiftKey) store.dispatch(saveCue())
 			break
 		case 'BracketLeft':
 			store.dispatch(loadAndSendCue(app.cue_index - 1))

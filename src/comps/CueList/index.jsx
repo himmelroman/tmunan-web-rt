@@ -20,6 +20,7 @@ import {
 	setSelectedCues,
 	renameCue,
 	setSelection,
+	addCue,
 } from '~/lib/redux'
 import { MdAdd, MdClose, MdPlayCircleFilled } from 'react-icons/md'
 import { loadAndSendCue } from '~/lib/thunks'
@@ -113,14 +114,13 @@ const CueList = () => {
 		selectedNames: selectedCues,
 	})
 
-	const addNewCue = () => {
-		document.getElementById('cue_name_input').blur()
-		dispatch(saveCue())
-		ref.current.focus()
-		// setTimeout(() => {
-
-		// }
+	const onAddCue = () => {
+		dispatch(addCue())
 	}
+
+	useEffect(() => {
+		ref.current?.focus()
+	}, [cues.length])
 
 	const onListDown = e => {
 		const item = e.target.closest(`.${styles.item}`)
@@ -135,7 +135,7 @@ const CueList = () => {
 		}
 
 		if (e.target.closest(`.${styles.play}`)) {
-			if (index === currentCueIndex && cueChanged) dispatch(saveCue(true))
+			if (index === currentCueIndex && cueChanged) dispatch(saveCue())
 			else dispatch(loadAndSendCue(index))
 			return
 		}
@@ -290,10 +290,10 @@ const CueList = () => {
 						onChange={e => dispatch(setCueInputValue(e.target.value))}
 						value={inputValue}
 						onKeyDown={e => {
-							e.key === 'Enter' && addNewCue()
+							!e.ctrlKey && !e.shiftKey && e.key === 'Enter' && onAddCue()
 						}}
 					/>
-					<button onClick={addNewCue} className={styles.add} tabIndex={-1}>
+					<button onClick={onAddCue} className={styles.add} tabIndex={-1}>
 						<MdAdd />
 					</button>
 				</div>

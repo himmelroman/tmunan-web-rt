@@ -262,19 +262,7 @@ export const appSlice = createSlice({
 		setCueInputValue: (s, { payload }) => {
 			s.cue_input_value = payload.replace(/[^a-zA-Z0-9\- \s]/g, '')
 		},
-		saveCue: (s, { payload: overwrite }) => {
-			let cue
-			// save to selected cue
-			if (overwrite) {
-				cue = s.cues[s.cue_index]
-				if (cue) {
-					Object.assign(cue, s.parameters)
-				}
-				saveLocal(s)
-				return
-			}
-
-			// save new cue
+		addCue: s => {
 			let name = s.cue_input_value.trim()
 			if (!name) {
 				// generate name
@@ -302,7 +290,7 @@ export const appSlice = createSlice({
 				}
 			}
 
-			cue = { name, ...s.parameters }
+			const cue = { name, ...s.parameters }
 			if (s.cue_index === -1) {
 				s.cues.push(cue)
 				s.cue_index = s.cues.length - 1
@@ -317,6 +305,14 @@ export const appSlice = createSlice({
 
 			s.cue_input_value = ''
 			saveLocal(s)
+		},
+		saveCue: s => {
+			const cue = s.cues[s.cue_index]
+			if (cue) {
+				Object.assign(cue, s.parameters)
+			}
+			saveLocal(s)
+			return
 		},
 		renameCue: (s, { payload }) => {
 			let { name, index } = payload
@@ -361,11 +357,6 @@ export const appSlice = createSlice({
 			if (current) {
 				s.cue_index = s.cues.findIndex(f => f.name === current)
 			}
-			saveLocal(s)
-		},
-		clearCues: s => {
-			s.cues = []
-			s.cue_index = -1
 			saveLocal(s)
 		},
 		loadCue: (s, { payload }) => {
@@ -419,7 +410,6 @@ export const appSlice = createSlice({
 })
 
 export const {
-	clearCues,
 	loadCue,
 	openFile,
 	removeCues,
@@ -427,6 +417,7 @@ export const {
 	setSelectedCues,
 	setSelection,
 	reset,
+	addCue,
 	saveCue,
 	setAblyState,
 	setActiveRange,
