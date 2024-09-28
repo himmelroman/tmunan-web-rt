@@ -26,7 +26,13 @@ export async function getCameras() {
 	window.cmap = { none: 'None' }
 	try {
 		logger.info('Getting cameras...')
+		// trigger permission request
+		const stream = await navigator.mediaDevices.getUserMedia({ video: true })
+		// stop stream
+		stream.getTracks().forEach(track => track.stop())
+		// get devices
 		const devices = await navigator.mediaDevices.enumerateDevices()
+		console.log('devices', devices)
 		const cameras = devices
 			.filter(device => device.kind === 'videoinput')
 			.map(({ deviceId, label }) => {
