@@ -55,7 +55,6 @@ async function main() {
 
 	logger.info(chalk.greenBright('START'))
 	print('Version', VERSION)
-	// print('Websocket URL', SOCKET_URL)
 	print('Server URL', BASE_URL)
 	print('Name', NAME)
 	print('Channel', ABLY_CHANNEL)
