@@ -227,3 +227,5 @@ export const CAMERA_PROPS = [
 	{ name: 'focusDistance', label: 'Focus', parent: 'focusMode', row: 3 },
 	{ name: 'sharpness', row: 3 },
 ]
+
+console.log('Env test', ABLY_CHANNEL, ABLY_TOKEN, HOST)
