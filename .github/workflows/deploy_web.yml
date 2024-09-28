@@ -8,6 +8,9 @@ on:
 jobs:
   deploy-webapp:
     runs-on: ubuntu-latest
+    env:
+      VITE_ABLY_TOKEN: ${{ secrets.ABLY_TOKEN }}
+      VITE_LOG_TOKEN: ${{ secrets.LOG_TOKEN }}
     environment: tmunan_icu
     permissions:
       id-token: write

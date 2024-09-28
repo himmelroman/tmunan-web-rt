@@ -1,4 +1,3 @@
-// export const ENV_PROTOCOL = import.meta.env.VITE_PROTOCOL
 import { version } from '../../package.json'
 
 export const VERSION = version
