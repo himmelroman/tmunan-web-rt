@@ -11,6 +11,10 @@ jobs:
     env:
       VITE_ABLY_TOKEN: ${{ secrets.ABLY_TOKEN }}
       VITE_LOG_TOKEN: ${{ secrets.LOG_TOKEN }}
+      VITE_HOST: ${{ vars.HOST }}
+      VITE_AUTH0_CALLBACK_URL: ${{ vars.AUTH0_CALLBACK_URL }}
+      VITE_AUTH0_CLIENT_ID: ${{ vars.AUTH0_CLIENT_ID }}
+      VITE_AUTH0_DOMAIN: ${{ vars.AUTH0_DOMAIN }}
     environment: tmunan_icu
     permissions:
       id-token: write

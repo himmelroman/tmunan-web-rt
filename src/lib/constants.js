@@ -20,15 +20,15 @@ export const HOST = QUERY.host || import.meta.env.VITE_HOST
 
 export const PORT = QUERY.port || import.meta.env.VITE_PORT
 
-export const NAME = QUERY.name || import.meta.env.VITE_NAME
+export const NAME = QUERY.name || 'nobody'
 
 export const FPS = QUERY.fps || 30
 
 export const BASE_URL = `${PROTOCOL}://${HOST}${PORT ? ':' + PORT : ''}/api`
 
-export const WIDTH = parseInt(QUERY.width || import.meta.env.VITE_WIDTH || 512)
+export const WIDTH = parseInt(QUERY.width || 904)
 
-export const HEIGHT = parseInt(QUERY.height || import.meta.env.VITE_HEIGHT || 512)
+export const HEIGHT = parseInt(QUERY.height || 512)
 
 export const RATIO = WIDTH / HEIGHT
 
