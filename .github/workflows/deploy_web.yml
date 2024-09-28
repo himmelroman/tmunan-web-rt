@@ -1,0 +1,48 @@
+name: Deploy Tmunan WebApp
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  deploy-webapp:
+    runs-on: ubuntu-latest
+    environment: tmunan_icu
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: '9.6.0'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: CI=true pnpm i
+
+      - name: Build Vite React app
+        run: pnpm run build
+
+      - name: Configure AWS credentials using OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: eu-west-1
+          role-to-assume: arn:aws:iam::090268630745:role/github_deploy_role
+
+      - name: Deploy to S3
+        run: |
+          aws s3 sync dist/ s3://tmunan-web-rt --delete
+
+      - name: Invalidate CloudFront distribution
+        run: |
+          aws cloudfront create-invalidation --distribution-id ENR9LYJ17KBYF --paths "/*"
