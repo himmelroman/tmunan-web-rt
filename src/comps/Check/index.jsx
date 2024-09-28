@@ -40,7 +40,16 @@ const Check = forwardRef(
 		const cls = useClasses(styles.cont, className, value ? styles.checked : styles.unchecked)
 
 		return (
-			<button className={cls} {...props} ref={ref} data-check data-checked={value || null} onClick={onClick} onKeyDown={onKeyDown}>
+			<button
+				name={name}
+				className={cls}
+				{...props}
+				ref={ref}
+				data-check
+				data-checked={value || null}
+				onClick={onClick}
+				onKeyDown={onKeyDown}
+			>
 				{children}
 			</button>
 		)

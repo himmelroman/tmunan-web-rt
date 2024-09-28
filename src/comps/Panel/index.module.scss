@@ -45,40 +45,6 @@
 		filter: brightness(1.2);
 	}
 
-	[name="reload"] {
-		font-size: 19px;
-	}
-
-	[name="fullscreen"] {
-		padding: 0;
-		font-size: 24px;
-	}
-
-	[name="reset"] {
-		span {
-			font-size: 20px;
-		}
-	}
-
-	[name="show_cuelist"] {
-		span {
-			font-size: 20px;
-		}
-	}
-
-	[name="open"] {
-		display: none;
-		font-size: 16px;
-		svg {
-			margin-top: 2px;
-		}
-	}
-
-	[name="save"] {
-		display: none;
-		font-size: 18px;
-	}
-
 	[data-select] {
 		--line-width: 100%;
 		--line-height: 40px;
@@ -197,6 +163,55 @@
 		&[data-checked] {
 			color: #7c7;
 		}
+	}
+
+	[name="reload"] {
+		font-size: 19px;
+	}
+
+	[name="show_source"],
+	[name="show_output"] {
+		span {
+			color: var(--deep-2);
+			background-color: var(--deep-4);
+			width: 26px;
+			height: 19px;
+			line-height: 19px;
+			font-size: 14px;
+			font-weight: 800;
+			border-radius: 3px;
+			text-shadow: solid 2px var(--deep-2);
+		}
+	}
+
+	[name="fullscreen"] {
+		padding: 0;
+		font-size: 24px;
+	}
+
+	[name="reset"] {
+		span {
+			font-size: 20px;
+		}
+	}
+
+	[name="show_cuelist"] {
+		span {
+			font-size: 20px;
+		}
+	}
+
+	[name="open"] {
+		display: none;
+		font-size: 16px;
+		svg {
+			margin-top: 2px;
+		}
+	}
+
+	[name="save"] {
+		display: none;
+		font-size: 18px;
 	}
 }
 

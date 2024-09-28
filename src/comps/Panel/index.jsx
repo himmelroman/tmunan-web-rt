@@ -422,19 +422,11 @@ const Panel = () => {
 						<div className={styles.led} data-state={ably_state} />
 						<div className={styles.led} data-state={rtc_state} />
 					</div>
-					{/* <button
-						name='reload'
-						onDoubleClick={() => {
-							window.location.reload()
-						}}
-					>
-						<MdRefresh />
-					</button> */}
 					<Check name='show_source' value={show_source} onChange={onLocalChange}>
-						<MdInput />
+						<span>I</span>
 					</Check>
 					<Check name='show_output' value={show_output} onChange={onLocalChange}>
-						<MdOutput />
+						<span>O</span>
 					</Check>
 					<button
 						name='fullscreen'
