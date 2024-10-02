@@ -1,0 +1,15 @@
+/**
+ *
+ * Button Styles
+ *
+ */
+@import "@/vars";
+
+.cont {
+	display: flex;
+	gap: 1.5em;
+
+	.icon {
+		font-size: 20px;
+	}
+}

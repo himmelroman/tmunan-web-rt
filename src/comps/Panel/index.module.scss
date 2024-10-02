@@ -3,64 +3,29 @@
  * Panel Styles
  *
  */
-@import "@/variables";
+@import "@/vars";
 
 .cont {
-	height: 100%;
 	position: relative;
 	z-index: 10;
 
 	display: flex;
-	flex-direction: column;
+	flex-direction: row;
 	align-items: stretch;
 
-	color: var(--deep-5);
-	background-color: var(--deep-2);
-
-	font-family: "Open Sans", sans-serif;
-	font-optical-sizing: auto;
-	font-weight: 350;
-	font-variation-settings: "wdth" 100;
-	font-size: 13px;
+	color: $deep-5;
+	background-color: $deep-2;
 	letter-spacing: 1px;
 
 	box-sizing: border-box;
 	overflow: hidden;
-
-	--header-height: 50px;
-
-	main {
-		display: flex;
-		flex-direction: row;
-		align-items: stretch;
-		height: calc(100% - var(--header-height));
-	}
 
 	textarea {
 		padding: 8px;
 		letter-spacing: 1px;
 	}
 
-	button:hover {
-		filter: brightness(1.2);
-	}
-
 	[data-select] {
-		--line-width: 100%;
-		--line-height: 40px;
-		--background-color: var(--deep-3);
-		--focus-color: var(--deep-35);
-		--color: var(--deep-45);
-		--selected-bg: var(--deep-35);
-		--border: none;
-
-		&:focus {
-			color: var(--deep-5);
-		}
-
-		font-size: inherit;
-		--align: left;
-
 		[data-item],
 		[data-button] {
 			padding: 0 10px;
@@ -69,19 +34,6 @@
 
 	[name="freeze"] {
 		--checked: #f66;
-	}
-
-	&.connected {
-		.led[data-connected] {
-			background-color: #5f5;
-		}
-	}
-
-	&.show_cuelist {
-		[name="open"],
-		[name="save"] {
-			display: block;
-		}
 	}
 
 	@media only screen and (max-height: 400px) {
@@ -108,111 +60,6 @@
 			}
 		}
 	}
-
-	&.control {
-		@media (max-width: 600px) {
-			[name="reload"],
-			[name="fullscreen"],
-			[name="close"] {
-				display: none;
-			}
-			[name="show_cuelist"] {
-				order: 0;
-			}
-		}
-	}
-}
-
-.top_header {
-	position: relative;
-	display: flex;
-	align-items: center;
-	height: var(--header-height);
-	min-height: var(--header-height);
-	padding: 0 15px;
-	gap: 15px;
-	border-bottom: $border;
-
-	.sep {
-		font-size: 14px;
-		color: var(--deep-4);
-	}
-
-	button:has(svg),
-	[data-check] {
-		width: 32px;
-		height: 32px;
-	}
-
-	button {
-		order: 50;
-	}
-
-	.right {
-		position: absolute;
-		right: 0;
-		display: flex;
-		flex-direction: row;
-		align-items: center;
-		gap: 15px;
-		padding-right: 10px;
-		margin-left: auto;
-	}
-
-	[data-check] {
-		&[data-checked] {
-			color: #7c7;
-		}
-	}
-
-	[name="reload"] {
-		font-size: 19px;
-	}
-
-	[name="show_source"],
-	[name="show_output"] {
-		span {
-			color: var(--deep-2);
-			background-color: var(--deep-4);
-			width: 26px;
-			height: 19px;
-			line-height: 19px;
-			font-size: 14px;
-			font-weight: 800;
-			border-radius: 3px;
-			text-shadow: solid 2px var(--deep-2);
-		}
-	}
-
-	[name="fullscreen"] {
-		padding: 0;
-		font-size: 24px;
-	}
-
-	[name="reset"] {
-		span {
-			font-size: 20px;
-		}
-	}
-
-	[name="show_cuelist"] {
-		span {
-			font-size: 20px;
-		}
-	}
-
-	[name="open"] {
-		display: none;
-		font-size: 16px;
-		svg {
-			margin-top: 2px;
-		}
-	}
-
-	[name="save"] {
-		display: none;
-		font-size: 18px;
-	}
 }
 
 .camera_select {
@@ -224,7 +71,7 @@
 		transform: translateY(-50%);
 		right: 10px;
 		font-size: 20px;
-		color: var(--deep-4);
+		color: $deep-4;
 		pointer-events: none;
 		z-index: 100;
 		opacity: 0.6;
@@ -246,17 +93,6 @@
 	&[data-checked] {
 		color: #c66;
 	}
-}
-
-.column {
-	width: 422px;
-	display: flex;
-	flex-direction: column;
-	align-items: stretch;
-	&:not(:last-child) {
-		border-right: $border_3;
-	}
-	overflow-y: scroll;
 }
 
 .row {
@@ -289,11 +125,6 @@
 	}
 }
 
-.sep {
-	order: 50;
-	border-bottom: $border;
-}
-
 .rsep {
 	padding-bottom: 15px;
 	border-bottom: $border;
@@ -304,32 +135,6 @@
 	flex-direction: row;
 	align-items: center;
 	gap: 20px;
-}
-
-.leds {
-	position: absolute;
-	left: 4px;
-	top: 4px;
-
-	display: flex;
-	flex-direction: row;
-	align-items: center;
-	gap: 3px;
-}
-
-.led {
-	width: 3px;
-	height: 3px;
-	border-radius: 50%;
-
-	background-color: #f55;
-
-	&[data-state="connecting"] {
-		background-color: #ee0;
-	}
-	&[data-state="connected"] {
-		background-color: #4e4;
-	}
 }
 
 .field {
@@ -453,7 +258,7 @@
 	align-items: stretch;
 	overflow-y: scroll;
 
-	background-color: var(--deep-1);
+	background-color: $deep-1;
 	flex-grow: 1;
 	flex-shrink: 0;
 }
@@ -486,21 +291,13 @@
 	}
 
 	&:hover {
-		color: var(--deep-6);
-		background-color: var(--deep-25);
+		color: $deep-6;
+		background-color: $deep-25;
 	}
 
 	.active {
 		color: #f88;
 	}
-}
-
-.version {
-	position: absolute;
-	font-size: 10px;
-	bottom: 10px;
-	right: 10px;
-	opacity: 0.2;
 }
 
 // Phone

@@ -1,0 +1,10 @@
+panels:
+	parameters (camera, diffusion params, filters, etc.)
+	playlist
+	connections
+	projects
+	console
+
+	how to solve panel organization?
+		tabs?
+		draggable panels?

@@ -3,24 +3,15 @@
  * CueList Styles
  *
  */
-@import "@/variables";
+@import "@/vars";
 
 .cont {
-	flex: 1;
-	display: flex;
-	flex-direction: column;
-	align-items: stretch;
-
-	background-color: var(--deep-15);
-
 	&.dragging {
 		cursor: grabbing;
 		.item {
 			pointer-events: none;
 		}
 	}
-
-	overflow: hidden;
 }
 
 .header {
@@ -29,7 +20,7 @@
 	// padding-right: 10px;
 	gap: 10px;
 	border-bottom: $border;
-	background-color: var(--deep-2);
+	background-color: $deep-2;
 
 	.cue_input {
 		position: relative;
@@ -48,12 +39,12 @@
 			color 0.2s,
 			background-color 0.2s;
 
-		color: var(--deep-45);
-		background-color: var(--deep-3);
+		color: $deep-45;
+		background-color: $deep-3;
 
 		&:focus-within {
-			color: var(--deep-5);
-			background-color: var(--deep-35);
+			color: $deep-5;
+			background-color: $deep-35;
 		}
 	}
 
@@ -62,7 +53,7 @@
 		right: 5px;
 		top: 50%;
 		transform: translateY(-50%);
-		color: var(--deep-4);
+		color: $deep-4;
 	}
 
 	input {
@@ -81,8 +72,8 @@
 	justify-content: space-between;
 	height: 50px;
 
-	background-color: var(--deep-15);
-	border-top: $border_2;
+	background-color: $deep-15;
+	border-top: $border-2;
 }
 
 .list {
@@ -101,8 +92,8 @@
 	// justify-content: space-between;
 	// gap: 10px;
 
-	background-color: var(--deep-2);
-	color: var(--deep-42);
+	background-color: $deep-2;
+	color: $deep-42;
 
 	border-bottom: $border-2;
 	white-space: pre;
@@ -114,7 +105,7 @@
 		font-size: 16px;
 		width: 45px;
 		height: 45px;
-		color: var(--deep-3);
+		color: $deep-3;
 		padding: 0;
 
 		&:focus-visible {
@@ -127,7 +118,7 @@
 		font-size: 16px;
 		cursor: grab;
 		&:hover {
-			color: var(--deep-4);
+			color: $deep-4;
 		}
 	}
 
@@ -174,8 +165,8 @@
 	}
 
 	&[data-selected] {
-		color: var(--deep-42);
-		background-color: var(--deep-25);
+		color: $deep-42;
+		background-color: $deep-25;
 	}
 
 	&[data-current] {

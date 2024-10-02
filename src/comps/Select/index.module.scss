@@ -1,20 +1,22 @@
-@import "@/variables";
+@import "@/vars";
 
 .cont {
 	position: relative;
 
-	--line-height: 30px;
-	--line-width: 90px;
-	--align: center;
+	--line-width: 100%;
+	--line-height: 40px;
+	--align: left;
 
-	--color: #000;
-	--background-color: #fff;
-	--focus-color: #f0f0f0;
-	--border: solid 1px #e0e0f0;
+	--color: #{$deep-45};
+	--background-color: #{$deep-3};
+	--focus-color: #{$deep-35};
+	--selected-bg: #{$deep-35};
+	--border: none;
 
-	--selected-bg: #f0f0f0;
+	&:focus {
+		color: #{$deep-5};
+	}
 
-	font-size: 13px;
 	letter-spacing: 0.8px;
 	font-weight: 400;
 

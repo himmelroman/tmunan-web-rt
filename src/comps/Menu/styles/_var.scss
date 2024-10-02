@@ -1,0 +1,16 @@
+@use "sass:math";
+
+@import "@/vars";
+
+$color: $deep-45;
+$color-disabled: #aaa;
+
+$header-color: #888;
+$divider-color: rgba(0, 0, 0, 0.12);
+$border-color: rgba(0, 0, 0, 0.1);
+
+$background-color: $deep-2;
+$background-color-hover: $deep-3;
+
+$arrow-size: 0.75rem;
+$arrow-pos: -(math.div($arrow-size, 2));

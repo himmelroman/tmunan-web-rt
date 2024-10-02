@@ -1,11 +1,11 @@
-@import "@/variables";
+@import "@/vars";
 
 .cont {
 	--width: 32px;
 	--height: 10px;
 	--handle-height: 10px;
 	--bar-height: 10px;
-	--checked: var(--accent-0);
+	--checked: #{$accent-0};
 
 	position: relative;
 	display: inline-block;
@@ -38,24 +38,24 @@
 		// 	filter: brightness(1.1) saturate(1.1);
 		// }
 		.bg {
-			background-color: var(--deep-35);
+			background-color: $deep-35;
 		}
 		.handle .inner_handle {
-			// background-color: var(--deep-6);
+			// background-color: $deep-6;
 			filter: brightness(1.2) saturate(1.2);
 		}
 	}
 
 	&:focus-within {
 		.bg {
-			background-color: var(--deep-4);
+			background-color: $deep-4;
 		}
 	}
 
 	&.disabled {
 		pointer-events: none;
 		.inner_handle {
-			background-color: var(--deep-3);
+			background-color: $deep-3;
 		}
 	}
 }
@@ -66,11 +66,11 @@
 	height: var(--bar-height);
 
 	box-sizing: content-box;
-	border: solid 6px var(--deep-2);
+	border: solid 6px $deep-2;
 	top: calc((var(--height) - var(--bar-height)) / 2 - 6px);
 	left: -6px;
 
-	background-color: var(--deep-3);
+	background-color: $deep-3;
 	transition: background-color 0.25s;
 	cursor: pointer;
 }
@@ -101,10 +101,10 @@
 	transform: translate(-50%, -50%);
 
 	// border-radius: 50%;
-	background-color: var(--deep-5);
+	background-color: $deep-5;
 
 	transition: all 0.2s;
 
 	// box-sizing: content-box;
-	// border: solid 4px var(--deep-4);
+	// border: solid 4px $deep-4;
 }

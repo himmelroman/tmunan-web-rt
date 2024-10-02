@@ -1,0 +1,59 @@
+/**
+ *
+ * Footer Styles
+ *
+ */
+@import "@/vars";
+
+.cont {
+	display: flex;
+	align-items: center;
+
+	height: 20px;
+	padding: 0 8px;
+
+	border-top: $border;
+	background-color: $deep-2;
+
+	&.connected {
+		.led[data-connected] {
+			background-color: #5f5;
+		}
+	}
+}
+
+.leds {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: 6px;
+}
+
+.led {
+	width: 2px;
+	height: 2px;
+	border-radius: 50%;
+
+	background-color: #f44;
+	border: solid 1px #f33c;
+	filter: drop-shadow(0 0 1.5px #f889);
+
+	&[data-state="connecting"] {
+		background-color: #ee0;
+		border: solid 1px #aa2c;
+		filter: drop-shadow(0 0 1px #fd07);
+	}
+	&[data-state="connected"] {
+		background-color: #4e4;
+		border: solid 1px #2a2c;
+		filter: drop-shadow(0 0 1px #8f86);
+	}
+}
+
+.version {
+	letter-spacing: 1px;
+	color: $accent-4;
+	font-size: 10px;
+	opacity: 0.5;
+	margin-bottom: 1px;
+}

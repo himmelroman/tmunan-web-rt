@@ -31,16 +31,11 @@ const Check = forwardRef(
 			onChange?.(!value, name)
 		}
 
-		const onKeyDown = e => {
-			if (e.key === 'Enter' || e.key === ' ') {
-				onClick()
-			}
-		}
-
 		const cls = useClasses(styles.cont, className, value ? styles.checked : styles.unchecked)
 
 		return (
 			<button
+				id={`check-${name}`}
 				name={name}
 				className={cls}
 				{...props}
@@ -48,7 +43,6 @@ const Check = forwardRef(
 				data-check
 				data-checked={value || null}
 				onClick={onClick}
-				onKeyDown={onKeyDown}
 			>
 				{children}
 			</button>

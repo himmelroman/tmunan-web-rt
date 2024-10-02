@@ -15,6 +15,7 @@ import {
 } from './constants'
 import logger from './logger'
 import { copy } from './utils'
+import { getProperty, setProperty } from 'dot-prop'
 
 export const defaultState = {
 	// camera
@@ -29,8 +30,9 @@ export const defaultState = {
 		connections: [],
 	},
 	// ui
-	show_panel: IS_CONTROL,
+	show_ui: true, // IS_CONTROL,
 	show_cuelist: IS_CONTROL && !IS_MOBILE,
+	show_connections: IS_CONTROL,
 	show_source: false,
 	show_output: !OFFLINE,
 	active_range: null,
@@ -171,8 +173,8 @@ export const appSlice = createSlice({
 			s.presence = payload
 		},
 		// ui
-		setShowPanel: (s, { payload }) => {
-			s.show_panel = payload
+		setShowUI: (s, { payload }) => {
+			s.show_ui = payload
 		},
 		setShowCueList: (s, { payload }) => {
 			s.show_cuelist = payload
@@ -190,6 +192,10 @@ export const appSlice = createSlice({
 				s.parameters = merge(s.parameters, window.pending_params)
 				window.pending_params = null
 			}
+		},
+		toggleProperty: (s, { payload }) => {
+			const value = getProperty(s, payload)
+			setProperty(s, payload, !value)
 		},
 		// props params
 		setLocalProp: (s, { payload }) => {
@@ -417,6 +423,7 @@ export const {
 	setSelectedCues,
 	setSelection,
 	reset,
+	toggleProperty,
 	addCue,
 	saveCue,
 	setAblyState,
@@ -434,7 +441,7 @@ export const {
 	setPresence,
 	setRTCState,
 	setShowCueList,
-	setShowPanel,
+	setShowUI,
 	setTransform,
 	sortCues,
 } = appSlice.actions
@@ -444,14 +451,6 @@ export const {
 export const selectApp = s => s.app
 
 export const selectCameras = s => s.app.cameras
-
-// ui
-
-export const selectShowClients = s => s.app.show_cuelist
-
-export const selectShowPanel = s => s.app.show_panel
-
-export const selectShowSource = s => s.app.show_source
 
 // settings
 

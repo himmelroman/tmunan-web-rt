@@ -3,14 +3,13 @@
  * Select
  *
  */
-import PropTypes from 'prop-types'
 import { useSelect } from 'downshift'
-import { useCallback, useEffect, useMemo, useRef, forwardRef } from 'react'
+import PropTypes from 'prop-types'
+import { forwardRef, useCallback, useEffect, useMemo, useRef } from 'react'
 
 import useClasses from '~/lib/useClasses'
+import { noop } from '~/lib/utils'
 import styles from './index.module.scss'
-
-const noToString = item => item
 
 const Select = forwardRef((props, eref) => {
 	const {
@@ -19,7 +18,7 @@ const Select = forwardRef((props, eref) => {
 		options = [],
 		value,
 		onChange,
-		itemToString = noToString,
+		itemToString = noop,
 		buttonPrefix = '',
 		disabled,
 		children,

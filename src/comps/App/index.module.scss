@@ -4,15 +4,24 @@
  *
  */
 
-@import "@/variables";
+@import "@/vars";
 
 .cont {
 	width: 100dvw;
 	height: 100dvh;
 
 	display: flex;
+	flex-direction: column;
 	align-items: stretch;
 	box-sizing: border-box;
+
+	--header-height: 50px;
+
+	main {
+		flex: 1;
+		display: flex;
+		align-items: stretch;
+	}
 
 	&.show_source {
 		.source {
@@ -50,13 +59,13 @@
 		}
 	}
 
-	&.show_panel {
-		.view {
-			background-color: var(--deep-0);
-			padding: 10px;
-			gap: 10px;
-		}
-	}
+	// &.show_ui {
+	// .view {
+	// background-color: $deep-0;
+	// padding: 10px;
+	// gap: 10px;
+	// }
+	// }
 
 	@media (orientation: portrait) or (max-width: 600px) {
 		&.show_source.show_output {
@@ -67,7 +76,7 @@
 			}
 		}
 
-		&.show_panel {
+		&.show_ui {
 			.view {
 				padding: 0;
 				gap: 0;

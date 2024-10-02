@@ -1,0 +1,79 @@
+/**
+ *
+ * AppBar Styles
+ *
+ */
+@import "@/vars";
+
+.cont {
+	position: relative;
+	display: flex;
+	align-items: center;
+
+	height: var(--header-height);
+	min-height: var(--header-height);
+	padding: 0 15px;
+	gap: 15px;
+	border-bottom: $border;
+
+	color: $deep-5;
+	background-color: $deep-2;
+
+	button:has(svg),
+	[data-check] {
+		width: 32px;
+		height: 32px;
+	}
+
+	[data-check] {
+		&[data-checked] {
+			color: #7c7;
+		}
+	}
+
+	[name="toggle_power"] {
+		// color: rgb(120, 123, 153);
+		span {
+			font-variation-settings:
+				"FILL" 1,
+				"wght" 400,
+				"GRAD" 4,
+				"opsz" 20;
+		}
+	}
+
+	[name="account"] {
+		span {
+			font-variation-settings:
+				"FILL" 1,
+				"wght" 300,
+				"GRAD" 0,
+				"opsz" 24;
+			font-size: 24px;
+		}
+	}
+}
+
+.sep {
+	font-size: 18px;
+	border-bottom: $border;
+	color: $deep-4;
+
+	&:after {
+		content: "|";
+	}
+}
+
+.logo {
+	margin-right: 5px;
+}
+
+.user {
+	width: 28px;
+	height: 28px;
+	border-radius: 50%;
+
+	border: solid 1px $deep-4;
+	background-color: $deep-1;
+	// background-color: #69f;
+}

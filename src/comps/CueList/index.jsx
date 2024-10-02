@@ -74,7 +74,7 @@ const CueItem = ({ name, index, current, renaming, onRename, selected }) => {
 					<div>{name}</div>
 				)}
 			</div>
-			<div className={styles.spacer} />
+			<div className='spacer' />
 			<button className={styles.play} tabIndex={-1}>
 				<MdPlayCircleFilled />
 			</button>
@@ -187,7 +187,7 @@ const CueList = () => {
 		setRenaming(index)
 	}
 
-	const onKeyDown = e => {
+	const onKeyUp = e => {
 		const sel = window.selection
 		const { key, ctrlKey, shiftKey } = e
 		const IS_INPUT = e.target.tagName === 'INPUT'
@@ -277,10 +277,10 @@ const CueList = () => {
 		}
 	}, [])
 
-	const cls = useClasses(styles.cont, isDragging && styles.dragging, cueChanged && styles.changed)
+	const cls = useClasses(styles.cont, 'column', isDragging && styles.dragging, cueChanged && styles.changed)
 
 	return (
-		<div className={cls} onKeyDown={onKeyDown} tabIndex={0} ref={ref}>
+		<div className={cls} onKeyUp={onKeyUp} tabIndex={0} ref={ref}>
 			<div className={styles.header}>
 				<div className={styles.cue_input}>
 					<input
@@ -289,7 +289,9 @@ const CueList = () => {
 						placeholder='Add cue name'
 						onChange={e => dispatch(setCueInputValue(e.target.value))}
 						value={inputValue}
-						onKeyDown={e => {
+						data-noblur
+						onKeyUp={e => {
+							console.log('onKEYPU', e.key)
 							!e.ctrlKey && !e.shiftKey && e.key === 'Enter' && onAddCue()
 						}}
 					/>
@@ -316,7 +318,7 @@ const CueList = () => {
 					/>
 				))}
 			</div>
-			<div className={styles.footer}></div>
+			{/* <div className={styles.footer}></div> */}
 		</div>
 	)
 }

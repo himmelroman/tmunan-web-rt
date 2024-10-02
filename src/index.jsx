@@ -5,14 +5,13 @@
  */
 
 import ReactDOM from 'react-dom/client'
-// import { PersistGate } from 'redux-persist/integration/react'
 import { Provider } from 'react-redux'
 import chalk from 'chalk'
 
 import { VERSION, NAME, IS_CONTROL, ABLY_CHANNEL, BASE_URL } from './lib/constants'
 import logger from './lib/logger'
 import socket from './lib/socket'
-import store, { /* persistor, */ setCameras } from '~/lib/redux'
+import store, { setCameras } from '~/lib/redux'
 import App from './comps/App'
 import './styles/index.scss'
 
@@ -76,5 +75,3 @@ async function main() {
 }
 
 main()
-
-// <PersistGate loading={null} persistor={persistor}></PersistGate

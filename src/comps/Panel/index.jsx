@@ -5,89 +5,36 @@
  */
 import { getProperty } from 'dot-prop'
 import { memo, useEffect, useMemo, useState } from 'react'
-import FocusLock from 'react-focus-lock'
-import { FaFolderOpen } from 'react-icons/fa6'
-import {
-	MdClose,
-	MdFullscreen,
-	MdFullscreenExit,
-	MdInput,
-	MdOutlineStorage,
-	MdOutput,
-	MdPhotoCamera,
-	MdSave,
-	MdTune,
-} from 'react-icons/md'
+import { MdPhotoCamera, MdTune } from 'react-icons/md'
 import { useDispatch, useSelector } from 'react-redux'
 
+import { CAMERA_PROPS, DIFFUSION_RANGES, FILTER_RANGES, NAME, PARAMETER_SCHEMA } from '~/lib/constants'
 import {
-	CAMERA_PROPS,
-	DIFFUSION_RANGES,
-	FILTER_RANGES,
-	IS_CONTROL,
-	NAME,
-	PARAMETER_SCHEMA,
-	VERSION,
-} from '~/lib/constants'
+	onClientParameterChange,
+	onDiffusionParameterChange,
+	onFilterParameterChange,
+	onLocalChange,
+	onTransformParameterChange,
+	parameterCallbacks,
+} from '~/lib/handlers'
 import logger from '~/lib/logger'
 import store, {
 	addCue,
 	defaultState,
-	openFile,
-	reset,
 	saveCue,
 	selectApp,
 	selectConnected,
 	setCameraSetting,
-	setClientParameter,
-	setDiffusionParameter,
 	setFilter,
 	setLocalProp,
-	setMouseDown,
-	setShowCueList,
-	setShowPanel,
-	setTransform,
 } from '~/lib/redux'
 import socket from '~/lib/socket'
 import { loadAndSendCue } from '~/lib/thunks'
-import useClasses from '~/lib/useClasses'
 import { camelToFlat } from '~/lib/utils'
-import Check from '../Check'
-import CueList from '../CueList'
 import Range from '../Range'
 import Select from '../Select'
 import Toggle from '../Toggle'
 import styles from './index.module.scss'
-
-const onLocalChange = (value, name) => {
-	store.dispatch(setLocalProp([name, value]))
-}
-
-const onDiffusionParameterChange = (value, name) => {
-	store.dispatch(setDiffusionParameter([name, value]))
-	socket.debouncedSend('parameters', { diffusion: { [name]: value }, override: true })
-}
-
-const onClientParameterChange = (value, name) => {
-	store.dispatch(setClientParameter([name, value]))
-	socket.debouncedSend('parameters', { client: { [name]: value }, override: true })
-}
-
-const onTransformParameterChange = (value, name) => {
-	store.dispatch(setTransform({ [name]: value }))
-	socket.debouncedSend('parameters', { client: { transform: { [name]: value } }, override: true })
-}
-
-const onFilterParameterChange = (value, name) => {
-	store.dispatch(setFilter({ [name]: value }))
-	socket.debouncedSend('parameters', { client: { filter: { [name]: value } }, override: true })
-}
-
-const parameterCallbacks = {
-	diffusion: onDiffusionParameterChange,
-	filter: onFilterParameterChange,
-	client: onClientParameterChange,
-}
 
 const onInvert = value => {
 	const s = store.getState()
@@ -188,40 +135,14 @@ const onKeyDown = e => {
 	}
 }
 
-const onMouseDown = () => {
-	store.dispatch(setMouseDown(true))
-}
-
-const onMouseUp = () => {
-	store.dispatch(setMouseDown(false))
-}
-
-const onContext = e => {
-	e.preventDefault()
-}
-
 // Component
 
 const Panel = () => {
 	const dispatch = useDispatch()
 
 	const app = useSelector(selectApp)
-	const connected = useSelector(selectConnected)
 
-	const {
-		ably_state,
-		rtc_state,
-		camera,
-		cameras,
-		camera_settings,
-		cue_index,
-		cues,
-		presence,
-		show_cuelist,
-		active_range,
-		show_output,
-		show_source,
-	} = app
+	const { camera, cameras, camera_settings, presence, active_range } = app
 	const { diffusion } = app.parameters
 	const { filter, transform, fps, freeze, transition_duration } = app.parameters.client
 	const { connections, active_connection_name } = presence
@@ -252,10 +173,10 @@ const Panel = () => {
 		setCurrentPrompt(value)
 	}
 
-	const outsideClick = e => {
-		if (e.target.closest(`.${styles.cont}`)) return
-		dispatch(setShowPanel(false))
-	}
+	// const outsideClick = e => {
+	// 	if (e.target.closest(`.${styles.cont}`)) return
+	// 	dispatch(setShowUI(false))
+	// }
 
 	const onConnectionClick = e => {
 		const { name } = e.target.closest(`.${styles.connection}`).dataset
@@ -263,45 +184,13 @@ const Panel = () => {
 		socket.send('set_active_name', { name })
 	}
 
-	const onOpenCuelist = () => {
-		const input = document.createElement('input')
-		input.type = 'file'
-		input.accept = '.json'
-		input.onchange = e => {
-			const file = e.target.files[0]
-			const reader = new FileReader()
-			reader.onload = e => {
-				const data = JSON.parse(e.target.result)
-				logger.info('open', data)
-				dispatch(openFile(data))
-			}
-			reader.readAsText(file)
-		}
-		input.click()
-	}
-
-	const onSaveCuelist = () => {
-		const data = JSON.stringify({ cues, cue_index })
-		const blob = new Blob([data], { type: 'application/json' })
-		const url = URL.createObjectURL(blob)
-		const a = document.createElement('a')
-		a.href = url
-		a.download = `tmunan_${NAME}.json`
-		a.click()
-		URL.revokeObjectURL(url)
-	}
-
-	const onReset = () => {
-		socket.send('parameters', { ...defaultState.parameters, override: true })
-		dispatch(reset())
-	}
-
 	useEffect(() => {
-		if (!IS_CONTROL) window.addEventListener('pointerdown', outsideClick)
+		// if (!IS_CONTROL) window.addEventListener('pointerdown', outsideClick)
 		window.addEventListener('keydown', onKeyDown, true)
 		window.addEventListener('wheel', onWheel, { passive: false })
+
 		return () => {
-			if (!IS_CONTROL) window.removeEventListener('pointerdown', outsideClick)
+			// if (!IS_CONTROL) window.removeEventListener('pointerdown', outsideClick)
 			window.removeEventListener('keydown', onKeyDown, true)
 			window.removeEventListener('wheel', onWheel)
 		}
@@ -407,190 +296,139 @@ const Panel = () => {
 		)
 	}, [camera_settings, camExpanded])
 
-	const cls = useClasses(
-		styles.cont,
-		connected && styles.connected,
-		show_cuelist && styles.show_cuelist,
-		IS_CONTROL && styles.control
-	)
-
 	return (
-		<FocusLock className={styles.lock}>
-			<div className={cls} onMouseDown={onMouseDown} onMouseUp={onMouseUp} onContextMenu={onContext}>
-				<div className={styles.top_header}>
-					<div className={styles.leds}>
-						<div className={styles.led} data-state={ably_state} />
-						<div className={styles.led} data-state={rtc_state} />
+		<div className={styles.cont}>
+			<div className='column'>
+				<div id='camera-field' className={styles.camera_field} data-expanded={camExpanded || null}>
+					<div className={styles.header}>
+						<Select
+							className={styles.camera_select}
+							name='camera'
+							itemToString={a => window.cmap[a]}
+							itemToValue={a => a}
+							options={cameras}
+							value={camera}
+							onChange={onLocalChange}
+						>
+							<MdPhotoCamera className={styles.camera_icon} />
+						</Select>
+						<button
+							className={styles.camera_settings_button}
+							data-active={camera_settings || null}
+							onClick={() => setCameExpanded(!camExpanded)}
+						>
+							<MdTune />
+						</button>
 					</div>
-					<Check name='show_source' value={show_source} onChange={onLocalChange}>
-						<span>I</span>
-					</Check>
-					<Check name='show_output' value={show_output} onChange={onLocalChange}>
-						<span>O</span>
-					</Check>
-					<button
-						name='fullscreen'
-						className={styles.fullscreen}
-						onClick={() => {
-							document.fullscreenElement
-								? document.exitFullscreen()
-								: document.querySelector('body').requestFullscreen()
-						}}
-					>
-						{document.fullscreenElement ? <MdFullscreenExit /> : <MdFullscreen />}
-					</button>
-					<button name='reset' onClick={onReset}>
-						<span className='material-symbols-outlined'>reset_image</span>
-					</button>
-					<div className={styles.sep}>/</div>
-					<button name='show_cuelist' onClick={() => dispatch(setShowCueList(show_cuelist ? false : true))}>
-						<MdOutlineStorage />
-					</button>
-					<button name='open' onClick={onOpenCuelist}>
-						<FaFolderOpen />
-					</button>
-					<button name='save' onClick={onSaveCuelist}>
-						<MdSave />
-					</button>
-					{!IS_CONTROL && (
-						<div className={styles.right}>
-							<button name='close' onClick={() => dispatch(setShowPanel(false))}>
-								<MdClose />
-							</button>
-						</div>
-					)}
+					<div id='camera-wrap' className={styles.wrap}>
+						{cameraSettingsDiv}
+					</div>
 				</div>
-				<main>
-					<div className={styles.column} data-page='1'>
-						<div id='camera-field' className={styles.camera_field} data-expanded={camExpanded || null}>
-							<div className={styles.header}>
-								<Select
-									className={styles.camera_select}
-									name='camera'
-									itemToString={a => window.cmap[a]}
-									itemToValue={a => a}
-									options={cameras}
-									value={camera}
-									onChange={onLocalChange}
-								>
-									<MdPhotoCamera className={styles.camera_icon} />
-								</Select>
-								<button
-									className={styles.camera_settings_button}
-									data-active={camera_settings || null}
-									onClick={() => setCameExpanded(!camExpanded)}
-								>
-									<MdTune />
-								</button>
-							</div>
-							<div id='camera-wrap' className={styles.wrap}>
-								{cameraSettingsDiv}
-							</div>
-						</div>
-						<div className={styles.row}>{[diffusionDivs[0], diffusionDivs[1]]}</div>
-						<div className={styles.row}>
-							{diffusionDivs[2]}
-							<Range
-								name='fps'
-								label={PARAMETER_SCHEMA.fps.label}
-								value={fps}
-								onChange={onClientParameterChange}
-								min={PARAMETER_SCHEMA.fps.min}
-								max={PARAMETER_SCHEMA.fps.max}
-								step={PARAMETER_SCHEMA.fps.step}
-								initial={PARAMETER_SCHEMA.fps.default}
-							/>
-						</div>
-						<div className={`${styles.row} ${styles.prompt_row}`} data-1>
-							<div className={styles.field} data-prompt data-changed={promptChanged || null}>
-								<textarea
-									name='prompt'
-									value={currentPrompt}
-									data-noblur
-									placeholder='Prompt'
-									onChange={onPrompt}
-									onKeyDown={e => {
-										if ('[]'.includes(e.key)) {
-											e.preventDefault()
-											return
-										}
-										if (e.key === 'Enter') {
-											e.preventDefault()
-											if (promptChanged) onDiffusionParameterChange(currentPrompt, 'prompt')
-										} else if (e.key === 'Escape') {
-											if (promptChanged) setCurrentPrompt(diffusion.prompt)
-											else e.target.blur()
-										}
-									}}
-								/>
-								{/* <textarea name='negative_prompt' value={diffusion.negative_prompt} placeholder='Negative prompt' onChange={onText} /> */}
-							</div>
-						</div>
-						<div className={styles.rsep} />
-						<div className={styles.row} data-4>
-							<div className={styles.field}>
-								<label>Flip X</label>
-								<Toggle name='flip_x' value={transform.flip_x} onChange={onTransformParameterChange} />
-							</div>
-							<div className={styles.field}>
-								<label>Flip Y</label>
-								<Toggle name='flip_y' value={transform.flip_y} onChange={onTransformParameterChange} />
-							</div>
-							<div className={styles.field}>
-								<label>Invert</label>
-								<Toggle name='invert' value={filter.invert || 0} onChange={onInvert} />
-							</div>
-							<div className={styles.field}>
-								<label>Stop</label>
-								<Toggle name='freeze' value={freeze} onChange={onClientParameterChange} />
-							</div>
-						</div>
-						<div className={styles.rsep} />
-						<div className={styles.row}>{[filterDivs[0], filterDivs[1]]}</div>
-						<div className={styles.row}>{[filterDivs[2], filterDivs[3]]}</div>
-						<div className={styles.row}>{[filterDivs[4], filterDivs[5]]}</div>
-						<div className={styles.rsep} />
-						<div className={styles.row}>
-							<Range
-								name='transition_duration'
-								label='Transition'
-								value={transition_duration}
-								onChange={onClientParameterChange}
-								min={0}
-								max={10}
-								natural_step={1}
-								step={0.1}
-								initial={defaultState.parameters.transition_duration}
-							/>
-						</div>
-						<div className={styles.rsep} />
-						{connections.length ? (
-							<div className={styles.connections}>
-								{connections.map((c, i) => (
-									<div
-										key={i}
-										className={styles.connection}
-										data-name={c.name}
-										data-self={NAME === c.name || null}
-										data-active={c.name === active_connection_name || null}
-										onClick={onConnectionClick}
-									>
-										{c.name}
-										{NAME === c.name && ' (You)'}
-									</div>
-								))}
-							</div>
-						) : null}
+				<div className={styles.row}>{[diffusionDivs[0], diffusionDivs[1]]}</div>
+				<div className={styles.row}>
+					{diffusionDivs[2]}
+					<Range
+						name='fps'
+						label={PARAMETER_SCHEMA.fps.label}
+						value={fps}
+						onChange={onClientParameterChange}
+						min={PARAMETER_SCHEMA.fps.min}
+						max={PARAMETER_SCHEMA.fps.max}
+						step={PARAMETER_SCHEMA.fps.step}
+						initial={PARAMETER_SCHEMA.fps.default}
+					/>
+				</div>
+				<div className={`${styles.row} ${styles.prompt_row}`} data-1>
+					<div className={styles.field} data-prompt data-changed={promptChanged || null}>
+						<textarea
+							name='prompt'
+							value={currentPrompt}
+							data-noblur
+							placeholder='Prompt'
+							onChange={onPrompt}
+							onKeyUp={e => {
+								if ('[]'.includes(e.key)) {
+									e.preventDefault()
+									return
+								}
+								if (e.key === 'Enter') {
+									e.preventDefault()
+									if (promptChanged) onDiffusionParameterChange(currentPrompt, 'prompt')
+								} else if (e.key === 'Escape') {
+									if (promptChanged) setCurrentPrompt(diffusion.prompt)
+									else e.target.blur()
+								}
+							}}
+						/>
 					</div>
-					{show_cuelist && (
-						<div className={styles.column}>
-							<CueList />
-						</div>
-					)}
-				</main>
-				<div className={styles.version}>{VERSION}</div>
+				</div>
+				<div className={styles.rsep} />
+				<div className={styles.row} data-4>
+					<div className={styles.field}>
+						<label>Flip X</label>
+						<Toggle name='flip_x' value={transform.flip_x} onChange={onTransformParameterChange} />
+					</div>
+					<div className={styles.field}>
+						<label>Flip Y</label>
+						<Toggle name='flip_y' value={transform.flip_y} onChange={onTransformParameterChange} />
+					</div>
+					<div className={styles.field}>
+						<label>Invert</label>
+						<Toggle name='invert' value={filter.invert || 0} onChange={onInvert} />
+					</div>
+					<div className={styles.field}>
+						<label>Stop</label>
+						<Toggle name='freeze' value={freeze} onChange={onClientParameterChange} />
+					</div>
+				</div>
+				<div className={styles.rsep} />
+				<div className={styles.row}>{[filterDivs[0], filterDivs[1]]}</div>
+				<div className={styles.row}>{[filterDivs[2], filterDivs[3]]}</div>
+				<div className={styles.row}>{[filterDivs[4], filterDivs[5]]}</div>
+				<div className={styles.row}>
+					<Range
+						name='zoom'
+						label='Zoom'
+						value={1}
+						// onChange={onClientParameterChange}
+						min={1}
+						max={10}
+						natural_step={1}
+						step={0.1}
+						initial={1}
+					/>
+					<Range
+						name='transition_duration'
+						label='Transition'
+						value={transition_duration}
+						onChange={onClientParameterChange}
+						min={0}
+						max={10}
+						natural_step={1}
+						step={0.1}
+						initial={defaultState.parameters.transition_duration}
+					/>
+				</div>
+				<div className={styles.rsep} />
+				{connections.length ? (
+					<div className={styles.connections}>
+						{connections.map((c, i) => (
+							<div
+								key={i}
+								className={styles.connection}
+								data-name={c.name}
+								data-self={NAME === c.name || null}
+								data-active={c.name === active_connection_name || null}
+								onClick={onConnectionClick}
+							>
+								{c.name}
+								{NAME === c.name && ' (You)'}
+							</div>
+						))}
+					</div>
+				) : null}
 			</div>
-		</FocusLock>
+		</div>
 	)
 }
 

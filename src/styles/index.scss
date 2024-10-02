@@ -1,4 +1,4 @@
-@import "@/variables";
+@import "@/vars";
 @import "@/fonts";
 
 html,
@@ -18,45 +18,11 @@ body {
 }
 
 html {
-	--deep-0: hsl(233, 18%, 8%);
-	--deep-1: hsl(236, 20%, 14%);
-	--deep-15: hsl(236, 20%, 15%);
-	--deep-2: hsl(236, 20%, 16%);
-	--deep-21: hsl(236, 21%, 18%);
-	--deep-25: hsl(236, 21%, 20%);
-	--deep-3: hsl(236, 21%, 26%);
-	--deep-35: hsl(236, 21%, 30%);
-	--deep-4: hsl(230, 21%, 40%);
-	--deep-41: hsl(230, 21%, 45%);
-	--deep-42: hsl(230, 21%, 50%);
-	--deep-45: hsl(220, 31%, 65%);
-	--deep-5: hsl(229, 24%, 70%);
-	--deep-6: hsl(229, 24%, 85%);
-
-	--accent-0: #6d1; // #abff2e;
-
-	--accent-1: hsl(31, 100%, 67%);
-	--accent-2: hsl(6, 100%, 68%);
-	--accent-3: hsl(332, 100%, 74%);
-	--accent-4: hsl(225, 100%, 70%);
-	--accent-5: hsl(185, 100%, 74%);
-
-	--shadow-0: 0 0 10px #2222;
-	--shadow-1: 0 0 15px var(--deep-0);
-
-	--apex-blue: #009fda;
-	--accent-g: var(--accent-0);
-
-	--border-0: solid 1px #d0d0f010;
-	--border-1: solid 1px var(--deep-3);
-
-	[data-primary] {
-		&:hover {
-			filter: brightness(1.2) saturate(1.1);
-		}
-	}
-
-	--hover-filter: brightness(1.2);
+	font-family: "Open Sans", sans-serif;
+	font-optical-sizing: auto;
+	font-weight: 350;
+	font-variation-settings: "wdth" 100;
+	font-size: 13px;
 }
 
 button {
@@ -83,7 +49,7 @@ button {
 	font-size: 20px;
 	border-radius: 2px;
 
-	color: var(--deep-5);
+	color: $deep-5;
 	background-color: transparent;
 
 	font-weight: 500;
@@ -92,20 +58,24 @@ button {
 	font-family: inherit;
 	user-select: none;
 
+	&:hover {
+		filter: brightness(1.2) saturate(1.1);
+	}
+
 	> * {
 		pointer-events: none;
 	}
 
 	&:focus-visible {
 		outline: none;
-		background-color: var(--deep-25);
+		background-color: $deep-25;
 		filter: brightness(1.2);
 	}
 
 	&[disabled] {
 		opacity: 0.5;
 		pointer-events: none;
-		color: var(--deep-4);
+		color: $deep-4;
 	}
 }
 
@@ -126,7 +96,7 @@ input {
 	font-family: inherit;
 
 	&::placeholder {
-		color: var(--deep-4);
+		color: $deep-4;
 	}
 
 	&:focus {
@@ -152,20 +122,20 @@ textarea {
 	font-family: inherit;
 	font-size: inherit;
 
-	color: var(--deep-45);
-	background-color: var(--deep-3);
+	color: $deep-45;
+	background-color: $deep-3;
 
 	transition:
 		color 0.2s,
 		background-color 0.2s;
 
 	&:focus-visible {
-		color: var(--deep-5);
-		background-color: var(--deep-35);
+		color: $deep-5;
+		background-color: $deep-35;
 	}
 
 	&::placeholder {
-		color: var(--deep-4);
+		color: $deep-4;
 	}
 
 	&:focus {
@@ -220,4 +190,30 @@ input[type="range"] {
 
 *:focus {
 	outline: none;
+}
+
+.column {
+	width: 422px;
+	display: flex;
+	flex-direction: column;
+	align-items: stretch;
+	overflow-y: scroll;
+
+	background-color: $deep-2;
+	&:not(:last-child) {
+		border-right: $border-3;
+	}
+}
+
+.spacer {
+	flex: 1;
+}
+
+.material-symbols-outlined {
+	font-variation-settings:
+		"FILL" 1,
+		"wght" 400,
+		"GRAD" 0,
+		"opsz" 20;
+	font-size: 20px;
 }

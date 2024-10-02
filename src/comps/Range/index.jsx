@@ -93,7 +93,7 @@ const Range = ({
 			id={name ? `range-${name}` : undefined}
 			data-active={active || null}
 			className={styles.cont}
-			onKeyDown={onKeyDown}
+			onKeyUp={onKeyDown}
 			onMouseDown={captureFocus}
 			disabled={disabled}
 			data-range

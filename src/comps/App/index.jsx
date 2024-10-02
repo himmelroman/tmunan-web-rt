@@ -6,9 +6,10 @@
 import chalk from 'chalk'
 import gsap from 'gsap'
 import { memo, useEffect, useRef } from 'react'
+import FocusLock from 'react-focus-lock'
 import { useDispatch, useSelector } from 'react-redux'
 
-import { HEIGHT, IS_CONTROL, RANGE_KEYS, WIDTH } from '~/lib/constants'
+import { HEIGHT, RANGE_KEYS, WIDTH } from '~/lib/constants'
 import logger from '~/lib/logger'
 import '~/lib/midi'
 import store, {
@@ -20,12 +21,17 @@ import store, {
 	setActiveRange,
 	setCameraSettings,
 	setLocalProp,
+	setMouseDown,
 } from '~/lib/redux'
 import sleep from '~/lib/sleep'
 import socket from '~/lib/socket'
 import useClasses from '~/lib/useClasses'
 import Panel from '../Panel'
+import CueList from '../CueList'
+import AppBar from '../AppBar'
 import styles from './index.module.scss'
+import Footer from '../Footer'
+import { triggerKey } from '~/lib/key-bindings'
 
 // gsap
 
@@ -94,10 +100,11 @@ const onKeyDown = e => {
 
 	const { app } = store.getState()
 
-	if (/Key\w/.test(e.code)) {
+	if (!e.ctrlKey && !e.shiftKey && !e.altKey && /Key\w/.test(e.code)) {
 		const param = RANGE_KEYS[e.code]
-		if (app.active_range !== param) {
+		if (param !== undefined && app.active_range !== param) {
 			store.dispatch(setActiveRange(param))
+			return
 		}
 	}
 }
@@ -107,43 +114,60 @@ const onKeyUp = e => {
 
 	if (app.active_range && app.active_range === RANGE_KEYS[e.code]) {
 		store.dispatch(setActiveRange(null))
-	}
-
-	if (e.ctrlKey) {
 		return
 	}
 
-	if (e.target.tagName === 'TEXTAREA' || (e.target.tagName === 'INPUT' && e.target.type === 'text')) {
+	if (
+		e.target.tagName === 'TEXTAREA' ||
+		(e.target.tagName === 'INPUT' && ['text', 'number'].includes(e.target.type))
+	) {
+		console.log('onKeyup return', e.code, e.target.tagName, e.target.type)
 		return
 	}
 
-	switch (e.code) {
-		case 'KeyQ':
-			if (!IS_CONTROL) store.dispatch(setLocalProp(['show_panel', !app.show_panel]))
-			break
-		case 'Digit1':
-			store.dispatch(setLocalProp(['show_source', !app.show_source]))
-			break
-		case 'Digit2':
-			store.dispatch(setLocalProp(['show_output', !app.show_output]))
-			break
-		case 'KeyF':
-			e.preventDefault()
-			document.fullscreenElement ? document.exitFullscreen() : document.querySelector('body').requestFullscreen()
-			break
-		default:
-			break
-	}
+	triggerKey(e)
+
+	// switch (e.code) {
+	// case 'KeyQ':
+	// 	store.dispatch(setLocalProp(['show_ui', !app.show_ui]))
+	// 	break
+	// case 'KeyW':
+	// 	store.dispatch(setLocalProp(['show_cuelist', !app.show_cuelist]))
+	// 	break
+	// case 'Digit1':
+	// 	store.dispatch(setLocalProp(['show_source', !app.show_source]))
+	// 	break
+	// case 'Digit2':
+	// 	store.dispatch(setLocalProp(['show_output', !app.show_output]))
+	// 	break
+	// case 'KeyF':
+	// 	e.preventDefault()
+	// 	document.fullscreenElement ? document.exitFullscreen() : document.querySelector('body').requestFullscreen()
+	// 	break
+	// 	default:
+	// 		break
+	// }
 }
 
 // eslint-disable-next-line no-unused-vars
-const focusChange = ({ type }) => {
+const onFocusIn = ({ type }) => {
 	console.log(type, document.activeElement)
+}
+
+const onMouseDown = () => {
+	store.dispatch(setMouseDown(true))
+}
+
+const onMouseUp = () => {
+	store.dispatch(setMouseDown(false))
+}
+
+const onContext = e => {
+	e.preventDefault()
 }
 
 const App = () => {
 	const ref = useRef()
-	// const img = useRef()
 
 	const dispatch = useDispatch()
 	const app = useSelector(selectApp)
@@ -157,13 +181,21 @@ const App = () => {
 		logger.info('App mounted')
 		window.addEventListener('keydown', onKeyDown, true)
 		window.addEventListener('keyup', onKeyUp, true)
+		// window.addEventListener('focusin', onFocusIn)
 
-		// window.addEventListener('focusin', focusChange)
+		window.addEventListener('mousedown', onMouseDown)
+		window.addEventListener('mouseup', onMouseUp)
+		window.addEventListener('contextmenu', onContext)
+		window.addEventListener('doubleclick', onDoubleClick)
 
 		return () => {
 			logger.info('App unmounted')
 			window.removeEventListener('keydown', onKeyDown, true)
 			window.removeEventListener('keydown', onKeyUp, true)
+			window.removeEventListener('mousedown', onMouseDown)
+			window.removeEventListener('mouseup', onMouseUp)
+			window.removeEventListener('contextmenu', onContext)
+			window.removeEventListener('doubleclick', onDoubleClick)
 			clearInterval(draw_interval)
 			if (source_vid?.srcObject) {
 				const tracks = source_vid.srcObject.getTracks()
@@ -275,39 +307,44 @@ const App = () => {
 	}, [transformString, clientParams.transform])
 
 	const onDoubleClick = () => {
-		if (!app.show_panel) dispatch(setLocalProp(['show_panel', true]))
+		if (!app.show_ui) dispatch(setLocalProp(['show_ui', true]))
 	}
 
 	const cls = useClasses(
 		styles.cont,
-		app.show_panel && styles.show_panel,
+		app.show_ui && styles.show_ui,
 		app.show_source && styles.show_source,
 		app.show_output && styles.show_output
 	)
 
 	return (
-		<div className={cls} ref={ref} onDoubleClick={onDoubleClick}>
-			{app.show_panel && <Panel />}
-			<div className={styles.view}>
-				<video
-					id='source'
-					autoPlay
-					className={`${styles.video} ${styles.source}`}
-					ref={r => {
-						source_vid = r
-						window.source_vid = r
-					}}
-				/>
-				<video
-					id='output'
-					autoPlay
-					className={`${styles.video} ${styles.output}`}
-					ref={r => {
-						window.output_vid = r
-					}}
-				/>
-			</div>
-		</div>
+		<FocusLock className={cls} ref={ref}>
+			{app.show_ui && <AppBar />}
+			<main>
+				{app.show_ui && <Panel />}
+				<div className={styles.view}>
+					<video
+						id='source'
+						autoPlay
+						className={`${styles.video} ${styles.source}`}
+						ref={r => {
+							source_vid = r
+							window.source_vid = r
+						}}
+					/>
+					<video
+						id='output'
+						autoPlay
+						className={`${styles.video} ${styles.output}`}
+						ref={r => {
+							window.output_vid = r
+						}}
+					/>
+				</div>
+				{app.show_ui && app.show_cuelist && <CueList />}
+			</main>
+			{app.show_ui && <Footer />}
+		</FocusLock>
 	)
 }
 
