@@ -9,7 +9,12 @@ import { memo, useEffect, useRef } from 'react'
 import FocusLock from 'react-focus-lock'
 import { useDispatch, useSelector } from 'react-redux'
 
+import AppBar from '~/comps/AppBar'
+import CueList from '~/comps/CueList'
+import Footer from '~/comps/Footer'
+import Panel from '~/comps/Panel'
 import { HEIGHT, RANGE_KEYS, WIDTH } from '~/lib/constants'
+import { hotkeyHandler } from '~/lib/key-bindings'
 import logger from '~/lib/logger'
 import '~/lib/midi'
 import store, {
@@ -19,6 +24,7 @@ import store, {
 	selectIsRunning,
 	selectTransformString,
 	setActiveRange,
+	setCameras,
 	setCameraSettings,
 	setLocalProp,
 	setMouseDown,
@@ -26,12 +32,7 @@ import store, {
 import sleep from '~/lib/sleep'
 import socket from '~/lib/socket'
 import useClasses from '~/lib/useClasses'
-import Panel from '../Panel'
-import CueList from '../CueList'
-import AppBar from '../AppBar'
 import styles from './index.module.scss'
-import Footer from '../Footer'
-import { triggerKey } from '~/lib/key-bindings'
 
 // gsap
 
@@ -56,6 +57,33 @@ let source_vid
 const transformRef = { ...defaultState.parameters.client.transform }
 
 window.pressed = {}
+window.cmap = { none: 'None' }
+
+export async function getCameras() {
+	try {
+		logger.info('Getting cameras...')
+		// trigger permission request
+		const stream = await navigator.mediaDevices.getUserMedia({ video: true })
+		// stop stream
+		stream.getTracks().forEach(track => track.stop())
+		// get devices
+		const devices = await navigator.mediaDevices.enumerateDevices()
+		console.log('devices', devices)
+		const cameras = devices
+			.filter(device => device.kind === 'videoinput')
+			.map(({ deviceId, label }) => {
+				window.cmap[deviceId] = label
+				logger.info(chalk.blueBright(label))
+				return deviceId
+			})
+		window.cameras = cameras
+		store.dispatch(setCameras(cameras))
+		return true
+	} catch (error) {
+		logger.error('Error getting cameras', error)
+		return false
+	}
+}
 
 async function drawVideo() {
 	const vwidth = source_vid.videoWidth
@@ -125,7 +153,7 @@ const onKeyUp = e => {
 		return
 	}
 
-	triggerKey(e)
+	hotkeyHandler(e)
 
 	// switch (e.code) {
 	// case 'KeyQ':
@@ -169,12 +197,13 @@ const onContext = e => {
 const App = () => {
 	const ref = useRef()
 
-	const dispatch = useDispatch()
 	const app = useSelector(selectApp)
 	const clientParams = app.parameters.client
 	const isRunning = useSelector(selectIsRunning)
 	const filterString = useSelector(selectFilterString)
 	const transformString = useSelector(selectTransformString)
+
+	const dispatch = useDispatch()
 
 	// mnt
 	useEffect(() => {
@@ -187,6 +216,10 @@ const App = () => {
 		window.addEventListener('mouseup', onMouseUp)
 		window.addEventListener('contextmenu', onContext)
 		window.addEventListener('doubleclick', onDoubleClick)
+
+		if (!window.cameras) {
+			getCameras()
+		}
 
 		return () => {
 			logger.info('App unmounted')

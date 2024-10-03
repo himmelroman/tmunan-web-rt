@@ -8,8 +8,10 @@ body {
 }
 
 body {
-	background-color: #000;
-	color: #ccc;
+	width: 100%;
+	height: 100%;
+	color: $deep-5;
+	background-color: $deep-05;
 	position: relative;
 }
 
@@ -18,11 +20,32 @@ body {
 }
 
 html {
+	width: 100%;
+	height: 100%;
+
 	font-family: "Open Sans", sans-serif;
 	font-optical-sizing: auto;
 	font-weight: 350;
 	font-variation-settings: "wdth" 100;
 	font-size: 13px;
+}
+
+#root {
+	width: 100%;
+	height: 100%;
+}
+
+ul {
+	padding-inline-start: 0;
+	padding-inline-end: 0;
+	margin-block-start: 0;
+	margin-block-end: 0;
+	margin-inline-start: 0;
+	margin-inline-end: 0;
+
+	display: flex;
+	flex-direction: column;
+	align-items: stretch;
 }
 
 button {
@@ -76,6 +99,27 @@ button {
 		opacity: 0.5;
 		pointer-events: none;
 		color: $deep-4;
+	}
+}
+
+a {
+	text-decoration: none;
+	color: inherit;
+	letter-spacing: 1px;
+
+	&:hover,
+	&:focus {
+		// text-decoration: underline;
+		color: $deep-6;
+	}
+
+	&:focus-visible {
+		outline: none;
+	}
+
+	&.active {
+		pointer-events: none;
+		color: $deep-6;
 	}
 }
 

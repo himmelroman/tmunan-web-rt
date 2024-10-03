@@ -13,9 +13,19 @@ import socket from '~/lib/socket'
 import styles from './index.module.scss'
 import { keyBindings, keyActions } from '~/lib/key-bindings'
 import Button from '../Button'
+import { useAuth0 } from '@auth0/auth0-react'
 
 const AppBar = () => {
+	const { logout } = useAuth0()
 	const { show_source, show_output, show_cuelist, rtc_state } = useSelector(selectApp)
+
+	const handleLogout = () => {
+		logout({
+			logoutParams: {
+				returnTo: 'https://tmunan.icu',
+			},
+		})
+	}
 
 	const handleReset = () => {
 		socket.send('parameters', { ...defaultState.parameters, override: true })
@@ -76,7 +86,6 @@ const AppBar = () => {
 				</MenuItem>
 				<MenuItem
 					name='fullscreen'
-					label='Full Screen'
 					checked={document.fullscreenElement}
 					onClick={keyActions.fullscreen}
 					hotkey={keyBindings.fullscreen}
@@ -97,7 +106,14 @@ const AppBar = () => {
 				onClick={keyActions.toggle_power}
 				data-state={rtc_state}
 			/>
-			<Button name='account' icon='account_circle' />
+			<Menu name='account_menu' menuButton={<Button icon='account_circle' className={styles.account_button} />}>
+				<MenuItem name='dashboard' type='link' href='https://tmunan.icu/dashboard'>
+					Dashboard
+				</MenuItem>
+				<MenuItem name='logout' onClick={handleLogout}>
+					Logout
+				</MenuItem>
+			</Menu>
 		</div>
 	)
 }

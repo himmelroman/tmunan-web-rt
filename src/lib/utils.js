@@ -1,3 +1,6 @@
+import chalk from 'chalk'
+import logger from './logger'
+
 export const camelToFlat = (camel, title = false) => {
 	let arr = camel.replace(/([a-z])([A-Z])/g, '$1 $2').split(' ')
 	arr = arr.map(word => (title ? word.charAt(0).toUpperCase() + word.slice(1) : word.toLowerCase()))
@@ -7,6 +10,10 @@ export const camelToFlat = (camel, title = false) => {
 export const copy = obj => JSON.parse(JSON.stringify(obj))
 
 export const noop = a => a
+
+export const printValue = (prop, val) => {
+	logger.info(chalk.gray(prop.padEnd(20)) + chalk.blueBright(val))
+}
 
 /*
 export const fromPrompt = s => {

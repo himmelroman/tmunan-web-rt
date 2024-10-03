@@ -1,5 +1,6 @@
 import store, { toggleProperty } from './redux'
 
+// TODO: move into user space and make configurable
 export const keyBindings = {
 	show_source: '1',
 	show_output: '2',
@@ -46,25 +47,17 @@ export const keyActions = {
 	show_ui: () => store.dispatch(toggleProperty('show_ui')),
 }
 
-export const triggerKey = e => {
+export const hotkeyHandler = e => {
 	const action = bindingsMap.find(
 		b => b.key === e.code && b.ctrlKey === e.ctrlKey && b.altKey === e.altKey && b.shiftKey === e.shiftKey
 	)
-
-	if (!action) {
-		console.log('No Key Binding', e.code, e.ctrlKey, e.altKey, e.shiftKey)
-		return
-	}
+	if (!action) return
 
 	const callback = keyActions[action.name]
 	if (callback) {
-		console.log('Triggering Key', action.name)
 		e.preventDefault()
 		callback()
 	} else {
 		console.log('No Key Action', action.name)
 	}
 }
-
-// console.log('Key Bindings', keyBindings)
-// console.log('Key Bindings Map', bindingsMap)
