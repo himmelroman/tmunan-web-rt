@@ -6,8 +6,6 @@
 import { useDispatch, useSelector } from 'react-redux'
 
 import { Menu, MenuItem } from '~/comps/Menu'
-import { NAME } from '~/lib/constants'
-import logger from '~/lib/logger'
 import { defaultState, reset, selectApp } from '~/lib/redux'
 import socket from '~/lib/socket'
 import styles from './index.module.scss'
@@ -99,15 +97,19 @@ const AppBar = () => {
 				<span className='material-symbols-outlined'>reset_image</span>
 			</button>
 
-			<span className='spacer' />
+			<span data-spacer />
 			<Button
 				name='toggle_power'
 				icon='power_settings_new'
 				onClick={keyActions.toggle_power}
 				data-state={rtc_state}
 			/>
-			<Menu name='account_menu' menuButton={<Button icon='account_circle' className={styles.account_button} />}>
-				<MenuItem name='dashboard' type='link' href='https://tmunan.icu/dashboard'>
+			<Menu
+				name='account_menu'
+				menuButton={<Button icon='account_circle' className={styles.account_button} />}
+				gap={7}
+			>
+				<MenuItem name='dashboard' href='https://tmunan.icu/dashboard' target='_blank'>
 					Dashboard
 				</MenuItem>
 				<MenuItem name='logout' onClick={handleLogout}>

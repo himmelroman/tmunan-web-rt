@@ -302,19 +302,17 @@
 
 // Phone
 
-@media screen and (max-width: 600px) {
-	.cont {
-		--header-height: 60px;
-	}
+// TODO: move to connections component
+// TODO: centralized responsive styles
+// @media screen and (max-width: 600px) {
+// 	.connection {
+// 		padding: 10px;
+// 		&:first-child {
+// 			padding-top: 10px;
+// 		}
 
-	.connection {
-		padding: 10px;
-		&:first-child {
-			padding-top: 10px;
-		}
-
-		&:last-child {
-			padding-bottom: 10px;
-		}
-	}
-}
+// 		&:last-child {
+// 			padding-bottom: 10px;
+// 		}
+// 	}
+// }

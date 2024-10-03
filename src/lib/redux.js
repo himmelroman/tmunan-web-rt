@@ -111,7 +111,7 @@ export const appSlice = createSlice({
 			s.cameras = payload
 			s.cameras.unshift('none')
 			if (!s.camera || !payload.includes(s.camera)) {
-				s.camera = IS_CONTROL ? s.cameras[0] : s.cameras[1]
+				s.camera = s.cameras[0]
 			}
 		},
 		setCameraSettings: (s, { payload }) => {

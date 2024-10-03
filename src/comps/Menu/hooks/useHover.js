@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useClick } from './useClick'
 
-const useHover = (isOpen, onToggle, { openDelay = 100, closeDelay = 300 } = {}) => {
+const useHover = (isOpen, onToggle, { openDelay = 50, closeDelay = 0 } = {}) => {
 	const [config] = useState({})
 
 	const clearTimer = () => clearTimeout(config.t)
