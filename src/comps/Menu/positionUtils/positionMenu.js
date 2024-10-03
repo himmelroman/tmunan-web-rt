@@ -1,7 +1,17 @@
 import { placeLeftorRight } from './placeLeftorRight'
 import { placeToporBottom } from './placeToporBottom'
 
-export const positionMenu = ({ arrow, align, direction, gap, shift, position, anchorRect, arrowRef, positionHelpers }) => {
+export const positionMenu = ({
+	arrow,
+	align,
+	direction,
+	gap,
+	shift,
+	position,
+	anchorRect,
+	arrowRef,
+	positionHelpers,
+}) => {
 	const { menuRect, containerRect } = positionHelpers
 
 	const isHorizontal = direction === 'left' || direction === 'right'

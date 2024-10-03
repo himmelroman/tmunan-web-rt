@@ -31,14 +31,6 @@ window.socket = socket
 // print('Name', NAME)
 // print('Channel', ABLY_CHANNEL)
 
-// const root = ReactDOM.createRoot(document.getElementById('root'))
-// root.render(
-// 		<Provider store={store}>
-// 			<App />
-// 		</Provider>
-// 	</Auth0Provider>
-// )
-
 const AuthRoot = () => {
 	const navigate = useNavigate()
 

@@ -108,6 +108,7 @@ const AppBar = () => {
 				name='account_menu'
 				menuButton={<Button icon='account_circle' className={styles.account_button} />}
 				gap={7}
+				// boundingBoxPadding='5'
 			>
 				<MenuItem name='dashboard' href='https://tmunan.icu/dashboard' target='_blank'>
 					Dashboard
