@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 
-const useDrag = ({ selectedNames, itemSelector, handleSelector, ignoreSelector, delay = 0, onChange }) => {
+const useDrag = ({ selectedNames, itemSelector, handleSelector, ignoreSelector, delay = 100, onChange }) => {
 	const oref = useRef({})
 	const sref = useRef(selectedNames)
 
@@ -72,7 +72,7 @@ const useDrag = ({ selectedNames, itemSelector, handleSelector, ignoreSelector, 
 			userSelect: 'none',
 			cursor: 'grabbing',
 		})
-		parent.appendChild(dragElement)
+		document.body.appendChild(dragElement)
 		o.dragElement = dragElement
 		o.isDragging = true
 		setIsDragging(true)
@@ -89,13 +89,9 @@ const useDrag = ({ selectedNames, itemSelector, handleSelector, ignoreSelector, 
 		document.addEventListener('pointerup', onMouseUp)
 		document.addEventListener('pointermove', onMouseMove)
 
-		// if (delay) {
 		oref.current.timeout = setTimeout(() => {
 			startDrag(e)
 		}, delay)
-		// } else {
-		// 	startDrag(e, item)
-		// }
 	}
 
 	const onMouseMove = e => {

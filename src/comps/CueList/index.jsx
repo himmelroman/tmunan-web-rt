@@ -74,7 +74,7 @@ const CueItem = ({ name, index, current, renaming, onRename, selected }) => {
 					<div>{name}</div>
 				)}
 			</div>
-			<div className='spacer' />
+			<span data-spacer />
 			<button className={styles.play} tabIndex={-1}>
 				<MdPlayCircleFilled />
 			</button>

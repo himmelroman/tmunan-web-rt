@@ -21,7 +21,7 @@ const Footer = () => {
 				<div className={styles.led} data-state={ably_state} />
 				<div className={styles.led} data-state={rtc_state} />
 			</div>
-			<span className='spacer' />
+			<span data-spacer />
 			<div className={styles.version}>{VERSION}</div>
 		</div>
 	)

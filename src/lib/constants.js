@@ -128,7 +128,7 @@ export const PARAMETER_SCHEMA = {
 	invert: {
 		parameter_type: 'filter',
 		type: 'toggle',
-		default: false,
+		default: 0,
 		key: 'KeyI',
 	},
 	brightness: {

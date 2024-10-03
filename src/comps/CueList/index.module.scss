@@ -125,6 +125,7 @@
 	.item_name {
 		margin-left: 12px;
 		flex-shrink: 0;
+		letter-spacing: 0.92px;
 	}
 
 	input {
@@ -179,10 +180,6 @@
 			pointer-events: none;
 		}
 	}
-}
-
-.spacer {
-	flex: 1;
 }
 
 .changed {
