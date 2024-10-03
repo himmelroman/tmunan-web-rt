@@ -54,6 +54,24 @@ const Select = forwardRef((props, eref) => {
 			onSelectedItemChange,
 			selectedItem: options?.length ? options[currentIndex] : '',
 			id: name,
+			stateReducer: (s, { changes, type }) => {
+				switch (type) {
+					case useSelect.stateChangeTypes.ToggleButtonKeyDownArrowDown:
+						if (s.highlightedIndex === options.length - 1) {
+							return { ...changes, highlightedIndex: 0 }
+						} else {
+							return changes
+						}
+					case useSelect.stateChangeTypes.ToggleButtonKeyDownArrowUp:
+						if (s.highlightedIndex === 0) {
+							return { ...changes, highlightedIndex: options.length - 1 }
+						} else {
+							return changes
+						}
+					default:
+						return changes
+				}
+			},
 		})
 
 	useEffect(() => {
@@ -68,13 +86,13 @@ const Select = forwardRef((props, eref) => {
 		}
 	}, [eref, openMenu, closeMenu, isOpen])
 
-	useEffect(() => {
-		if (!isOpen) {
-			if (buttonRef.current) {
-				buttonRef.current.blur()
-			}
-		}
-	}, [isOpen])
+	// useEffect(() => {
+	// 	if (!isOpen) {
+	// 		if (buttonRef.current) {
+	// 			buttonRef.current.blur()
+	// 		}
+	// 	}
+	// }, [isOpen])
 
 	const cls = useClasses(styles.cont, className, (disabled || options.length < 2) && styles.disabled)
 

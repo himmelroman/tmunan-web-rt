@@ -37,6 +37,7 @@ export const defaultState = {
 	show_output: !OFFLINE,
 	active_range: null,
 	mouse_down: false,
+	confirm: null,
 	// parameters
 	parameters: {
 		diffusion: {
@@ -412,6 +413,19 @@ export const appSlice = createSlice({
 			s.cues = payload.cues
 			s.cue_index = payload.index
 		},
+		// confirm
+		requestConfirm: (s, { payload }) => {
+			const { title, message, yesAction, noAction } = payload
+			if (!title || !message || !yesAction) {
+				console.error('Invalid confirm payload')
+				return
+			}
+			s.confirm = { title, message, yesAction }
+			if (noAction) s.confirm.noAction = noAction
+		},
+		clearConfirm: s => {
+			s.confirm = null
+		},
 	},
 })
 
@@ -444,6 +458,8 @@ export const {
 	setShowUI,
 	setTransform,
 	sortCues,
+	requestConfirm,
+	clearConfirm,
 } = appSlice.actions
 
 /* Selectors */
@@ -451,6 +467,8 @@ export const {
 export const selectApp = s => s.app
 
 export const selectCameras = s => s.app.cameras
+
+export const selectConfirm = s => s.app.confirm
 
 // settings
 

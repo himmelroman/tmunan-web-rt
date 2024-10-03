@@ -4,7 +4,14 @@ import { menuClass, menuDividerClass, stylePropTypes } from '../utils'
 
 export const MenuDivider = memo(
 	forwardRef(function MenuDivider({ className, ...restProps }, externalRef) {
-		return <li role='separator' {...restProps} ref={externalRef} className={useBEM({ block: menuClass, element: menuDividerClass, className })} />
+		return (
+			<li
+				role='separator'
+				{...restProps}
+				ref={externalRef}
+				className={useBEM({ block: menuClass, element: menuDividerClass, className })}
+			/>
+		)
 	})
 )
 

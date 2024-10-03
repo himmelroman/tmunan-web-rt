@@ -5,7 +5,7 @@
  */
 import { useDispatch, useSelector } from 'react-redux'
 
-import { Menu, MenuItem } from '~/comps/Menu'
+import { Menu, MenuDivider, MenuItem } from '~/comps/Menu'
 import { defaultState, reset, selectApp } from '~/lib/redux'
 import socket from '~/lib/socket'
 import styles from './index.module.scss'
@@ -52,6 +52,10 @@ const AppBar = () => {
 				</MenuItem>
 				<MenuItem name='export' onClick={keyActions.export_project} hotkey={keyBindings.export_project}>
 					Export
+				</MenuItem>
+				<MenuDivider />
+				<MenuItem name='preferences' onClick={keyActions.preferences} hotkey={keyBindings.preferences}>
+					Preferences
 				</MenuItem>
 			</Menu>
 			<Menu menuButton={<Button icon='visibility' />}>

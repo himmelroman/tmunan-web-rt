@@ -1,0 +1,42 @@
+/**
+ *
+ * Dialog Styles
+ *
+ */
+@import "@/variables";
+
+.cont {
+	display: flex;
+	flex-direction: column;
+	font-size: 14px;
+	max-width: 50vw;
+}
+
+.header {
+	padding: 10px;
+	border-bottom: $border;
+	font-weight: 600;
+}
+
+.message {
+	flex: 1;
+	display: flex;
+	padding: 10px;
+	margin-right: 5px;
+}
+
+.options {
+	display: flex;
+	padding: 10px;
+	gap: 10px;
+
+	button {
+		border: $border2;
+		opacity: 0.7;
+		&:hover {
+			color: black;
+			opacity: 1;
+			background-color: $hover_bg;
+		}
+	}
+}
